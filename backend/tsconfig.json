@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "declaration": true,
+    "sourceMap": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "@/types": ["src/types/index.ts"],
+      "@/validation": ["src/validation/index.ts"],
+      "@/database": ["src/database/index.ts"],
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src/**/*"]
+}
