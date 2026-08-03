@@ -8,6 +8,7 @@ import {
   ScrollView,
   SafeAreaView,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 
@@ -151,17 +152,20 @@ const styles = StyleSheet.create({
   badgeText: {
     color: 'rgba(255,255,255,0.8)',
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
     letterSpacing: 1,
   },
   title: {
     color: '#ffffff',
     fontSize: 22,
-    fontWeight: '900',
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
   },
   subtitle: {
     color: 'rgba(255,255,255,0.85)',
     fontSize: 12,
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_500Medium',
     lineHeight: 16,
   },
   errorBox: {
@@ -172,7 +176,8 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#ffffff',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
   },
   infoBox: {
     backgroundColor: '#3E3BE0',
@@ -184,12 +189,14 @@ const styles = StyleSheet.create({
   infoBoxLabel: {
     color: 'rgba(255,255,255,0.7)',
     fontSize: 9,
-    fontWeight: '800',
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
   },
   infoBoxValue: {
     color: '#F4C463',
     fontSize: 16,
-    fontWeight: '900',
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
     marginTop: 2,
   },
   fieldGroup: {
@@ -198,7 +205,8 @@ const styles = StyleSheet.create({
   inputLabel: {
     color: 'rgba(255,255,255,0.9)',
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
   },
   input: {
     backgroundColor: '#3E3BE0',
@@ -207,6 +215,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 16,
     fontSize: 13,
+    fontWeight: '500',
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_500Medium',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.15)',
   },
@@ -223,7 +233,8 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: '#ffffff',
     fontSize: 11,
-    fontWeight: '900',
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
   },
   arrowCircle: {
     width: 28,
@@ -235,6 +246,7 @@ const styles = StyleSheet.create({
   },
   arrowText: {
     color: '#ffffff',
-    fontWeight: 'bold',
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
   },
 });

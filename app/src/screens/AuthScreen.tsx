@@ -396,7 +396,8 @@ const styles = StyleSheet.create({
   },
   wordmark: {
     fontSize: 17,
-    fontWeight: "900",
+    fontWeight: "600",
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
     color: "#121316",
     letterSpacing: 1,
   },
@@ -405,15 +406,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   heroHeading: {
-    fontSize: 54,
-    fontWeight: "900",
+    fontSize: 52,
+    fontWeight: "600",
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
     color: "#121316",
-    lineHeight: 56,
+    lineHeight: 54,
     letterSpacing: -1,
   },
   heroSub: {
     fontSize: 13,
     color: "#4A5248",
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_500Medium',
     lineHeight: 19,
     fontWeight: "500",
     maxWidth: 280,
@@ -443,7 +446,8 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "600",
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
     color: "#4A5248",
     letterSpacing: 0.5,
   },
@@ -459,7 +463,8 @@ const styles = StyleSheet.create({
   errorText: {
     color: "#ffffff",
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "600",
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
   },
   infoBox: {
     backgroundColor: "#121316",
@@ -470,10 +475,9 @@ const styles = StyleSheet.create({
   infoText: {
     color: "#4ade80",
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "600",
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
   },
-
-  // Form Card Layout & Field Precision
   formCard: {
     backgroundColor: "#121316",
     borderRadius: 28,
@@ -490,7 +494,8 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 10,
-    fontWeight: "800",
+    fontWeight: "600",
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
     color: "#71717a",
     letterSpacing: 1,
     marginBottom: 6,
@@ -509,6 +514,7 @@ const styles = StyleSheet.create({
     height: 48,
     fontSize: 14,
     fontWeight: "500",
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_500Medium',
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.07)",
     width: "100%",
@@ -525,7 +531,8 @@ const styles = StyleSheet.create({
   actionBtnText: {
     color: "#ffffff",
     fontSize: 11,
-    fontWeight: "900",
+    fontWeight: "600",
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
     letterSpacing: 0.5,
   },
   togglePasswordBtn: {
@@ -542,7 +549,8 @@ const styles = StyleSheet.create({
   togglePasswordText: {
     color: "#71717a",
     fontSize: 10,
-    fontWeight: "900",
+    fontWeight: "600",
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
     letterSpacing: 0.5,
   },
   submitBtn: {
@@ -556,7 +564,8 @@ const styles = StyleSheet.create({
   submitBtnText: {
     color: "#ffffff",
     fontSize: 13,
-    fontWeight: "900",
+    fontWeight: "600",
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
     letterSpacing: 1,
   },
   toggleRow: {
@@ -567,6 +576,7 @@ const styles = StyleSheet.create({
     color: "#4A5248",
     fontSize: 12,
     fontWeight: "600",
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
     textDecorationLine: "underline",
   },
   demoSection: {
@@ -574,7 +584,8 @@ const styles = StyleSheet.create({
   },
   demoLabel: {
     fontSize: 9,
-    fontWeight: "900",
+    fontWeight: "600",
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
     color: "#4A5248",
     letterSpacing: 1.5,
     textAlign: "center",
@@ -592,7 +603,8 @@ const styles = StyleSheet.create({
   demoChipText: {
     color: "#ffffff",
     fontSize: 10,
-    fontWeight: "900",
+    fontWeight: "600",
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
     letterSpacing: 0.8,
   },
 });
