@@ -12,7 +12,7 @@ import {
   Platform,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import { AssessmentDTO, StudentTopicMasteryDTO } from "../types";
+import { AssessmentDTO, StudentTopicMasteryDTO, LeaderboardEntryDTO } from "../types";
 
 const { width } = Dimensions.get("window");
 
@@ -154,35 +154,33 @@ export function DashboardScreen({
   const [streak, setStreak] = useState(0);
   const [assessments, setAssessments] = useState<AssessmentDTO[]>([]);
   const [topics, setTopics] = useState<StudentTopicMasteryDTO[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntryDTO[]>([]);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [list, topicData] = await Promise.allSettled([
+        const [list, topicData, overviewData, leaderboardData] = await Promise.allSettled([
           apiClient.getAssessments(),
           apiClient.getTopicMastery(),
+          apiClient.getStudentOverview(),
+          apiClient.getLeaderboard(),
         ]);
         if (list.status === "fulfilled" && Array.isArray(list.value))
           setAssessments(list.value);
         if (topicData.status === "fulfilled" && Array.isArray(topicData.value))
           setTopics(topicData.value);
+        if (overviewData.status === "fulfilled" && overviewData.value) {
+          setXp(overviewData.value.totalXp || 0);
+          setStreak(overviewData.value.currentStreak || 0);
+        }
+        if (leaderboardData.status === "fulfilled" && Array.isArray(leaderboardData.value))
+          setLeaderboard(leaderboardData.value);
       } catch {}
     }
     loadData();
   }, [apiClient]);
 
   const weakTopics = topics.filter((t) => t.isWeak);
-  const leaderboard = [
-    { rank: 1, name: "Alex Johnson", xp: 2450 },
-    {
-      rank: 2,
-      name: `${user?.firstName || "You"} ${user?.lastName || ""}`.trim(),
-      xp,
-      isUser: true,
-    },
-    { rank: 3, name: "Sophia Lee", xp: 980 },
-    { rank: 4, name: "Marcus Vance", xp: 850 },
-  ];
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -389,37 +387,46 @@ export function DashboardScreen({
           </View>
 
           <View style={styles.leaderList}>
-            {leaderboard.map((item) => (
-              <View
-                key={item.rank}
-                style={[styles.leaderRow, item.isUser && styles.leaderRowUser]}
-              >
-                <Text
-                  style={[
-                    styles.leaderRank,
-                    item.isUser && styles.leaderRankUser,
-                  ]}
-                >
-                  {item.rank < 4
-                    ? ["01", "02", "03", "04"][item.rank - 1]
-                    : `0${item.rank}`}
-                </Text>
-                <Text
-                  style={[
-                    styles.leaderName,
-                    item.isUser && styles.leaderNameUser,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {item.name}
-                </Text>
-                <Text
-                  style={[styles.leaderXp, item.isUser && styles.leaderXpUser]}
-                >
-                  {item.xp.toLocaleString()} XP
-                </Text>
-              </View>
-            ))}
+            {leaderboard.length === 0 ? (
+              <Text style={{ fontSize: 12, color: "#71717a", textAlign: "center", paddingVertical: 16 }}>
+                No leaderboard data yet.
+              </Text>
+            ) : (
+              leaderboard.map((item) => {
+                const isCurrentUser = item.studentId === user?.id;
+                return (
+                  <View
+                    key={item.id}
+                    style={[styles.leaderRow, isCurrentUser && styles.leaderRowUser]}
+                  >
+                    <Text
+                      style={[
+                        styles.leaderRank,
+                        isCurrentUser && styles.leaderRankUser,
+                      ]}
+                    >
+                      {item.rank < 4
+                        ? ["01", "02", "03", "04"][item.rank - 1]
+                        : `0${item.rank}`}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.leaderName,
+                        isCurrentUser && styles.leaderNameUser,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {item.studentName}
+                    </Text>
+                    <Text
+                      style={[styles.leaderXp, isCurrentUser && styles.leaderXpUser]}
+                    >
+                      {item.totalXp.toLocaleString()} XP
+                    </Text>
+                  </View>
+                );
+              })
+            )}
           </View>
         </TouchableOpacity>
       </ScrollView>

@@ -4,6 +4,241 @@ import React, { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 
+// ── Lightweight Markdown Renderer ──────────────────────────────────────────
+function MarkdownRenderer({ content }: { content: string }) {
+  const lines = content.split("\n");
+  const elements: React.ReactNode[] = [];
+  let i = 0;
+
+  const renderInline = (text: string): React.ReactNode => {
+    // Replace inline code `...`, **bold**, *italic*
+    const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g);
+    return parts.map((part, idx) => {
+      if (part.startsWith("`") && part.endsWith("`")) {
+        return (
+          <code
+            key={idx}
+            className="px-1.5 py-0.5 bg-purple-100 text-purple-800 rounded text-[11px] font-mono"
+          >
+            {part.slice(1, -1)}
+          </code>
+        );
+      }
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return (
+          <strong key={idx} className="font-bold text-purple-950">
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+      if (part.startsWith("*") && part.endsWith("*")) {
+        return (
+          <em key={idx} className="italic">
+            {part.slice(1, -1)}
+          </em>
+        );
+      }
+      return part;
+    });
+  };
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Fenced code block
+    if (line.startsWith("```")) {
+      const lang = line.slice(3).trim();
+      const codeLines: string[] = [];
+      i++;
+      while (i < lines.length && !lines[i].startsWith("```")) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      elements.push(
+        <div
+          key={i}
+          className="my-3 rounded-lg overflow-hidden border border-purple-200"
+        >
+          {lang && (
+            <div className="bg-purple-900 text-purple-200 text-[10px] font-mono px-3 py-1 uppercase tracking-wider">
+              {lang}
+            </div>
+          )}
+          <pre className="bg-[#1e1b2e] text-purple-100 text-[11px] font-mono p-4 overflow-x-auto leading-relaxed">
+            <code>{codeLines.join("\n")}</code>
+          </pre>
+        </div>,
+      );
+      i++;
+      continue;
+    }
+
+    // Horizontal rule
+    if (/^-{3,}$|^={3,}$/.test(line.trim())) {
+      elements.push(<hr key={i} className="border-purple-200 my-3" />);
+      i++;
+      continue;
+    }
+
+    // H1
+    if (line.startsWith("# ")) {
+      elements.push(
+        <h1
+          key={i}
+          className="text-base font-bold text-purple-950 mt-4 mb-1 font-sans"
+        >
+          {renderInline(line.slice(2))}
+        </h1>,
+      );
+      i++;
+      continue;
+    }
+
+    // H2
+    if (line.startsWith("## ")) {
+      elements.push(
+        <h2
+          key={i}
+          className="text-sm font-bold text-purple-900 mt-3 mb-1 font-sans border-b border-purple-100 pb-1"
+        >
+          {renderInline(line.slice(3))}
+        </h2>,
+      );
+      i++;
+      continue;
+    }
+
+    // H3
+    if (line.startsWith("### ")) {
+      elements.push(
+        <h3
+          key={i}
+          className="text-xs font-bold text-purple-800 mt-2 mb-0.5 font-sans uppercase tracking-wide"
+        >
+          {renderInline(line.slice(4))}
+        </h3>,
+      );
+      i++;
+      continue;
+    }
+
+    // H4
+    if (line.startsWith("#### ")) {
+      elements.push(
+        <h4
+          key={i}
+          className="text-xs font-semibold text-purple-700 mt-2 mb-0.5 font-sans"
+        >
+          {renderInline(line.slice(5))}
+        </h4>,
+      );
+      i++;
+      continue;
+    }
+
+    // Underline-style heading (===)
+    if (
+      i + 1 < lines.length &&
+      /^=+$/.test(lines[i + 1].trim()) &&
+      line.trim()
+    ) {
+      elements.push(
+        <h1
+          key={i}
+          className="text-base font-bold text-purple-950 mt-4 mb-1 font-sans"
+        >
+          {renderInline(line)}
+        </h1>,
+      );
+      i += 2;
+      continue;
+    }
+
+    // Underline-style heading (---)
+    if (
+      i + 1 < lines.length &&
+      /^-+$/.test(lines[i + 1].trim()) &&
+      line.trim()
+    ) {
+      elements.push(
+        <h2
+          key={i}
+          className="text-sm font-bold text-purple-900 mt-3 mb-1 font-sans border-b border-purple-100 pb-1"
+        >
+          {renderInline(line)}
+        </h2>,
+      );
+      i += 2;
+      continue;
+    }
+
+    // Bullet list item (* or -)
+    if (/^[*\-]\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^[*\-]\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^[*\-]\s+/, ""));
+        i++;
+      }
+      elements.push(
+        <ul key={i} className="list-none space-y-1 my-1 pl-2">
+          {items.map((item, idx) => (
+            <li
+              key={idx}
+              className="flex gap-2 text-[12px] leading-relaxed text-purple-950"
+            >
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />
+              <span>{renderInline(item)}</span>
+            </li>
+          ))}
+        </ul>,
+      );
+      continue;
+    }
+
+    // Numbered list
+    if (/^\d+\.\s+/.test(line)) {
+      const items: { num: string; text: string }[] = [];
+      while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
+        const m = lines[i].match(/^(\d+)\.\s+(.*)$/)!;
+        items.push({ num: m[1], text: m[2] });
+        i++;
+      }
+      elements.push(
+        <ol key={i} className="space-y-1 my-1 pl-2">
+          {items.map((item, idx) => (
+            <li
+              key={idx}
+              className="flex gap-2 text-[12px] leading-relaxed text-purple-950"
+            >
+              <span className="font-mono font-bold text-purple-500 shrink-0">
+                {item.num}.
+              </span>
+              <span>{renderInline(item.text)}</span>
+            </li>
+          ))}
+        </ol>,
+      );
+      continue;
+    }
+
+    // Blank line
+    if (line.trim() === "") {
+      i++;
+      continue;
+    }
+
+    // Regular paragraph
+    elements.push(
+      <p key={i} className="text-[12px] leading-relaxed text-purple-950 my-1">
+        {renderInline(line)}
+      </p>,
+    );
+    i++;
+  }
+
+  return <div className="space-y-0.5">{elements}</div>;
+}
+
 export default function AssessmentResultPage({
   params,
 }: {
@@ -315,7 +550,7 @@ export default function AssessmentResultPage({
                         onClick={() => handleAskAiExplanation(ans)}
                         className="px-2.5 py-1 bg-purple-100 hover:bg-purple-200 text-purple-900 text-[11px] font-semibold rounded transition-all cursor-pointer"
                       >
-                         Ask AI Tutor
+                        Ask AI Tutor
                       </button>
                     </div>
                   </div>
@@ -342,14 +577,14 @@ export default function AssessmentResultPage({
                   {/* AI EXPLANATION BOX FOR THIS QUESTION */}
                   {aiExplainingQId === ans.questionId && (
                     <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg text-xs text-purple-950 space-y-1">
-                      <div className="flex items-center justify-between font-mono font-bold text-purple-800 mb-1">
-                        <span> AI Tutor Breakdown</span>
+                      <div className="flex items-center justify-between font-mono font-bold text-purple-800 mb-2">
+                        <span className="text-xs uppercase tracking-wider">
+                          AI Tutor Breakdown
+                        </span>
                         <button
                           onClick={() => setAiExplainingQId(null)}
                           className="text-zinc-400 hover:text-zinc-700"
-                        >
-                          
-                        </button>
+                        ></button>
                       </div>
                       {aiLoading ? (
                         <p className="text-purple-600 animate-pulse">
@@ -357,8 +592,8 @@ export default function AssessmentResultPage({
                           guidance...
                         </p>
                       ) : (
-                        <div className="whitespace-pre-wrap leading-relaxed font-sans">
-                          {aiExplanation}
+                        <div className="leading-relaxed font-sans">
+                          <MarkdownRenderer content={aiExplanation || ""} />
                         </div>
                       )}
                     </div>

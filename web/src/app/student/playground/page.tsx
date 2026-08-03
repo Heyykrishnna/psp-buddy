@@ -289,11 +289,8 @@ export default function StudentPlaygroundPage() {
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-serif font-semibold text-[#111111] flex items-center gap-2">
                 <CodeIcon className="w-5 h-5 text-[#111111]" />
-                Monaco Code Playground
+                Code Playground
               </h1>
-              <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-zinc-100 text-zinc-800 border border-zinc-300 rounded-full">
-                Real Monaco IDE
-              </span>
             </div>
             <p className="text-xs text-zinc-500 mt-0.5">
               Multi-Language Algorithmic Playground & Interactive Code Sandbox
