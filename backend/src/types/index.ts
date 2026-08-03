@@ -55,6 +55,10 @@ export interface UserProfile {
   isActive: boolean;
   isEmailVerified: boolean;
   isOnboarded: boolean;
+  studentRegistrationNo?: string | null;
+  gradeLevel?: string | null;
+  employeeId?: string | null;
+  department?: string | null;
   createdAt: string;
 }
 

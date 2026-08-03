@@ -40,7 +40,7 @@ const DEMO_OVERVIEW: StudentOverviewDTO = {
   totalXp: 1250,
   currentStreak: 5,
   maxStreak: 12,
-  gradeLevel: 'Grade 10',
+  gradeLevel: '1st Sem',
   totalAssessmentsAttempted: 8,
   averageScorePercentage: 67,
   weakTopicsCount: 3,

@@ -10,7 +10,7 @@ export default function OnboardingPage() {
   const isAdmin = user?.role === 'ADMIN';
 
   const [studentRegistrationNo, setStudentRegistrationNo] = useState('');
-  const [gradeLevel, setGradeLevel] = useState('Grade 10');
+  const [gradeLevel, setGradeLevel] = useState('1st Sem');
   const [employeeId, setEmployeeId] = useState('');
   const [department, setDepartment] = useState('Computer Science');
   const [avatarUrl, setAvatarUrl] = useState('');
@@ -94,10 +94,8 @@ export default function OnboardingPage() {
                   onChange={(e) => setGradeLevel(e.target.value)}
                   className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#111111] transition-all"
                 >
-                  <option value="Grade 9">Grade 9</option>
-                  <option value="Grade 10">Grade 10</option>
-                  <option value="Grade 11">Grade 11</option>
-                  <option value="Grade 12">Grade 12</option>
+                  <option value="1st Sem">1st Sem (Semester 1)</option>
+                  <option value="2nd Sem">2nd Sem (Semester 2)</option>
                   <option value="Undergraduate">Undergraduate</option>
                 </select>
               </div>

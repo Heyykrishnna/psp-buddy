@@ -61,11 +61,16 @@ export class AuthService {
       });
     }
 
+    const fullUser = await db.user.findUnique({
+      where: { id: user.id },
+      include: { student: true, teacher: true },
+    });
+
     const tokens = await this.generateTokens(user.id, user.email, assignedRole);
     await this.createSession(user.id, tokens.refreshToken);
 
     return {
-      user: this.formatUserProfile(user),
+      user: this.formatUserProfile(fullUser!),
       tokens,
     };
   }
@@ -73,6 +78,7 @@ export class AuthService {
   async login(input: LoginInput) {
     const user = await db.user.findUnique({
       where: { email: input.email },
+      include: { student: true, teacher: true },
     });
 
     if (!user || !user.passwordHash) {
@@ -193,11 +199,16 @@ export class AuthService {
       });
     }
 
+    const fullUser = await db.user.findUnique({
+      where: { id: user.id },
+      include: { student: true, teacher: true },
+    });
+
     const tokens = await this.generateTokens(user.id, user.email, user.role);
     await this.createSession(user.id, tokens.refreshToken);
 
     return {
-      user: this.formatUserProfile(user),
+      user: this.formatUserProfile(fullUser!),
       tokens,
     };
   }
@@ -245,25 +256,54 @@ export class AuthService {
       });
     }
 
-    if (user.role === RoleName.STUDENT && user.student) {
-      await db.student.update({
-        where: { id: user.student.id },
-        data: {
-          gradeLevel: input.gradeLevel || user.student.gradeLevel,
-          studentRegistrationNo: input.studentRegistrationNo || user.student.studentRegistrationNo,
-        },
-      });
-    } else if (user.role === RoleName.TEACHER && user.teacher) {
-      await db.teacher.update({
-        where: { id: user.teacher.id },
-        data: {
-          department: input.department || user.teacher.department,
-          employeeId: input.employeeId || user.teacher.employeeId,
-        },
-      });
+    if (user.role === RoleName.STUDENT) {
+      const regNo = input.studentRegistrationNo?.trim() || user.student?.studentRegistrationNo || `STU-${Date.now().toString().slice(-6)}`;
+      const grade = input.gradeLevel || user.student?.gradeLevel || '1st Sem';
+
+      if (user.student) {
+        await db.student.update({
+          where: { id: user.student.id },
+          data: {
+            gradeLevel: grade,
+            studentRegistrationNo: regNo,
+          },
+        });
+      } else {
+        await db.student.create({
+          data: {
+            userId: user.id,
+            studentRegistrationNo: regNo,
+            gradeLevel: grade,
+          },
+        });
+      }
+    } else if (user.role === RoleName.TEACHER) {
+      const empId = input.employeeId?.trim() || user.teacher?.employeeId || `EMP-${Date.now().toString().slice(-6)}`;
+      const dept = input.department || user.teacher?.department || 'Computer Science';
+
+      if (user.teacher) {
+        await db.teacher.update({
+          where: { id: user.teacher.id },
+          data: {
+            department: dept,
+            employeeId: empId,
+          },
+        });
+      } else {
+        await db.teacher.create({
+          data: {
+            userId: user.id,
+            employeeId: empId,
+            department: dept,
+          },
+        });
+      }
     }
 
-    const updatedUser = await db.user.findUnique({ where: { id: userId } });
+    const updatedUser = await db.user.findUnique({
+      where: { id: userId },
+      include: { student: true, teacher: true },
+    });
     return this.formatUserProfile(updatedUser!);
   }
 
@@ -353,6 +393,10 @@ export class AuthService {
       isActive: user.isActive,
       isEmailVerified: user.isEmailVerified,
       isOnboarded: user.isOnboarded,
+      studentRegistrationNo: user.student?.studentRegistrationNo || null,
+      gradeLevel: user.student?.gradeLevel || null,
+      employeeId: user.teacher?.employeeId || null,
+      department: user.teacher?.department || null,
       createdAt: user.createdAt.toISOString(),
     };
   }

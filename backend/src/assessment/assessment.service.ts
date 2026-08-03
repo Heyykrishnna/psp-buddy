@@ -43,7 +43,7 @@ export interface AutosaveAnswerDto {
 
 @Injectable()
 export class AssessmentService {
-  constructor(private syncGateway: SyncGateway) {}
+  constructor(private syncGateway: SyncGateway) { }
 
   // 1. Create Assessment with Questions & Config
   async createAssessment(dto: CreateAssessmentDto) {
@@ -51,7 +51,7 @@ export class AssessmentService {
       data: {
         title: dto.title,
         description: dto.description,
-        className: dto.className || 'Class 10-A',
+        className: dto.className || '1st Sem',
         topic: dto.topic || 'General',
         assessmentType: dto.assessmentType || 'QUIZ',
         totalMarks: dto.totalMarks || 100,
@@ -63,28 +63,28 @@ export class AssessmentService {
         isPublished: false,
         questions: dto.questions
           ? {
-              create: dto.questions.map((q) => ({
-                questionText: q.questionText,
-                questionType: q.questionType,
-                difficulty: q.difficulty || 'MEDIUM',
-                topic: q.topic || dto.topic || 'General',
-                points: q.points || 1,
-                negativeMarks: q.negativeMarks || (dto.hasNegativeMarking ? dto.negativeMarkValue || 0.25 : 0),
-                orderIndex: q.orderIndex,
-                explanation: q.explanation,
-                trueFalseAnswer: q.trueFalseAnswer,
-                shortAnswerKeywords: q.shortAnswerKeywords || [],
-                options: q.options
-                  ? {
-                      create: q.options.map((opt) => ({
-                        optionText: opt.optionText,
-                        isCorrect: opt.isCorrect,
-                        orderIndex: opt.orderIndex,
-                      })),
-                    }
-                  : undefined,
-              })),
-            }
+            create: dto.questions.map((q) => ({
+              questionText: q.questionText,
+              questionType: q.questionType,
+              difficulty: q.difficulty || 'MEDIUM',
+              topic: q.topic || dto.topic || 'General',
+              points: q.points || 1,
+              negativeMarks: q.negativeMarks || (dto.hasNegativeMarking ? dto.negativeMarkValue || 0.25 : 0),
+              orderIndex: q.orderIndex,
+              explanation: q.explanation,
+              trueFalseAnswer: q.trueFalseAnswer,
+              shortAnswerKeywords: q.shortAnswerKeywords || [],
+              options: q.options
+                ? {
+                  create: q.options.map((opt) => ({
+                    optionText: opt.optionText,
+                    isCorrect: opt.isCorrect,
+                    orderIndex: opt.orderIndex,
+                  })),
+                }
+                : undefined,
+            })),
+          }
           : undefined,
       },
       include: {
@@ -202,7 +202,7 @@ export class AssessmentService {
         data: {
           userId: studentId,
           studentRegistrationNo: `STU-${Date.now().toString().slice(-6)}`,
-          gradeLevel: 'Grade 10',
+          gradeLevel: '1st Sem',
         },
       });
     }

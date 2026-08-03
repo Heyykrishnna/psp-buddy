@@ -35,7 +35,7 @@ export default function DashboardPage() {
       title: "Algorithm Complexity & Data Structures Quiz",
       description:
         "Mid-term evaluation covering Big-O analysis, sorting algorithms, and boolean logic.",
-      className: "Class 10-A",
+      className: "1st Sem",
       topic: "Computer Science",
       assessmentType: "QUIZ" as any,
       totalMarks: 25,

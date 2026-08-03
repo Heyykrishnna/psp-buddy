@@ -18,7 +18,7 @@ export function OnboardingScreen() {
   const isAdmin = user?.role === 'ADMIN';
 
   const [studentRegistrationNo, setStudentRegistrationNo] = useState('');
-  const [gradeLevel, setGradeLevel] = useState('Grade 10');
+  const [gradeLevel, setGradeLevel] = useState('1st Sem');
   const [employeeId, setEmployeeId] = useState('');
   const [department, setDepartment] = useState('Computer Science');
 
@@ -83,7 +83,7 @@ export function OnboardingScreen() {
                   style={styles.input}
                   value={gradeLevel}
                   onChangeText={setGradeLevel}
-                  placeholder="Grade 10"
+                  placeholder="1st Sem"
                   placeholderTextColor="rgba(255,255,255,0.4)"
                 />
               </View>

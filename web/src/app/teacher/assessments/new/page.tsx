@@ -29,7 +29,7 @@ export default function NewAssessmentPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1); // 1: Config, 2: Questions, 3: Preview
 
   // Config State
-  const [className, setClassName] = useState("Class 10-A");
+  const [className, setClassName] = useState("1st Sem");
   const [topic, setTopic] = useState("Computer Science & Logic");
   const [title, setTitle] = useState(
     "Algorithm Complexity & Data Structures Quiz",
@@ -288,14 +288,11 @@ export default function NewAssessmentPage() {
                   onChange={(e) => setClassName(e.target.value)}
                   className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#111111]"
                 >
-                  <option value="Class 10-A">
-                    Class 10-A (Computer Science)
+                  <option value="1st Sem">
+                    1st Sem (Computer Science)
                   </option>
-                  <option value="Class 11-B">
-                    Class 11-B (Advanced Algorithms)
-                  </option>
-                  <option value="Class 12-C">
-                    Class 12-C (Software Systems)
+                  <option value="2nd Sem">
+                    2nd Sem (Advanced Algorithms)
                   </option>
                 </select>
               </div>
