@@ -129,11 +129,16 @@ export function AssessmentScreen({
         asm.id,
         user?.id || "student",
       );
-      if (attempt && (attempt.status === "SUBMITTED" || attempt.status === "EVALUATED")) {
+      if (
+        attempt &&
+        (attempt.status === "SUBMITTED" || attempt.status === "EVALUATED")
+      ) {
         setResultScore(attempt.totalScore || 0);
         setMaxScore(attempt.maxScore || asm.totalMarks || 100);
         setAccuracy(
-          attempt.maxScore > 0 ? Math.round(((attempt.totalScore || 0) / attempt.maxScore) * 100) : 0
+          attempt.maxScore > 0
+            ? Math.round(((attempt.totalScore || 0) / attempt.maxScore) * 100)
+            : 0,
         );
         setMode("RESULT");
         setLoading(false);
@@ -349,7 +354,7 @@ export function AssessmentScreen({
           setAccuracy(
             res.maxScore > 0
               ? Math.round(((res.totalScore || 0) / res.maxScore) * 100)
-              : 0
+              : 0,
           );
         }
       } catch (err) {
@@ -749,7 +754,7 @@ export function AssessmentScreen({
                     />
                     <View style={{ flex: 1, gap: 2 }}>
                       <Text style={styles.previewSuccessText} numberOfLines={1}>
-                         Image Attached
+                        Image Attached
                       </Text>
                       <Text style={styles.previewSubText} numberOfLines={1}>
                         {workbookUrlInput.startsWith("data:")
@@ -1010,7 +1015,7 @@ export function AssessmentScreen({
                     ]}
                   >
                     <Text style={[styles.insightTitle, { color: "#4ade80" }]}>
-                       STRENGTHS
+                      STRENGTHS
                     </Text>
                     {(
                       workbookResult.strengths || [
@@ -1031,7 +1036,7 @@ export function AssessmentScreen({
                     ]}
                   >
                     <Text style={[styles.insightTitle, { color: "#F4C463" }]}>
-                       IMPROVEMENTS
+                      IMPROVEMENTS
                     </Text>
                     {(
                       workbookResult.improvements || [
@@ -1343,7 +1348,7 @@ export function AssessmentScreen({
                             style={styles.previewSuccessText}
                             numberOfLines={1}
                           >
-                             Photo Attached
+                            Photo Attached
                           </Text>
                           <Text style={styles.previewSubText} numberOfLines={1}>
                             {questionWorkbooks[
@@ -1643,8 +1648,6 @@ export function AssessmentScreen({
     </SafeAreaView>
   );
 }
-
-
 
 const styles = StyleSheet.create({
   safeArea: {

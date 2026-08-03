@@ -40,6 +40,7 @@ export class ProblemController {
   @SkipThrottle()
   @Get()
   async getProblems(
+    @Request() req: any,
     @Query('difficulty') difficulty?: DifficultyLevel,
     @Query('topic') topic?: string,
     @Query('search') search?: string,
@@ -50,11 +51,13 @@ export class ProblemController {
     const isBookmarked =
       bookmarked === 'true' ? true : bookmarked === 'false' ? false : undefined;
 
+    const effectiveUserId = userId || req?.user?.sub || req?.user?.id;
+
     return this.problemService.getProblems({
       difficulty,
       topic,
       search,
-      userId,
+      userId: effectiveUserId,
       status,
       bookmarked: isBookmarked,
     });

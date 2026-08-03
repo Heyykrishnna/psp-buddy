@@ -82,21 +82,35 @@ export class ProblemService {
       orderBy: { createdAt: 'desc' },
     });
 
-    if (!query?.userId) {
-      return problems.map((p: any) => ({
-        ...p,
-        userStatus: 'UNATTEMPTED',
-        isBookmarked: false,
-      }));
+    let targetUserId = query?.userId;
+    if (targetUserId) {
+      const u = await db.user.findUnique({ where: { id: targetUserId } });
+      if (!u) {
+        const s = await db.student.findFirst({
+          where: { OR: [{ id: targetUserId }, { userId: targetUserId }] },
+          include: { user: true },
+        });
+        if (s?.user) targetUserId = s.user.id;
+        else if (s) targetUserId = s.userId;
+      }
     }
 
-    const userProgress = await db.userProblemProgress.findMany({
-      where: { userId: query.userId },
-    });
+    if (!targetUserId) {
+      const firstUser = await db.user.findFirst();
+      if (firstUser) targetUserId = firstUser.id;
+    }
 
-    const userBookmarks = await db.problemBookmark.findMany({
-      where: { userId: query.userId },
-    });
+    const userProgress = targetUserId
+      ? await db.userProblemProgress.findMany({
+          where: { userId: targetUserId },
+        })
+      : [];
+
+    const userBookmarks = targetUserId
+      ? await db.problemBookmark.findMany({
+          where: { userId: targetUserId },
+        })
+      : [];
 
     const progressMap = new Map<string, any>();
     userProgress.forEach((pr: any) => progressMap.set(pr.problemId, pr));
