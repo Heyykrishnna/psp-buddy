@@ -156,6 +156,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     department?: string;
     avatarUrl?: string;
   }) => {
+    try {
+      const updatedUser = await apiClientInstance.onboard(data);
+      if (updatedUser) {
+        setUser({
+          ...updatedUser,
+          isOnboarded: true,
+        });
+        return;
+      }
+    } catch (err: any) {
+      console.warn("Backend onboarding request failed, updating local state:", err?.message);
+    }
     if (user) {
       setUser({
         ...user,

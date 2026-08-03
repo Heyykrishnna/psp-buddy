@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { db } from '@/database';
@@ -29,7 +29,10 @@ export class AuthService {
     });
 
     // Send actual email via Nodemailer
-    await this.mailService.sendVerificationEmail(email, code);
+    const sent = await this.mailService.sendVerificationEmail(email, code);
+    if (!sent) {
+      throw new InternalServerErrorException('Failed to send verification code email. Please verify the recipient address and try again.');
+    }
 
     return {
       message: `Confirmation code sent to ${email}`,

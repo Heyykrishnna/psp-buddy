@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -9,36 +9,37 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Platform,
-} from 'react-native';
-import { useAuth } from '../context/AuthContext';
+} from "react-native";
+import { useAuth } from "../context/AuthContext";
 
 export function OnboardingScreen() {
   const { user, onboard } = useAuth();
 
-  const isTeacher = user?.role === 'TEACHER';
-  const isAdmin = user?.role === 'ADMIN';
+  const isTeacher = user?.role === "TEACHER";
+  const isAdmin = user?.role === "ADMIN";
 
-  const [studentRegistrationNo, setStudentRegistrationNo] = useState('');
-  const [gradeLevel, setGradeLevel] = useState('1st Sem');
-  const [employeeId, setEmployeeId] = useState('');
-  const [department, setDepartment] = useState('Computer Science');
+  const [studentRegistrationNo, setStudentRegistrationNo] = useState("");
+  const [gradeLevel, setGradeLevel] = useState("1st Sem");
+  const [employeeId, setEmployeeId] = useState("");
+  const [department, setDepartment] = useState("Computer Science");
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleSubmit = async () => {
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       await onboard({
-        studentRegistrationNo: isTeacher || isAdmin ? undefined : studentRegistrationNo,
+        studentRegistrationNo:
+          isTeacher || isAdmin ? undefined : studentRegistrationNo,
         gradeLevel: isTeacher || isAdmin ? undefined : gradeLevel,
         employeeId: isTeacher || isAdmin ? employeeId : undefined,
         department: isTeacher || isAdmin ? department : undefined,
       });
     } catch (err: any) {
-      setError(err.message || 'Failed to complete onboarding');
+      setError(err.message || "Failed to complete onboarding");
     } finally {
       setLoading(false);
     }
@@ -51,7 +52,8 @@ export function OnboardingScreen() {
           <Text style={styles.badgeText}>STEP 2 OF 2: PROFILE ONBOARDING</Text>
           <Text style={styles.title}>COMPLETE YOUR PROFILE</Text>
           <Text style={styles.subtitle}>
-            Welcome, {user?.firstName}! Set your credentials to access the mobile portal.
+            Welcome, {user?.firstName}! Set your credentials to access the
+            mobile portal.
           </Text>
 
           {error ? (
@@ -60,15 +62,12 @@ export function OnboardingScreen() {
             </View>
           ) : null}
 
-          <View style={styles.infoBox}>
-            <Text style={styles.infoBoxLabel}>ASSIGNED ROLE</Text>
-            <Text style={styles.infoBoxValue}>{String(user?.role || 'STUDENT')}</Text>
-          </View>
-
           {!isTeacher && !isAdmin ? (
             <>
               <View style={styles.fieldGroup}>
-                <Text style={styles.inputLabel}>STUDENT REGISTRATION NUMBER</Text>
+                <Text style={styles.inputLabel}>
+                  STUDENT REGISTRATION NUMBER
+                </Text>
                 <TextInput
                   style={styles.input}
                   value={studentRegistrationNo}
@@ -115,12 +114,18 @@ export function OnboardingScreen() {
             </>
           )}
 
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={loading}>
+          <TouchableOpacity
+            style={styles.submitButton}
+            onPress={handleSubmit}
+            disabled={loading}
+          >
             {loading ? (
               <ActivityIndicator color="#ffffff" />
             ) : (
               <>
-                <Text style={styles.submitButtonText}>ENTER MOBILE DASHBOARD</Text>
+                <Text style={styles.submitButtonText}>
+                  ENTER MOBILE DASHBOARD
+                </Text>
                 <View style={styles.arrowCircle}>
                   <Text style={styles.arrowText}>↗</Text>
                 </View>
@@ -136,117 +141,129 @@ export function OnboardingScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#B8C6B6',
+    backgroundColor: "#B8C6B6",
   },
   scrollContent: {
     padding: 20,
-    justifyContent: 'center',
+    justifyContent: "center",
     flexGrow: 1,
   },
   card: {
-    backgroundColor: '#5451FF',
+    backgroundColor: "#5451FF",
     borderRadius: 32,
     padding: 24,
     gap: 14,
   },
   badgeText: {
-    color: 'rgba(255,255,255,0.8)',
+    color: "rgba(255,255,255,0.8)",
     fontSize: 10,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontWeight: "600",
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     letterSpacing: 1,
   },
   title: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 22,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
+    fontWeight: "600",
+    fontFamily:
+      Platform.OS === "web"
+        ? "'Space Grotesk', sans-serif"
+        : "SpaceGrotesk_600SemiBold",
   },
   subtitle: {
-    color: 'rgba(255,255,255,0.85)',
+    color: "rgba(255,255,255,0.85)",
     fontSize: 12,
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_500Medium',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_500Medium",
     lineHeight: 16,
   },
   errorBox: {
-    backgroundColor: '#FF5745',
+    backgroundColor: "#FF5745",
     padding: 12,
     borderRadius: 14,
   },
   errorText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 12,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontWeight: "600",
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
   infoBox: {
-    backgroundColor: '#3E3BE0',
+    backgroundColor: "#3E3BE0",
     padding: 14,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: "rgba(255,255,255,0.15)",
   },
   infoBoxLabel: {
-    color: 'rgba(255,255,255,0.7)',
+    color: "rgba(255,255,255,0.7)",
     fontSize: 9,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontWeight: "600",
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
   infoBoxValue: {
-    color: '#F4C463',
+    color: "#F4C463",
     fontSize: 16,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontWeight: "600",
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     marginTop: 2,
   },
   fieldGroup: {
     gap: 4,
   },
   inputLabel: {
-    color: 'rgba(255,255,255,0.9)',
+    color: "rgba(255,255,255,0.9)",
     fontSize: 10,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontWeight: "600",
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
   input: {
-    backgroundColor: '#3E3BE0',
-    color: '#ffffff',
+    backgroundColor: "#3E3BE0",
+    color: "#ffffff",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 16,
     fontSize: 13,
-    fontWeight: '500',
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_500Medium',
+    fontWeight: "500",
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_500Medium",
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: "rgba(255,255,255,0.15)",
   },
   submitButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#121316',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#121316",
     paddingVertical: 14,
     paddingHorizontal: 18,
     borderRadius: 24,
     marginTop: 10,
   },
   submitButtonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 11,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontWeight: "600",
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
   arrowCircle: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#FF5745',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#FF5745",
+    alignItems: "center",
+    justifyContent: "center",
   },
   arrowText: {
-    color: '#ffffff',
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    color: "#ffffff",
+    fontWeight: "600",
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
 });

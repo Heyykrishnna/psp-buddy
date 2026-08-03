@@ -93,6 +93,17 @@ export class PSPBuddyApiClient {
     return res.data;
   }
 
+  async onboard(data: {
+    gradeLevel?: string;
+    studentRegistrationNo?: string;
+    employeeId?: string;
+    department?: string;
+    avatarUrl?: string;
+  }): Promise<UserProfile> {
+    const res = await this.http.post<UserProfile>('/auth/onboarding', data);
+    return res.data;
+  }
+
   // ASSESSMENTS API
   async getAssessments(): Promise<AssessmentDTO[]> {
     const res = await this.http.get<AssessmentDTO[]>('/assessments');

@@ -9,19 +9,27 @@ export class MailService {
   constructor() {
     const host = process.env.SMTP_HOST || 'smtp.gmail.com';
     const port = parseInt(process.env.SMTP_PORT || '587', 10);
-    const secure = process.env.SMTP_SECURE === 'true';
     const user = process.env.SMTP_USER || 'khandelwalyatharth39@gmail.com';
     const rawPass = process.env.SMTP_PASS || 'xvpx ykrc acys khqa';
     const pass = rawPass.replace(/\s+/g, '');
 
     if (user && pass) {
-      this.transporter = nodemailer.createTransport({
-        host,
-        port,
-        secure,
-        auth: { user, pass },
-      });
-      this.logger.log(`Nodemailer transport initialized for ${host}:${port} (${user})`);
+      if (host.includes('gmail')) {
+        this.transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: { user, pass },
+          tls: { rejectUnauthorized: false },
+        });
+      } else {
+        this.transporter = nodemailer.createTransport({
+          host,
+          port,
+          secure: port === 465,
+          auth: { user, pass },
+          tls: { rejectUnauthorized: false },
+        });
+      }
+      this.logger.log(`Nodemailer Gmail SMTP transport initialized for ${user}`);
     } else {
       this.transporter = nodemailer.createTransport({
         host: 'smtp.ethereal.email',
@@ -37,7 +45,8 @@ export class MailService {
 
   async sendVerificationEmail(toEmail: string, code: string): Promise<boolean> {
     const fromName = process.env.SMTP_FROM_NAME || 'Dradix';
-    const from = process.env.SMTP_FROM || `"${fromName}" <support@dradix.dev>`;
+    const smtpUser = process.env.SMTP_USER || 'khandelwalyatharth39@gmail.com';
+    const from = process.env.SMTP_FROM;
     const subject = `Your Verification Code: ${code}`;
     const html = `
 <!DOCTYPE html>
@@ -56,7 +65,7 @@ export class MailService {
 </head>
 <body>
   <div class="card">
-    <div class="brand">${fromName}</div>
+    <div class="brand">PSP Lumora</div>
     <div class="title">Verification Code</div>
     <div class="text">Use the 6-digit confirmation code below to verify your email address and complete your registration:</div>
     <div class="code-box">${code}</div>
@@ -68,13 +77,13 @@ export class MailService {
     `;
 
     try {
-      await this.transporter.sendMail({
+      const info = await this.transporter.sendMail({
         from,
         to: toEmail,
         subject,
         html,
       });
-      this.logger.log(`✉️ Nodemailer successfully sent confirmation email to ${toEmail}`);
+      this.logger.log(`✉️ Nodemailer successfully sent verification email to ${toEmail} (MessageId: ${info.messageId})`);
       return true;
     } catch (err: any) {
       this.logger.error(`Failed to send email to ${toEmail}: ${err.message}`, err.stack);
