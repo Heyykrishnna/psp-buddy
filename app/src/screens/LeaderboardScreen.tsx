@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Ionicons, Feather, FontAwesome5 } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
+import { SlidingSegmentedControl } from "../components/SlidingSegmentedControl";
 import { LeaderboardEntryDTO } from "../types";
 
 interface LeaderboardScreenProps {
@@ -145,25 +146,11 @@ export function LeaderboardScreen({
         showsVerticalScrollIndicator={false}
       >
         {/* Timeframe Filter Tabs */}
-        <View style={styles.tabsContainer}>
-          {(["WEEKLY", "MONTHLY", "ALL_TIME"] as const).map((t) => (
-            <TouchableOpacity
-              key={t}
-              style={[styles.tabBtn, timeframe === t && styles.activeTabBtn]}
-              onPress={() => setTimeframe(t)}
-              activeOpacity={0.8}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  timeframe === t && styles.activeTabText,
-                ]}
-              >
-                {t.replace("_", " ")}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <SlidingSegmentedControl
+          options={["WEEKLY", "MONTHLY", "ALL_TIME"] as const}
+          selectedOption={timeframe}
+          onSelect={(val) => setTimeframe(val as "WEEKLY" | "MONTHLY" | "ALL_TIME")}
+        />
 
         {/* Current Student Highlight Banner */}
         <View style={styles.myRankCard}>

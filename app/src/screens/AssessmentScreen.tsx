@@ -14,6 +14,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { AssessmentDTO, QuestionDTO } from "../types";
 import { Ionicons, Feather } from "@expo/vector-icons";
+import { SlidingSegmentedControl } from "../components/SlidingSegmentedControl";
 
 interface AssessmentScreenProps {
   onBackToDashboard: () => void;
@@ -347,32 +348,11 @@ export function AssessmentScreen({
               placeholder="Search by quiz title or topic..."
               placeholderTextColor="rgba(255,255,255,0.4)"
             />
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.chipRow}
-            >
-              {["ALL", "QUIZ", "EXAM", "PRACTICE"].map((type) => (
-                <TouchableOpacity
-                  key={type}
-                  style={[
-                    styles.chip,
-                    filterType === type && styles.activeChip,
-                  ]}
-                  onPress={() => setFilterType(type)}
-                  activeOpacity={0.8}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      filterType === type && styles.activeChipText,
-                    ]}
-                  >
-                    {type}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <SlidingSegmentedControl
+              options={["ALL", "QUIZ", "EXAM", "PRACTICE"] as const}
+              selectedOption={filterType}
+              onSelect={setFilterType}
+            />
           </View>
 
           {/* Assessments Grid */}
