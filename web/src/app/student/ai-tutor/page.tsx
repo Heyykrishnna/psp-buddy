@@ -286,10 +286,16 @@ export default function AiTutorPage() {
   // Load user profile
   useEffect(() => {
     apiFetch<any>("/auth/me")
-      .then((u) =>
-        setUserName(`${u?.firstName ?? ""} ${u?.lastName ?? ""}`.trim()),
-      )
-      .catch(() => {});
+      .then((res) => {
+        const u = res?.user || res;
+        const fn = u?.firstName || "";
+        const ln = u?.lastName || "";
+        const name = `${fn} ${ln}`.trim() || fn || "Student";
+        setUserName(name);
+      })
+      .catch(() => {
+        setUserName("Student");
+      });
   }, []);
 
   // Load sessions
@@ -552,14 +558,14 @@ export default function AiTutorPage() {
 
         {/* User Footer */}
         <div className="border-t border-zinc-200 p-3 flex items-center gap-2.5 shrink-0">
-          <div className="w-7 h-7 rounded-full bg-zinc-800 flex items-center justify-center shrink-0">
-            <span className="text-white text-[11px] font-semibold">
-              {userName?.[0] ?? "U"}
+          <div className="w-7 h-7 rounded-full bg-zinc-900 flex items-center justify-center shrink-0">
+            <span className="text-white text-[11px] font-bold">
+              {(userName || "Student")[0]?.toUpperCase()}
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[12px] font-medium text-zinc-800 truncate">
-              {userName || "Student"}
+            <p className="text-[12px] font-semibold text-zinc-900 truncate">
+              {userName.split(" ")[0] || userName || "Student"}
             </p>
           </div>
           <button
