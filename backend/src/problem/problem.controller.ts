@@ -5,10 +5,14 @@ import { CreateTestCaseDto } from './dto/create-test-case.dto';
 import { SubmitProblemDto } from './dto/submit-problem.dto';
 import { DifficultyLevel } from '@/types';
 import { JwtAuthGuard } from '@/auth/jwt-auth.guard';
+import { ExecutionQueueService } from '@/queue/execution-queue.service';
 
 @Controller('problems')
 export class ProblemController {
-  constructor(private readonly problemService: ProblemService) {}
+  constructor(
+    private readonly problemService: ProblemService,
+    private readonly queueService: ExecutionQueueService,
+  ) {}
 
   // 1. POST /problems - Create Problem
   @Post()
@@ -147,7 +151,7 @@ export class ProblemController {
     return this.problemService.toggleBookmark(problemId, userId);
   }
 
-  // 15. POST /problems/:id/run - Step 15 Backend Execution API (Browser -> Backend API -> JudgeProvider -> Judge0)
+  // 15. POST /problems/:id/run - Backend Execution API routed via Queue
   @Post(':id/run')
   async runCode(
     @Param('id') problemId: string,
@@ -157,5 +161,11 @@ export class ProblemController {
       throw new BadRequestException('sourceCode is required.');
     }
     return this.problemService.runProblemCode(problemId, body.sourceCode, body.language);
+  }
+
+  // 16. GET /problems/queue/stats - Phase 17 BullMQ queue health stats
+  @Get('queue/stats')
+  async getQueueStats() {
+    return this.queueService.getQueueStats();
   }
 }

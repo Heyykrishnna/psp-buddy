@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { ProblemController } from './problem.controller';
 import { ProblemService } from './problem.service';
 import { AiModule } from '@/ai/ai.module';
-import { JudgeModule } from '@/judge/judge.module';
+import { QueueModule } from '@/queue/queue.module';
 
 @Module({
-  imports: [AiModule, JudgeModule],
+  imports: [AiModule, QueueModule],
   controllers: [ProblemController],
   providers: [ProblemService],
   exports: [ProblemService],

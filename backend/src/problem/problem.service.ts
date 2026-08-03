@@ -5,13 +5,13 @@ import { CreateTestCaseDto } from './dto/create-test-case.dto';
 import { SubmitProblemDto } from './dto/submit-problem.dto';
 import { DifficultyLevel, SubmissionStatus, ProblemProgressStatus } from '@/types';
 import { AiService } from '@/ai/ai.service';
-import { JudgeProvider } from '@/judge/provider';
+import { ExecutionQueueService } from '@/queue/execution-queue.service';
 
 @Injectable()
 export class ProblemService {
   constructor(
     private readonly aiService: AiService,
-    private readonly judgeProvider: JudgeProvider,
+    private readonly queueService: ExecutionQueueService,
   ) {}
 
   async createProblem(dto: CreateProblemDto) {
@@ -252,7 +252,7 @@ export class ProblemService {
     return { success: true, message: 'Test case deleted successfully.' };
   }
 
-  // ── Step 15: Run Code API (Backend -> JudgeProvider abstraction) ─────────────
+  // ── Step 15 + Phase 17: Run Code (via Queue abstraction) ────────────────────
 
   async runProblemCode(problemId: string, sourceCode: string, language: string = 'python') {
     let problem = await db.problem.findUnique({
@@ -271,21 +271,25 @@ export class ProblemService {
 
     const publicTestCases = problem.testCases || [];
 
-    const executionResult = await this.judgeProvider.execute({
-      sourceCode,
-      language,
-      testCases: publicTestCases.map((tc: any) => ({
-        id: tc.id,
-        input: tc.input,
-        expectedOutput: tc.expectedOutput,
-        isHidden: false,
-      })),
-      functionName: problem.functionName,
-      timeLimitMs: problem.timeLimitMs,
-      memoryLimitMb: problem.memoryLimitMb,
+    const jobResult = await this.queueService.enqueue({
+      jobId: `run-${problem.id}-${Date.now()}`,
+      problemId: problem.id,
+      request: {
+        sourceCode,
+        language,
+        testCases: publicTestCases.map((tc: any) => ({
+          id: tc.id,
+          input: tc.input,
+          expectedOutput: tc.expectedOutput,
+          isHidden: false,
+        })),
+        functionName: problem.functionName,
+        timeLimitMs: problem.timeLimitMs,
+        memoryLimitMb: problem.memoryLimitMb,
+      },
     });
 
-    return executionResult;
+    return jobResult.result;
   }
 
   // ── Submissions & Progress Tracking Engine ─────────────────────────────────
@@ -311,20 +315,27 @@ export class ProblemService {
 
     const testCases = problem.testCases || [];
 
-    // Evaluate all test cases via JudgeProvider abstraction
-    const judgeResult = await this.judgeProvider.execute({
-      sourceCode: dto.sourceCode,
-      language: dto.language || 'python',
-      testCases: testCases.map((tc: any) => ({
-        id: tc.id,
-        input: tc.input,
-        expectedOutput: tc.expectedOutput,
-        isHidden: tc.isHidden,
-      })),
-      functionName: problem.functionName,
-      timeLimitMs: problem.timeLimitMs,
-      memoryLimitMb: problem.memoryLimitMb,
+    // Phase 17: Evaluate via queue abstraction (BullMQ + workers when Redis available, direct otherwise)
+    const jobResult = await this.queueService.enqueue({
+      jobId: `submit-${problem.id}-${userId}-${Date.now()}`,
+      problemId: problem.id,
+      userId,
+      request: {
+        sourceCode: dto.sourceCode,
+        language: dto.language || 'python',
+        testCases: testCases.map((tc: any) => ({
+          id: tc.id,
+          input: tc.input,
+          expectedOutput: tc.expectedOutput,
+          isHidden: tc.isHidden,
+        })),
+        functionName: problem.functionName,
+        timeLimitMs: problem.timeLimitMs,
+        memoryLimitMb: problem.memoryLimitMb,
+      },
     });
+
+    const judgeResult = jobResult.result!;
 
     const passedTests = judgeResult.totalPassed;
     const totalTests = judgeResult.totalTests || 1;

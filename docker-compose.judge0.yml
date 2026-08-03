@@ -1,40 +1,44 @@
 version: "3.8"
 
+# PSP Lumora: Self-Hosted Judge0 + Redis/BullMQ Queue Stack
+# Run: docker compose -f docker-compose.judge0.yml up -d
+
 services:
-  server:
+  # ── Self-Hosted Judge0 API (Free, GPL-3.0) ────────────────────────────────
+  judge0-server:
     image: judge0/judge0:1.13.1
     ports:
       - "2358:2358"
     privileged: true
     environment:
       - JUDGE0_KEY=
-      - REDIS_HOST=db-redis
-      - POSTGRES_HOST=db-postgres
+      - REDIS_HOST=judge0-redis
+      - POSTGRES_HOST=judge0-postgres
       - POSTGRES_USER=judge0
       - POSTGRES_PASSWORD=judge0
       - POSTGRES_DB=judge0
     depends_on:
-      - db-postgres
-      - db-redis
+      - judge0-postgres
+      - judge0-redis
     restart: always
 
-  workers:
+  judge0-workers:
     image: judge0/judge0:1.13.1
     command: ["./scripts/workers"]
     privileged: true
     environment:
       - JUDGE0_KEY=
-      - REDIS_HOST=db-redis
-      - POSTGRES_HOST=db-postgres
+      - REDIS_HOST=judge0-redis
+      - POSTGRES_HOST=judge0-postgres
       - POSTGRES_USER=judge0
       - POSTGRES_PASSWORD=judge0
       - POSTGRES_DB=judge0
     depends_on:
-      - db-postgres
-      - db-redis
+      - judge0-postgres
+      - judge0-redis
     restart: always
 
-  db-postgres:
+  judge0-postgres:
     image: postgres:13.0
     environment:
       - POSTGRES_USER=judge0
@@ -42,6 +46,16 @@ services:
       - POSTGRES_DB=judge0
     restart: always
 
-  db-redis:
+  judge0-redis:
     image: redis:6.0
     restart: always
+
+  # ── PSP Backend Queue Redis (for BullMQ Phase 17) ─────────────────────────
+  # This is a separate Redis instance for BullMQ job queueing.
+  # Set REDIS_URL=redis://localhost:6380 in backend/.env to enable queue mode.
+  psp-queue-redis:
+    image: redis:7.2-alpine
+    ports:
+      - "6380:6379"
+    restart: always
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
