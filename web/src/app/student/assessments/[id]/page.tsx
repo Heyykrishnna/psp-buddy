@@ -28,7 +28,10 @@ import {
   Target,
   HelpCircle,
   AlertTriangle,
-  ChevronDown,
+  Bot,
+  Sliders,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 // Dynamically import Monaco Editor to prevent SSR issues
@@ -82,10 +85,21 @@ export default function StudentAssessmentRunnerPage({
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [showSubmitModal, setShowSubmitModal] = useState<boolean>(false);
 
-  // Left Panel & Console Tabs UI State
+  // Left Panel & Resizer State
   const [activeLeftTab, setActiveLeftTab] = useState<
-    "question" | "ai" | "hints"
+    "question" | "ai" | "hints" | "settings"
   >("question");
+  const [leftWidthPercent, setLeftWidthPercent] = useState<number>(42);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [isLeftCollapsed, setIsLeftCollapsed] = useState<boolean>(false);
+
+  // IDE Settings
+  const [editorFontSize, setEditorFontSize] = useState<number>(14);
+  const [editorTheme, setEditorTheme] = useState<"vs-dark" | "light">(
+    "vs-dark",
+  );
+
+  // Console Tabs State
   const [activeConsoleTab, setActiveConsoleTab] = useState<
     "input" | "output" | "error" | "tests"
   >("output");
@@ -96,6 +110,53 @@ export default function StudentAssessmentRunnerPage({
   const [evalOutput, setEvalOutput] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [evalResults, setEvalResults] = useState<any[] | null>(null);
+
+  // AI Tutor Chat state inside Left Panel
+  const [aiPrompt, setAiPrompt] = useState<string>("");
+  const [aiLoading, setAiLoading] = useState<boolean>(false);
+  const [aiChatHistory, setAiChatHistory] = useState<
+    Array<{ sender: "user" | "ai"; message: string }>
+  >([
+    {
+      sender: "ai",
+      message:
+        "Hello! I am your AI Assessment Tutor. Ask me any question about algorithm logic or debugging guidance!",
+    },
+  ]);
+
+  // Hints State
+  const [unlockedHints, setUnlockedHints] = useState<Record<number, boolean>>(
+    {},
+  );
+
+  // Resizer Dragging Handler
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      const newPercent = (e.clientX / window.innerWidth) * 100;
+      if (newPercent >= 20 && newPercent <= 70) {
+        setLeftWidthPercent(newPercent);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging]);
 
   // Load Assessment details on mount
   useEffect(() => {
@@ -263,8 +324,49 @@ export default function StudentAssessmentRunnerPage({
       } else {
         router.push(`/student/assessments`);
       }
+    } catch (err) {
+      console.error("Failed to submit assessment:", err);
+      router.push(`/student/assessments`);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // Send AI Message in Assessment Runner
+  const handleSendAiMessage = async (textToSend?: string) => {
+    const currentQ = questions[currentIdx];
+    const query = textToSend || aiPrompt;
+    if (!query.trim()) return;
+
+    setAiChatHistory((prev) => [...prev, { sender: "user", message: query }]);
+    if (!textToSend) setAiPrompt("");
+    setAiLoading(true);
+
+    try {
+      const res = await apiFetch<any>("/ai/chat", {
+        method: "POST",
+        body: JSON.stringify({
+          message: `Assessment Question: ${currentQ?.questionText}\nStudent Answer/Code: ${codingSolutions[currentQ?.id] || "None"}\nQuestion: ${query}`,
+          history: [],
+        }),
+      });
+
+      const reply =
+        res?.reply ||
+        res?.message ||
+        "Think about breaking down the problem into smaller sub-problems. Verify loop indices and base conditions!";
+      setAiChatHistory((prev) => [...prev, { sender: "ai", message: reply }]);
+    } catch {
+      setAiChatHistory((prev) => [
+        ...prev,
+        {
+          sender: "ai",
+          message:
+            "Key Hint: Pay close attention to edge cases like empty arrays or target parameters. Using an efficient lookup table helps optimize performance.",
+        },
+      ]);
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -380,12 +482,12 @@ export default function StudentAssessmentRunnerPage({
         </div>
       )}
 
-      {/* ── RUNNER MODE IDE WORKSPACE (Matching Image 2) ────────────────────────── */}
+      {/* ── RUNNER MODE IDE WORKSPACE (Image 2 style with Resizer Slider) ─────── */}
       {mode === "RUNNER" && currentQ && (
         <>
-          {/* Top Navbar Header (Image 2 style) */}
+          {/* Top Navbar Header */}
           <header className="h-14 bg-white border-b border-zinc-200 px-4 flex items-center justify-between shrink-0 z-30 shadow-2xs">
-            {/* Left: Back + Title + Question Pill Selector */}
+            {/* Left: Back + Title + Question Pills */}
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowSubmitModal(true)}
@@ -424,9 +526,8 @@ export default function StudentAssessmentRunnerPage({
               </div>
             </div>
 
-            {/* Right: Timer + XP + Actions */}
+            {/* Right: Timer + XP + Action Buttons */}
             <div className="flex items-center gap-3">
-              {/* Countdown Timer */}
               <div
                 className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-mono text-xs font-bold border transition-all ${
                   timeLeftSeconds < 120
@@ -438,7 +539,6 @@ export default function StudentAssessmentRunnerPage({
                 <span>{formatTime(timeLeftSeconds)}</span>
               </div>
 
-              {/* XP Badge */}
               <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-xs font-bold text-amber-900 font-mono">
                 <span className="text-zinc-500 text-[11px] font-sans font-semibold">
                   Total XP
@@ -454,7 +554,6 @@ export default function StudentAssessmentRunnerPage({
                 <Bookmark className="w-4 h-4" />
               </button>
 
-              {/* Run Button (for Coding questions) */}
               {currentQ.questionType === "CODING" && (
                 <button
                   onClick={() => handleRunCode(currentQ)}
@@ -466,7 +565,6 @@ export default function StudentAssessmentRunnerPage({
                 </button>
               )}
 
-              {/* Submit Button */}
               <button
                 onClick={() => setShowSubmitModal(true)}
                 className="flex items-center gap-1.5 px-4 py-1.5 bg-[#0066FF] hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer"
@@ -477,17 +575,20 @@ export default function StudentAssessmentRunnerPage({
             </div>
           </header>
 
-          {/* ── MAIN 2-PANEL WORKSPACE SPLIT (Image 2 style) ────────────────────── */}
-          <div className="flex-1 flex overflow-hidden">
+          {/* ── MAIN WORKSPACE SPLIT WITH DRAGGABLE RESIZER SLIDER ────────────────── */}
+          <div className="flex-1 flex overflow-hidden relative">
             {/* Far Left Navigation Icon Rail */}
-            <aside className="w-12 bg-white border-r border-zinc-200 flex flex-col items-center justify-between py-3 shrink-0">
+            <aside className="w-12 bg-white border-r border-zinc-200 flex flex-col items-center justify-between py-3 shrink-0 z-10">
               <div className="flex flex-col items-center gap-4">
                 <button
-                  onClick={() => setActiveLeftTab("question")}
-                  title="Question Details"
+                  onClick={() => {
+                    setActiveLeftTab("question");
+                    setIsLeftCollapsed(false);
+                  }}
+                  title="Question Statement"
                   className={`p-2 rounded-lg transition-colors cursor-pointer ${
-                    activeLeftTab === "question"
-                      ? "text-zinc-900 bg-zinc-100"
+                    activeLeftTab === "question" && !isLeftCollapsed
+                      ? "text-zinc-900 bg-zinc-100 font-bold"
                       : "text-zinc-400 hover:text-zinc-800 hover:bg-zinc-50"
                   }`}
                 >
@@ -495,11 +596,14 @@ export default function StudentAssessmentRunnerPage({
                 </button>
 
                 <button
-                  onClick={() => setActiveLeftTab("ai")}
-                  title="AI Tutor & Hints"
+                  onClick={() => {
+                    setActiveLeftTab("ai");
+                    setIsLeftCollapsed(false);
+                  }}
+                  title="AI Tutor Assistant"
                   className={`p-2 rounded-lg transition-colors cursor-pointer ${
-                    activeLeftTab === "ai"
-                      ? "text-zinc-900 bg-zinc-100"
+                    activeLeftTab === "ai" && !isLeftCollapsed
+                      ? "text-[#0066FF] bg-blue-50 font-bold"
                       : "text-zinc-400 hover:text-zinc-800 hover:bg-zinc-50"
                   }`}
                 >
@@ -507,11 +611,14 @@ export default function StudentAssessmentRunnerPage({
                 </button>
 
                 <button
-                  onClick={() => setActiveLeftTab("hints")}
-                  title="Question Hints"
+                  onClick={() => {
+                    setActiveLeftTab("hints");
+                    setIsLeftCollapsed(false);
+                  }}
+                  title="Hints & Guidance"
                   className={`p-2 rounded-lg transition-colors cursor-pointer ${
-                    activeLeftTab === "hints"
-                      ? "text-zinc-900 bg-zinc-100"
+                    activeLeftTab === "hints" && !isLeftCollapsed
+                      ? "text-amber-600 bg-amber-50 font-bold"
                       : "text-zinc-400 hover:text-zinc-800 hover:bg-zinc-50"
                   }`}
                 >
@@ -520,26 +627,63 @@ export default function StudentAssessmentRunnerPage({
               </div>
 
               <button
-                title="Settings"
-                className="p-2 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg cursor-pointer"
+                onClick={() => {
+                  setActiveLeftTab("settings");
+                  setIsLeftCollapsed(false);
+                }}
+                title="IDE Settings"
+                className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                  activeLeftTab === "settings" && !isLeftCollapsed
+                    ? "text-zinc-900 bg-zinc-100 font-bold"
+                    : "text-zinc-400 hover:text-zinc-800 hover:bg-zinc-50"
+                }`}
               >
                 <Settings className="w-4 h-4" />
               </button>
             </aside>
 
-            {/* ── LEFT PANEL: QUESTION / PROBLEM STATEMENT ────────────────────── */}
-            <section className="w-5/12 bg-white border-r border-zinc-200 flex flex-col overflow-hidden">
+            {/* ── LEFT PANEL: CLICKABLE & SWITCHABLE TABS ────────────────────── */}
+            <section
+              style={{
+                width: isLeftCollapsed ? "0px" : `${leftWidthPercent}%`,
+              }}
+              className="bg-white border-r border-zinc-200 flex flex-col overflow-hidden transition-[width] duration-75 shrink-0"
+            >
               {/* Header Bar */}
               <div className="h-10 border-b border-zinc-200 px-4 flex items-center justify-between bg-zinc-50/60 shrink-0">
                 <div className="flex items-center gap-2 text-[11px] font-mono font-bold uppercase text-zinc-500 tracking-wider">
-                  <FileText className="w-3.5 h-3.5 text-blue-600" />
-                  <span>
-                    QUESTION {currentIdx + 1} OF {questions.length}
-                  </span>
+                  {activeLeftTab === "question" && (
+                    <>
+                      <FileText className="w-3.5 h-3.5 text-blue-600" />
+                      <span>
+                        QUESTION {currentIdx + 1} OF {questions.length}
+                      </span>
+                    </>
+                  )}
+                  {activeLeftTab === "ai" && (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                      <span>AI TUTOR ASSISTANT</span>
+                    </>
+                  )}
+                  {activeLeftTab === "hints" && (
+                    <>
+                      <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                      <span>HINTS & APPROACH</span>
+                    </>
+                  )}
+                  {activeLeftTab === "settings" && (
+                    <>
+                      <Sliders className="w-3.5 h-3.5 text-zinc-700" />
+                      <span>IDE PREFERENCES</span>
+                    </>
+                  )}
                 </div>
+
                 <div className="flex items-center gap-2 text-zinc-400">
                   <button
-                    title="Minimize"
+                    onClick={() => setIsLeftCollapsed(!isLeftCollapsed)}
+                    title="Collapse Sidebar"
                     className="hover:text-zinc-700 cursor-pointer"
                   >
                     <Minimize2 className="w-3.5 h-3.5" />
@@ -547,177 +691,357 @@ export default function StudentAssessmentRunnerPage({
                 </div>
               </div>
 
-              {/* Scrollable Question Content */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6 text-zinc-800 text-xs leading-relaxed font-sans">
-                {/* Title */}
-                <div>
-                  <h2 className="text-lg font-bold text-zinc-900">
-                    {currentQ.questionText}
-                  </h2>
-                </div>
+              {/* TAB CONTENT 1: QUESTION STATEMENT */}
+              {activeLeftTab === "question" && (
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 text-zinc-800 text-xs leading-relaxed font-sans">
+                  <div>
+                    <h2 className="text-lg font-bold text-zinc-900">
+                      {currentQ.questionText}
+                    </h2>
+                  </div>
 
-                {/* Badges Row */}
-                <div className="flex items-center gap-2 font-mono text-[11px]">
-                  {currentQ.difficulty && (
-                    <span
-                      className={`px-2.5 py-0.5 font-bold rounded-full ${
-                        currentQ.difficulty === "EASY"
-                          ? "bg-emerald-100 text-emerald-900"
-                          : currentQ.difficulty === "MEDIUM"
-                            ? "bg-amber-100 text-amber-900"
-                            : "bg-red-100 text-red-900"
-                      }`}
-                    >
-                      {currentQ.difficulty}
+                  <div className="flex items-center gap-2 font-mono text-[11px]">
+                    {currentQ.difficulty && (
+                      <span
+                        className={`px-2.5 py-0.5 font-bold rounded-full ${
+                          currentQ.difficulty === "EASY"
+                            ? "bg-emerald-100 text-emerald-900"
+                            : currentQ.difficulty === "MEDIUM"
+                              ? "bg-amber-100 text-amber-900"
+                              : "bg-red-100 text-red-900"
+                        }`}
+                      >
+                        {currentQ.difficulty}
+                      </span>
+                    )}
+                    <span className="px-2 py-0.5 bg-zinc-100 text-zinc-600 font-semibold rounded">
+                      2x
                     </span>
-                  )}
-                  <span className="px-2 py-0.5 bg-zinc-100 text-zinc-600 font-semibold rounded">
-                    2x
-                  </span>
-                  <span className="px-2.5 py-0.5 bg-zinc-100 text-zinc-800 font-bold rounded">
-                    {currentQ.points} Points
-                  </span>
-                </div>
+                    <span className="px-2.5 py-0.5 bg-zinc-100 text-zinc-800 font-bold rounded">
+                      {currentQ.points} Points
+                    </span>
+                  </div>
 
-                {/* Specs */}
-                <div className="text-[11px] font-mono text-zinc-400">
-                  Time Limit: 2s, Memory Limit: 128000
-                </div>
+                  <div className="text-[11px] font-mono text-zinc-400">
+                    Time Limit: 2s, Memory Limit: 128000
+                  </div>
 
-                {/* User Task */}
-                <div className="space-y-1">
-                  <h3 className="font-bold text-zinc-900 text-xs">
-                    User Task:
-                  </h3>
-                  <p className="text-zinc-600 leading-relaxed font-sans">
-                    Read the question logic carefully and select or write the
-                    appropriate solution to complete the task.
-                  </p>
-                </div>
-
-                {/* NON-CODING OPTIONS IN QUESTION SIDEBAR */}
-                {currentQ.questionType !== "CODING" && (
-                  <div className="pt-2 space-y-3">
+                  <div className="space-y-1">
                     <h3 className="font-bold text-zinc-900 text-xs">
-                      Select Your Answer:
+                      User Task:
                     </h3>
+                    <p className="text-zinc-600 leading-relaxed font-sans">
+                      Read the question logic carefully and select or write the
+                      appropriate solution to complete the task.
+                    </p>
+                  </div>
 
-                    {/* Single / Multiple Choice */}
-                    {(currentQ.questionType === "SINGLE_CHOICE" ||
-                      currentQ.questionType === "MULTIPLE_CHOICE") &&
-                      currentQ.options && (
-                        <div className="space-y-2.5">
-                          {currentQ.options.map(
-                            (opt: OptionDTO, oIdx: number) => {
-                              const isSelected =
-                                selectedAnswers[currentQ.id]?.optionId ===
-                                opt.id;
-                              const letter = String.fromCharCode(65 + oIdx);
+                  {/* NON-CODING OPTIONS */}
+                  {currentQ.questionType !== "CODING" && (
+                    <div className="pt-2 space-y-3">
+                      <h3 className="font-bold text-zinc-900 text-xs">
+                        Select Your Answer:
+                      </h3>
 
-                              return (
-                                <button
-                                  key={opt.id}
-                                  onClick={() =>
-                                    handleAnswerSelect(currentQ.id, {
-                                      optionId: opt.id,
-                                    })
-                                  }
-                                  className={`w-full flex items-center justify-between p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
-                                    isSelected
-                                      ? "bg-zinc-900 text-white border-zinc-900 shadow-sm"
-                                      : "bg-zinc-50 hover:bg-zinc-100 border-zinc-200 text-zinc-800"
-                                  }`}
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <div
-                                      className={`w-6 h-6 rounded-md text-[11px] font-mono font-bold flex items-center justify-center border ${
-                                        isSelected
-                                          ? "bg-white text-zinc-900 border-white"
-                                          : "bg-white text-zinc-600 border-zinc-200"
-                                      }`}
-                                    >
-                                      {letter}
+                      {(currentQ.questionType === "SINGLE_CHOICE" ||
+                        currentQ.questionType === "MULTIPLE_CHOICE") &&
+                        currentQ.options && (
+                          <div className="space-y-2.5">
+                            {currentQ.options.map(
+                              (opt: OptionDTO, oIdx: number) => {
+                                const isSelected =
+                                  selectedAnswers[currentQ.id]?.optionId ===
+                                  opt.id;
+                                const letter = String.fromCharCode(65 + oIdx);
+
+                                return (
+                                  <button
+                                    key={opt.id}
+                                    onClick={() =>
+                                      handleAnswerSelect(currentQ.id, {
+                                        optionId: opt.id,
+                                      })
+                                    }
+                                    className={`w-full flex items-center justify-between p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                                      isSelected
+                                        ? "bg-zinc-900 text-white border-zinc-900 shadow-sm"
+                                        : "bg-zinc-50 hover:bg-zinc-100 border-zinc-200 text-zinc-800"
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <div
+                                        className={`w-6 h-6 rounded-md text-[11px] font-mono font-bold flex items-center justify-center border ${
+                                          isSelected
+                                            ? "bg-white text-zinc-900 border-white"
+                                            : "bg-white text-zinc-600 border-zinc-200"
+                                        }`}
+                                      >
+                                        {letter}
+                                      </div>
+                                      <span className="text-xs font-medium font-sans">
+                                        {opt.optionText || opt.text}
+                                      </span>
                                     </div>
-                                    <span className="text-xs font-medium font-sans">
-                                      {opt.optionText || opt.text}
-                                    </span>
-                                  </div>
-                                  {isSelected && (
-                                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                                  )}
-                                </button>
-                              );
-                            },
-                          )}
+                                    {isSelected && (
+                                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                    )}
+                                  </button>
+                                );
+                              },
+                            )}
+                          </div>
+                        )}
+
+                      {currentQ.questionType === "TRUE_FALSE" && (
+                        <div className="grid grid-cols-2 gap-3">
+                          {[true, false].map((val) => {
+                            const isSelected =
+                              selectedAnswers[currentQ.id]?.booleanAnswer ===
+                              val;
+
+                            return (
+                              <button
+                                key={String(val)}
+                                onClick={() =>
+                                  handleAnswerSelect(currentQ.id, {
+                                    booleanAnswer: val,
+                                  })
+                                }
+                                className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                                  isSelected
+                                    ? "bg-zinc-900 text-white border-zinc-900 shadow-sm"
+                                    : "bg-zinc-50 hover:bg-zinc-100 border-zinc-200 text-zinc-800"
+                                }`}
+                              >
+                                <span className="text-sm font-bold font-mono">
+                                  {val ? "TRUE" : "FALSE"}
+                                </span>
+                                {isSelected && (
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
                       )}
 
-                    {/* True / False */}
-                    {currentQ.questionType === "TRUE_FALSE" && (
-                      <div className="grid grid-cols-2 gap-3">
-                        {[true, false].map((val) => {
-                          const isSelected =
-                            selectedAnswers[currentQ.id]?.booleanAnswer === val;
+                      {(currentQ.questionType === "SHORT_ANSWER" ||
+                        currentQ.questionType === "FILL_IN_BLANKS") && (
+                        <textarea
+                          rows={4}
+                          value={selectedAnswers[currentQ.id]?.textAnswer || ""}
+                          onChange={(e) =>
+                            handleAnswerSelect(currentQ.id, {
+                              textAnswer: e.target.value,
+                            })
+                          }
+                          placeholder="Type your answer text here..."
+                          className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-xl text-xs font-sans text-zinc-900 focus:outline-none focus:bg-white focus:border-blue-600 transition-all"
+                        />
+                      )}
+                    </div>
+                  )}
 
-                          return (
-                            <button
-                              key={String(val)}
-                              onClick={() =>
-                                handleAnswerSelect(currentQ.id, {
-                                  booleanAnswer: val,
-                                })
-                              }
-                              className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                                isSelected
-                                  ? "bg-zinc-900 text-white border-zinc-900 shadow-sm"
-                                  : "bg-zinc-50 hover:bg-zinc-100 border-zinc-200 text-zinc-800"
-                              }`}
-                            >
-                              <span className="text-sm font-bold font-mono">
-                                {val ? "TRUE" : "FALSE"}
-                              </span>
-                              {isSelected && (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                              )}
-                            </button>
-                          );
-                        })}
+                  {currentQ.questionType === "CODING" && (
+                    <div className="space-y-1.5">
+                      <h3 className="font-bold text-zinc-900 text-xs">
+                        Constraints:
+                      </h3>
+                      <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-lg font-mono text-[11px] text-zinc-800 space-y-1">
+                        <div>1 ≤ N ≤ 1000</div>
+                        <div>0 ≤ Element.data ≤ 100</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB CONTENT 2: AI TUTOR CHAT */}
+              {activeLeftTab === "ai" && (
+                <div className="flex-1 flex flex-col overflow-hidden p-4 space-y-4 font-sans text-xs">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={() =>
+                        handleSendAiMessage("How do I approach this question?")
+                      }
+                      className="px-2.5 py-1 bg-zinc-100 hover:bg-zinc-200 rounded-lg text-[11px] font-medium text-zinc-700 cursor-pointer"
+                    >
+                      💡 Approach Hint
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleSendAiMessage(
+                          "Can you explain the problem constraints?",
+                        )
+                      }
+                      className="px-2.5 py-1 bg-zinc-100 hover:bg-zinc-200 rounded-lg text-[11px] font-medium text-zinc-700 cursor-pointer"
+                    >
+                      ⚡ Explain Constraints
+                    </button>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                    {aiChatHistory.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className={`flex flex-col ${
+                          item.sender === "user" ? "items-end" : "items-start"
+                        }`}
+                      >
+                        <div
+                          className={`max-w-[85%] p-3 rounded-xl leading-relaxed ${
+                            item.sender === "user"
+                              ? "bg-[#0066FF] text-white rounded-br-none"
+                              : "bg-zinc-100 text-zinc-900 rounded-bl-none border border-zinc-200"
+                          }`}
+                        >
+                          {item.message}
+                        </div>
+                      </div>
+                    ))}
+                    {aiLoading && (
+                      <div className="flex items-center gap-2 text-zinc-400 font-mono text-[11px]">
+                        <div className="w-3 h-3 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                        AI thinking...
                       </div>
                     )}
-
-                    {/* Short Answer */}
-                    {(currentQ.questionType === "SHORT_ANSWER" ||
-                      currentQ.questionType === "FILL_IN_BLANKS") && (
-                      <textarea
-                        rows={4}
-                        value={selectedAnswers[currentQ.id]?.textAnswer || ""}
-                        onChange={(e) =>
-                          handleAnswerSelect(currentQ.id, {
-                            textAnswer: e.target.value,
-                          })
-                        }
-                        placeholder="Type your answer text here..."
-                        className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-xl text-xs font-sans text-zinc-900 focus:outline-none focus:bg-white focus:border-blue-600 transition-all"
-                      />
-                    )}
                   </div>
-                )}
 
-                {/* Constraints for Coding */}
-                {currentQ.questionType === "CODING" && (
-                  <div className="space-y-1.5">
-                    <h3 className="font-bold text-zinc-900 text-xs">
-                      Constraints:
-                    </h3>
-                    <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-lg font-mono text-[11px] text-zinc-800 space-y-1">
-                      <div>1 ≤ N ≤ 1000</div>
-                      <div>0 ≤ Element.data ≤ 100</div>
+                  <div className="flex items-center gap-2 pt-2 border-t border-zinc-200">
+                    <input
+                      type="text"
+                      value={aiPrompt}
+                      onChange={(e) => setAiPrompt(e.target.value)}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && handleSendAiMessage()
+                      }
+                      placeholder="Ask AI Tutor..."
+                      className="flex-1 px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-xs focus:outline-none focus:bg-white focus:border-purple-600"
+                    />
+                    <button
+                      onClick={() => handleSendAiMessage()}
+                      className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl text-xs cursor-pointer"
+                    >
+                      Send
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB CONTENT 3: HINTS */}
+              {activeLeftTab === "hints" && (
+                <div className="flex-1 overflow-y-auto p-6 space-y-4 font-sans text-xs">
+                  <h3 className="font-bold text-sm text-zinc-900">
+                    Question Hints
+                  </h3>
+                  <p className="text-zinc-500 text-xs">
+                    Review helpful steps to guide your response.
+                  </p>
+
+                  <div className="space-y-3 pt-2">
+                    {[
+                      {
+                        id: 1,
+                        title: "Hint 1: Core Concept",
+                        text: "Identify the primary data structure or logic pattern required for this question.",
+                      },
+                      {
+                        id: 2,
+                        title: "Hint 2: Edge Cases",
+                        text: "Ensure your code/answer accounts for edge boundary limits (e.g. N=1 or negative values).",
+                      },
+                    ].map((hint) => (
+                      <div
+                        key={hint.id}
+                        className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-zinc-900">
+                            {hint.title}
+                          </span>
+                          <button
+                            onClick={() =>
+                              setUnlockedHints((prev) => ({
+                                ...prev,
+                                [hint.id]: !prev[hint.id],
+                              }))
+                            }
+                            className="flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:underline cursor-pointer"
+                          >
+                            {unlockedHints[hint.id] ? (
+                              <EyeOff className="w-3.5 h-3.5" />
+                            ) : (
+                              <Eye className="w-3.5 h-3.5" />
+                            )}
+                            {unlockedHints[hint.id]
+                              ? "Hide Hint"
+                              : "Reveal Hint"}
+                          </button>
+                        </div>
+                        {unlockedHints[hint.id] && (
+                          <p className="text-zinc-700 leading-relaxed pt-1 border-t border-zinc-200">
+                            {hint.text}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB CONTENT 4: IDE SETTINGS */}
+              {activeLeftTab === "settings" && (
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 font-sans text-xs">
+                  <h3 className="font-bold text-sm text-zinc-900">
+                    IDE Preferences
+                  </h3>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3.5 bg-zinc-50 border border-zinc-200 rounded-xl">
+                      <div>
+                        <h4 className="font-semibold text-zinc-900">
+                          Editor Theme
+                        </h4>
+                        <p className="text-[11px] text-zinc-500">
+                          Switch between VS Dark and Light themes
+                        </p>
+                      </div>
+                      <select
+                        value={editorTheme}
+                        onChange={(e: any) => setEditorTheme(e.target.value)}
+                        className="bg-white border border-zinc-300 rounded px-2.5 py-1 text-xs font-mono"
+                      >
+                        <option value="vs-dark">VS Dark</option>
+                        <option value="light">Light</option>
+                      </select>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3.5 bg-zinc-50 border border-zinc-200 rounded-xl">
+                      <div>
+                        <h4 className="font-semibold text-zinc-900">
+                          Font Size
+                        </h4>
+                        <p className="text-[11px] text-zinc-500">
+                          Adjust code font size in Monaco Editor
+                        </p>
+                      </div>
+                      <select
+                        value={editorFontSize}
+                        onChange={(e) =>
+                          setEditorFontSize(Number(e.target.value))
+                        }
+                        className="bg-white border border-zinc-300 rounded px-2.5 py-1 text-xs font-mono"
+                      >
+                        <option value={12}>12px</option>
+                        <option value={14}>14px</option>
+                        <option value={16}>16px</option>
+                      </select>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
-              {/* Previous / Next Question Navigation Footer */}
+              {/* Previous / Next Footer Nav */}
               <div className="h-14 border-t border-zinc-200 px-4 flex items-center justify-between bg-zinc-50/40 shrink-0">
                 <button
                   onClick={() => setCurrentIdx((prev) => Math.max(0, prev - 1))}
@@ -742,6 +1066,17 @@ export default function StudentAssessmentRunnerPage({
                 </button>
               </div>
             </section>
+
+            {/* ── DRAGGABLE RESIZER SLIDER BAR ────────────────────────────────────── */}
+            <div
+              onMouseDown={handleMouseDown}
+              className={`w-2 hover:w-2.5 bg-zinc-200 hover:bg-blue-600 cursor-col-resize flex items-center justify-center transition-all shrink-0 select-none z-20 ${
+                isDragging ? "bg-blue-600 w-2.5" : ""
+              }`}
+              title="Drag left or right to resize panels"
+            >
+              <div className="w-0.5 h-8 bg-zinc-400 rounded-full" />
+            </div>
 
             {/* ── RIGHT PANEL: MONACO EDITOR & CONSOLE ────────────────────────── */}
             <section className="flex-1 flex flex-col overflow-hidden bg-white">
@@ -806,14 +1141,14 @@ export default function StudentAssessmentRunnerPage({
                     handleAnswerSelect(currentQ.id, { textAnswer: val });
                   }}
                   language={codingLanguages[currentQ.id] || "python"}
-                  theme="vs-dark"
+                  theme={editorTheme}
+                  fontSize={editorFontSize}
                   height="100%"
                 />
               </div>
 
               {/* Bottom Console Panel (INPUT / OUTPUT / ERROR / TEST RESULTS) */}
               <div className="h-52 border-t border-zinc-200 flex flex-col bg-white shrink-0">
-                {/* Console Tab Header */}
                 <div className="h-9 border-b border-zinc-200 px-4 flex items-center gap-5 bg-zinc-50/60 text-[11px] font-mono font-bold text-zinc-500 shrink-0">
                   <button
                     onClick={() => setActiveConsoleTab("input")}
@@ -857,9 +1192,7 @@ export default function StudentAssessmentRunnerPage({
                   </button>
                 </div>
 
-                {/* Console Body */}
                 <div className="flex-1 p-4 font-mono text-xs overflow-y-auto bg-zinc-50/40">
-                  {/* Tab 1: Custom Input */}
                   {activeConsoleTab === "input" && (
                     <div className="space-y-2 h-full flex flex-col">
                       <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
@@ -874,7 +1207,6 @@ export default function StudentAssessmentRunnerPage({
                     </div>
                   )}
 
-                  {/* Tab 2: Output */}
                   {activeConsoleTab === "output" && (
                     <div className="space-y-2">
                       {evalOutput ? (
@@ -890,7 +1222,6 @@ export default function StudentAssessmentRunnerPage({
                     </div>
                   )}
 
-                  {/* Tab 3: Error */}
                   {activeConsoleTab === "error" && (
                     <div>
                       {errorMessage ? (
@@ -905,7 +1236,6 @@ export default function StudentAssessmentRunnerPage({
                     </div>
                   )}
 
-                  {/* Tab 4: Test Results */}
                   {activeConsoleTab === "tests" && (
                     <div className="space-y-2">
                       {evalResults && evalResults.length > 0 ? (
