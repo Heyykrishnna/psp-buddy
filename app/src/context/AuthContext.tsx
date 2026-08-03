@@ -9,7 +9,9 @@ interface AuthContextType {
   loading: boolean;
   accessToken: string | null;
   login: (email: string, password: string) => Promise<void>;
-  sendVerificationCode: (email: string) => Promise<{ message: string; verificationCode?: string }>;
+  sendVerificationCode: (
+    email: string,
+  ) => Promise<{ message: string; verificationCode?: string }>;
   register: (
     firstName: string,
     lastName: string,
@@ -35,8 +37,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 let memoryAccessToken: string | null = null;
 let memoryRefreshToken: string | null = null;
 
+function getMobileApiUrl(): string {
+  const envUrl = process.env.EXPO_PUBLIC_API_URL;
+  if (envUrl && !envUrl.includes("localhost")) {
+    return envUrl;
+  }
+  return "http://192.168.1.5:4000";
+}
+
 const apiClientInstance = new PSPBuddyApiClient({
-  baseURL: process.env.EXPO_PUBLIC_API_URL || "http://localhost:4000",
+  baseURL: getMobileApiUrl(),
   getAccessToken: async () => memoryAccessToken,
   getRefreshToken: async () => memoryRefreshToken,
   setTokens: async (tokens) => {
@@ -84,7 +94,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return await apiClientInstance.sendVerificationCode(email);
     } catch (err: any) {
       const backendMessage = err.response?.data?.message || err.message;
-      const msg = Array.isArray(backendMessage) ? backendMessage.join(", ") : backendMessage;
+      const msg = Array.isArray(backendMessage)
+        ? backendMessage.join(", ")
+        : backendMessage;
       throw new Error(msg || "Failed to send verification code.");
     }
   };
@@ -168,7 +180,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
     } catch (err: any) {
-      console.warn("Backend onboarding request failed, updating local state:", err?.message);
+      console.warn(
+        "Backend onboarding request failed, updating local state:",
+        err?.message,
+      );
     }
     if (user) {
       setUser({

@@ -1,25 +1,32 @@
 {
   "expo": {
-    "name": "PSP Buddy",
-    "slug": "psp-buddy-mobile",
+    "name": "PSP Lumora",
+    "slug": "psp-lumora-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "newArchEnabled": false,
     "splash": {
       "resizeMode": "contain",
-      "backgroundColor": "#0f172a"
+      "backgroundColor": "#09090b"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.psplumora.app"
     },
     "android": {
+      "package": "com.psplumora.app",
       "adaptiveIcon": {
-        "backgroundColor": "#0f172a"
+        "backgroundColor": "#09090b"
       }
     },
     "plugins": [
       "expo-status-bar"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "f36b9884-ce35-4e98-9661-e5a3d8480df7"
+      }
+    }
   }
 }
