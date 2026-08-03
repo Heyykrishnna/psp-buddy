@@ -8,6 +8,7 @@ import {
   TextInput,
   SafeAreaView,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 
@@ -15,30 +16,38 @@ interface AiTutorScreenProps {
   onBackToDashboard: () => void;
 }
 
+const QUICK_PROMPTS = [
+  'Explain Two Sum Hash Map',
+  'Master Theorem Complexity',
+  'Array Reversal Algorithm',
+  'How to debug infinite loop',
+];
+
 export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
   const { apiClient: client } = useAuth();
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([
     {
       role: 'assistant',
-      content: 'Hello! I am your AI Tutor. Ask me any question about programming logic, data structures, algorithms, or code debugging!',
+      content:
+        'Hello! I am your AI Tutor. Ask me any question about programming logic, data structures, algorithm complexities, or code debugging!',
     },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
+  const handleSend = async (textToSend?: string) => {
+    const query = textToSend || input.trim();
+    if (!query || loading) return;
 
-    const userMsg = input.trim();
     setInput('');
-    const updatedHistory = [...messages, { role: 'user' as const, content: userMsg }];
+    const updatedHistory = [...messages, { role: 'user' as const, content: query }];
     setMessages(updatedHistory);
     setLoading(true);
 
     try {
       if (client) {
         const res = await client.chatTutor({
-          message: userMsg,
+          message: query,
           conversationHistory: updatedHistory,
         });
 
@@ -52,13 +61,17 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
         ...prev,
         {
           role: 'assistant',
-          content: 'Here is a hint: try using a Hash Map to store seen elements for O(N) time complexity.',
+          content:
+            'Here is a hint: use a Hash Map (dictionary) to store seen element indices. As you iterate, check if `target - current_element` exists in the map for O(N) time complexity.',
         },
       ]);
-    } catch (err: any) {
+    } catch {
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'AI Tutor service unavailable right now. Try again in a moment!' },
+        {
+          role: 'assistant',
+          content: 'AI Tutor service is momentarily offline. Please try sending your prompt again!',
+        },
       ]);
     } finally {
       setLoading(false);
@@ -72,50 +85,81 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
         <TouchableOpacity onPress={onBackToDashboard} style={styles.backBtn}>
           <Text style={styles.backBtnText}>‹ Back</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>AI Tutor Chat</Text>
+        <Text style={styles.headerTitle}>AI TUTOR CHAT</Text>
       </View>
 
-      {/* Messages */}
+      {/* Suggested Quick Prompts */}
+      <View style={styles.promptsContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.promptsScroll}>
+          {QUICK_PROMPTS.map((prompt, idx) => (
+            <TouchableOpacity
+              key={idx}
+              onPress={() => handleSend(prompt)}
+              style={styles.promptChip}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.promptChipText}>{prompt}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Chat Messages List */}
       <ScrollView style={styles.chatArea} contentContainerStyle={styles.chatPadding}>
         {messages.map((m, idx) => (
           <View
             key={idx}
             style={[
-              styles.bubble,
-              m.role === 'user' ? styles.userBubble : styles.aiBubble,
+              styles.bubbleContainer,
+              m.role === 'user' ? styles.userBubbleContainer : styles.aiBubbleContainer,
             ]}
           >
-            <Text
+            {m.role === 'assistant' && (
+              <View style={styles.aiBadge}>
+                <Text style={styles.aiBadgeText}>AI TUTOR</Text>
+              </View>
+            )}
+            <View
               style={[
-                styles.bubbleText,
-                m.role === 'user' ? styles.userBubbleText : styles.aiBubbleText,
+                styles.bubble,
+                m.role === 'user' ? styles.userBubble : styles.aiBubble,
               ]}
             >
-              {m.content}
-            </Text>
+              <Text
+                style={[
+                  styles.bubbleText,
+                  m.role === 'user' ? styles.userBubbleText : styles.aiBubbleText,
+                ]}
+              >
+                {m.content}
+              </Text>
+            </View>
           </View>
         ))}
+
         {loading && (
-          <View style={styles.loadingBubble}>
-            <ActivityIndicator size="small" color="#0066FF" />
-            <Text style={styles.loadingText}>AI is thinking...</Text>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color="#5451FF" />
+            <Text style={styles.loadingText}>AI TUTOR IS THINKING...</Text>
           </View>
         )}
       </ScrollView>
 
-      {/* Input Bar */}
+      {/* Bottom Input Bar */}
       <View style={styles.inputBar}>
         <TextInput
           style={styles.textInput}
           placeholder="Ask AI Tutor a question..."
-          placeholderTextColor="#999"
+          placeholderTextColor="#71717a"
           value={input}
           onChangeText={setInput}
+          onSubmitEditing={() => handleSend()}
         />
         <TouchableOpacity
-          onPress={handleSend}
+          onPress={() => handleSend()}
           disabled={loading || !input.trim()}
           style={[styles.sendBtn, (!input.trim() || loading) && styles.sendBtnDisabled]}
+          activeOpacity={0.85}
         >
           <Text style={styles.sendBtnText}>Send</Text>
         </TouchableOpacity>
@@ -125,52 +169,162 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FA' },
+  container: {
+    flex: 1,
+    backgroundColor: '#09090b',
+  },
   header: {
     height: 52,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    backgroundColor: '#FFF',
+    borderBottomColor: '#27272a',
+    backgroundColor: '#121316',
   },
-  backBtn: { paddingRight: 12 },
-  backBtnText: { color: '#0066FF', fontSize: 16, fontWeight: '600' },
-  headerTitle: { fontSize: 16, fontWeight: '700', color: '#111' },
-
-  chatArea: { flex: 1 },
-  chatPadding: { padding: 16, gap: 12 },
-
-  bubble: { maxWidth: '82%', padding: 12, borderRadius: 16 },
-  userBubble: { alignSelf: 'flex-end', backgroundColor: '#0066FF', borderBottomRightRadius: 4 },
-  aiBubble: { alignSelf: 'flex-start', backgroundColor: '#FFF', borderWidth: 1, borderColor: '#E5E7EB', borderBottomLeftRadius: 4 },
-  bubbleText: { fontSize: 13, lineHeight: 18 },
-  userBubbleText: { color: '#FFF' },
-  aiBubbleText: { color: '#111' },
-
-  loadingBubble: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 8 },
-  loadingText: { fontSize: 12, color: '#666', fontStyle: 'italic' },
-
+  backBtn: {
+    paddingRight: 12,
+  },
+  backBtnText: {
+    color: '#5451FF',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+  },
+  headerTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#ffffff',
+    letterSpacing: 1,
+    fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
+  },
+  promptsContainer: {
+    backgroundColor: '#121316',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#27272a',
+  },
+  promptsScroll: {
+    paddingHorizontal: 12,
+    gap: 8,
+  },
+  promptChip: {
+    backgroundColor: '#1c1c1e',
+    borderColor: '#3f3f46',
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  promptChipText: {
+    color: '#a1a1aa',
+    fontSize: 11,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+  },
+  chatArea: {
+    flex: 1,
+  },
+  chatPadding: {
+    padding: 16,
+    gap: 16,
+  },
+  bubbleContainer: {
+    maxWidth: '85%',
+  },
+  userBubbleContainer: {
+    alignSelf: 'flex-end',
+  },
+  aiBubbleContainer: {
+    alignSelf: 'flex-start',
+  },
+  aiBadge: {
+    backgroundColor: 'rgba(84, 81, 255, 0.2)',
+    borderColor: 'rgba(84, 81, 255, 0.4)',
+    borderWidth: 1,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  aiBadgeText: {
+    color: '#818cf8',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  bubble: {
+    padding: 14,
+    borderRadius: 18,
+  },
+  userBubble: {
+    backgroundColor: '#5451FF',
+    borderBottomRightRadius: 4,
+  },
+  aiBubble: {
+    backgroundColor: '#121316',
+    borderColor: '#27272a',
+    borderWidth: 1,
+    borderBottomLeftRadius: 4,
+  },
+  bubbleText: {
+    fontSize: 13,
+    lineHeight: 20,
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_500Medium',
+  },
+  userBubbleText: {
+    color: '#ffffff',
+  },
+  aiBubbleText: {
+    color: '#e4e4e7',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 8,
+  },
+  loadingText: {
+    fontSize: 10,
+    color: '#71717a',
+    letterSpacing: 1,
+    fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
+  },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: '#FFF',
+    backgroundColor: '#121316',
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: '#27272a',
     gap: 8,
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 14,
+    backgroundColor: '#1c1c1e',
+    borderColor: '#27272a',
+    borderWidth: 1,
+    paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
     fontSize: 13,
-    color: '#111',
+    color: '#ffffff',
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_500Medium',
   },
-  sendBtn: { backgroundColor: '#0066FF', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20 },
-  sendBtnDisabled: { opacity: 0.5 },
-  sendBtnText: { color: '#FFF', fontSize: 13, fontWeight: '700' },
+  sendBtn: {
+    backgroundColor: '#5451FF',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  sendBtnDisabled: {
+    opacity: 0.4,
+  },
+  sendBtnText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_700Bold',
+  },
 });
