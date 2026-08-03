@@ -11,6 +11,7 @@ import {
   Platform,
   Animated,
   Modal,
+  Image,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { AssessmentDTO, QuestionDTO } from "../types";
@@ -253,6 +254,98 @@ export function AssessmentScreen({
       });
     } finally {
       setUploadingWorkbook(false);
+    }
+  };
+
+  const handlePickImageFile = () => {
+    if (Platform.OS === "web" && typeof document !== "undefined") {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = (e: any) => {
+        const file = e.target?.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (reader.result) {
+              setWorkbookUrlInput(reader.result.toString());
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
+    }
+  };
+
+  const handleCaptureCamera = () => {
+    if (Platform.OS === "web" && typeof document !== "undefined") {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.setAttribute("capture", "environment");
+      input.onchange = (e: any) => {
+        const file = e.target?.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (reader.result) {
+              setWorkbookUrlInput(reader.result.toString());
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
+    }
+  };
+
+  const handleQuestionPickImageFile = (questionId: string) => {
+    if (Platform.OS === "web" && typeof document !== "undefined") {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = (e: any) => {
+        const file = e.target?.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (reader.result) {
+              setQuestionWorkbooks((prev) => ({
+                ...prev,
+                [questionId]: reader.result.toString(),
+              }));
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
+    }
+  };
+
+  const handleQuestionCaptureCamera = (questionId: string) => {
+    if (Platform.OS === "web" && typeof document !== "undefined") {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.setAttribute("capture", "environment");
+      input.onchange = (e: any) => {
+        const file = e.target?.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (reader.result) {
+              setQuestionWorkbooks((prev) => ({
+                ...prev,
+                [questionId]: reader.result.toString(),
+              }));
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
     }
   };
 
@@ -645,20 +738,76 @@ export function AssessmentScreen({
             {!workbookResult ? (
               <View style={{ gap: 14 }}>
                 <Text style={styles.inputLabel}>
-                  PASTE PHOTO URL OR SELECT SOLVED WORKBOOK IMAGE:
+                  UPLOAD WORKBOOK IMAGE (CAMERA, FILE OR URL):
                 </Text>
+
+                {/* Dual Upload Mode Buttons */}
+                <View style={{ flexDirection: "row", gap: 10 }}>
+                  <TouchableOpacity
+                    style={styles.imageActionBtn}
+                    onPress={handleCaptureCamera}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="camera-outline" size={18} color="#4ade80" />
+                    <Text style={styles.imageActionBtnText}>TAKE PHOTO</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.imageActionBtn}
+                    onPress={handlePickImageFile}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="image-outline" size={18} color="#60A5FA" />
+                    <Text style={styles.imageActionBtnText}>UPLOAD FILE</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Image Preview Box if image attached */}
+                {workbookUrlInput ? (
+                  <View style={styles.imagePreviewBox}>
+                    <Image
+                      source={{ uri: workbookUrlInput }}
+                      style={styles.previewImageThumbnail}
+                      resizeMode="cover"
+                    />
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Text style={styles.previewSuccessText} numberOfLines={1}>
+                        ✓ Image Attached
+                      </Text>
+                      <Text style={styles.previewSubText} numberOfLines={1}>
+                        {workbookUrlInput.startsWith("data:")
+                          ? "Captured/Uploaded Image File"
+                          : workbookUrlInput}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => setWorkbookUrlInput("")}
+                      style={{ padding: 6 }}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={18}
+                        color="#F87171"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                ) : null}
+
                 <TextInput
                   style={styles.modalInput}
                   value={workbookUrlInput}
                   onChangeText={setWorkbookUrlInput}
-                  placeholder="https://your-image-host.com/workbook.png"
+                  placeholder="Or paste image URL (https://...)"
                   placeholderTextColor="rgba(255,255,255,0.4)"
                 />
 
                 <TouchableOpacity
-                  style={styles.uploadSubmitBtn}
+                  style={[
+                    styles.uploadSubmitBtn,
+                    !workbookUrlInput.trim() && { opacity: 0.5 },
+                  ]}
                   onPress={handleUploadWorkbook}
-                  disabled={uploadingWorkbook}
+                  disabled={uploadingWorkbook || !workbookUrlInput.trim()}
                   activeOpacity={0.85}
                 >
                   {uploadingWorkbook ? (
@@ -822,8 +971,89 @@ export function AssessmentScreen({
                     </View>
                     <Text style={styles.qWorkbookInstructionText}>
                       {questions[currentIdx].workbookInstructions ||
-                        "Please write out your working in your physical workbook and paste the image URL or upload reference below:"}
+                        "Please write out your working in your physical workbook and take a photo or upload an image below:"}
                     </Text>
+
+                    {/* Camera & File Upload Action Buttons */}
+                    <View style={{ flexDirection: "row", gap: 10 }}>
+                      <TouchableOpacity
+                        style={styles.imageActionBtn}
+                        onPress={() =>
+                          handleQuestionCaptureCamera(questions[currentIdx].id)
+                        }
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons
+                          name="camera-outline"
+                          size={16}
+                          color="#4ade80"
+                        />
+                        <Text style={styles.imageActionBtnText}>
+                          TAKE PHOTO
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.imageActionBtn}
+                        onPress={() =>
+                          handleQuestionPickImageFile(questions[currentIdx].id)
+                        }
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons
+                          name="image-outline"
+                          size={16}
+                          color="#60A5FA"
+                        />
+                        <Text style={styles.imageActionBtnText}>
+                          UPLOAD FILE
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Image Preview Box if attached */}
+                    {questionWorkbooks[questions[currentIdx].id] ? (
+                      <View style={styles.imagePreviewBox}>
+                        <Image
+                          source={{
+                            uri: questionWorkbooks[questions[currentIdx].id],
+                          }}
+                          style={styles.previewImageThumbnail}
+                          resizeMode="cover"
+                        />
+                        <View style={{ flex: 1, gap: 2 }}>
+                          <Text
+                            style={styles.previewSuccessText}
+                            numberOfLines={1}
+                          >
+                            ✓ Photo Attached
+                          </Text>
+                          <Text style={styles.previewSubText} numberOfLines={1}>
+                            {questionWorkbooks[
+                              questions[currentIdx].id
+                            ].startsWith("data:")
+                              ? "Uploaded Image File"
+                              : questionWorkbooks[questions[currentIdx].id]}
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          onPress={() =>
+                            setQuestionWorkbooks((prev) => ({
+                              ...prev,
+                              [questions[currentIdx].id]: "",
+                            }))
+                          }
+                          style={{ padding: 4 }}
+                        >
+                          <Ionicons
+                            name="trash-outline"
+                            size={18}
+                            color="#F87171"
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    ) : null}
+
                     <TextInput
                       style={styles.modalInput}
                       value={questionWorkbooks[questions[currentIdx].id] || ""}
@@ -833,7 +1063,7 @@ export function AssessmentScreen({
                           [questions[currentIdx].id]: val,
                         }))
                       }
-                      placeholder="https://image-host.com/workbook-page.png"
+                      placeholder="Or paste direct image URL (https://...)"
                       placeholderTextColor="rgba(255,255,255,0.4)"
                     />
                   </View>
@@ -2041,5 +2271,49 @@ const styles = StyleSheet.create({
     color: "#d1d5db",
     fontSize: 12,
     lineHeight: 17,
+  },
+  imageActionBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#22242a",
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+  },
+  imageActionBtnText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  imagePreviewBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "rgba(74, 222, 128, 0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(74, 222, 128, 0.3)",
+    padding: 10,
+    borderRadius: 14,
+  },
+  previewImageThumbnail: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: "#191a1e",
+  },
+  previewSuccessText: {
+    color: "#4ade80",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  previewSubText: {
+    color: "#9ca3af",
+    fontSize: 10,
   },
 });
