@@ -613,33 +613,6 @@ export function AssessmentScreen({
         >
           {/* Main Score & Grade Hero Card */}
           <View style={styles.resultCard}>
-            <View style={styles.statusPillRow}>
-              <View
-                style={[
-                  styles.statusPill,
-                  accuracy >= 70 ? styles.statusPass : styles.statusNeedsWork,
-                ]}
-              >
-                <Ionicons
-                  name={accuracy >= 70 ? "trophy" : "alert-circle"}
-                  size={14}
-                  color={accuracy >= 70 ? "#4ade80" : "#f59e0b"}
-                />
-                <Text
-                  style={[
-                    styles.statusPillText,
-                    { color: accuracy >= 70 ? "#4ade80" : "#f59e0b" },
-                  ]}
-                >
-                  {accuracy >= 90
-                    ? "PASSED WITH DISTINCTION"
-                    : accuracy >= 70
-                      ? "ASSESSMENT PASSED"
-                      : "NEEDS PRACTICE"}
-                </Text>
-              </View>
-            </View>
-
             <View style={styles.scoreHeroRow}>
               <Text style={styles.resultScoreBig}>
                 {resultScore}
@@ -806,20 +779,6 @@ export function AssessmentScreen({
 
           {/* Action Buttons Row */}
           <View style={styles.actionButtonsRow}>
-            <TouchableOpacity
-              style={styles.retryBtn}
-              onPress={() => setMode("RUNNER")}
-              activeOpacity={0.85}
-            >
-              <Ionicons
-                name="reload-outline"
-                size={16}
-                color="#ffffff"
-                style={{ marginRight: 6 }}
-              />
-              <Text style={styles.retryBtnText}>RETRY TEST</Text>
-            </TouchableOpacity>
-
             <TouchableOpacity
               style={styles.finishBtn}
               onPress={onBackToDashboard}
