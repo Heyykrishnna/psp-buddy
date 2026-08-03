@@ -198,11 +198,24 @@ export function AssessmentScreen({
     return () => clearInterval(timer);
   }, [mode, timeLeftSeconds]);
 
+  const [codingWarningAsm, setCodingWarningAsm] = useState<AssessmentDTO | null>(null);
+
   const startAssessment = async (asm: AssessmentDTO) => {
+    if (asm.containsCoding || asm.isWebOnly) {
+      setCodingWarningAsm(asm);
+      return;
+    }
+
     setSelectedAsm(asm);
     setLoading(true);
     try {
       const details = await apiClient.getAssessmentById(asm.id);
+      if (details.questions?.some((q) => q.questionType === "CODING" || q.isWebOnly)) {
+        setCodingWarningAsm(asm);
+        setLoading(false);
+        return;
+      }
+
       if (details.questions && details.questions.length > 0) {
         setQuestions(details.questions);
       } else {
@@ -610,6 +623,20 @@ export function AssessmentScreen({
                               style={[styles.asmTypeText, { color: "#C084FC" }]}
                             >
                               HYBRID
+                            </Text>
+                          </View>
+                        )}
+                        {(asm.containsCoding || asm.isWebOnly) && (
+                          <View
+                            style={[
+                              styles.asmTypeBadge,
+                              { backgroundColor: "rgba(168,85,247,0.22)" },
+                            ]}
+                          >
+                            <Text
+                              style={[styles.asmTypeText, { color: "#E9D5FF" }]}
+                            >
+                              🖥️ WEB ONLY
                             </Text>
                           </View>
                         )}
@@ -1128,6 +1155,44 @@ export function AssessmentScreen({
         </View>
       </Modal>
 
+      {/* WEB-ONLY CODING PLAYGROUND WARNING MODAL */}
+      <Modal
+        visible={!!codingWarningAsm}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setCodingWarningAsm(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { padding: 24, gap: 16 }]}>
+            <View style={{ alignItems: "center", gap: 12 }}>
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: "rgba(168,85,247,0.18)", borderWidth: 1, borderColor: "rgba(168,85,247,0.4)", alignItems: "center", justifyContent: "center" }}>
+                <Ionicons name="desktop-outline" size={32} color="#C084FC" />
+              </View>
+              <Text style={{ fontSize: 20, fontWeight: "700", color: "#ffffff", textAlign: "center" }}>
+                Desktop Web Browser Required
+              </Text>
+              <Text style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", textAlign: "center", lineHeight: 20 }}>
+                "{codingWarningAsm?.title}" includes a full interactive Coding Playground & IDE which requires a physical keyboard and desktop browser workspace.
+              </Text>
+              <View style={{ backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 12, padding: 14, borderLeftWidth: 4, borderLeftColor: "#C084FC", width: "100%" }}>
+                <Text style={{ fontSize: 12, color: "#E9D5FF", lineHeight: 18 }}>
+                  💻 Please log into your account on a computer/laptop browser to solve and execute code for this assignment.
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={{ width: "100%", backgroundColor: "#5451FF", borderRadius: 10, paddingVertical: 14, alignItems: "center", marginTop: 8 }}
+                onPress={() => setCodingWarningAsm(null)}
+                activeOpacity={0.85}
+              >
+                <Text style={{ fontSize: 13, fontWeight: "700", color: "#ffffff" }}>
+                  GOT IT, BACK TO ASSESSMENTS
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {mode === "RUNNER" && (
         <View style={styles.runnerContainer}>
           {/* Runner Status Bar */}
@@ -1214,6 +1279,38 @@ export function AssessmentScreen({
                     );
                   })}
                 </View>
+
+                {/* Fill in the Blanks / Short Answer Input */}
+                {(questions[currentIdx].questionType === "FILL_IN_BLANKS" ||
+                  questions[currentIdx].questionType === "SHORT_ANSWER" ||
+                  (!questions[currentIdx].options?.length && questions[currentIdx].questionType !== "SINGLE_CHOICE")) && (
+                  <View style={{ gap: 8, marginTop: 12 }}>
+                    <Text style={styles.inputLabel}>
+                      YOUR ANSWER RESPONSE:
+                    </Text>
+                    <TextInput
+                      style={styles.modalInput}
+                      value={selectedAnswers[questions[currentIdx].id] || ""}
+                      onChangeText={(txt) => {
+                        const updated = {
+                          ...selectedAnswers,
+                          [questions[currentIdx].id]: txt,
+                        };
+                        setSelectedAnswers(updated);
+                        if (attemptId) {
+                          apiClient
+                            .autosaveAnswer(attemptId, {
+                              questionId: questions[currentIdx].id,
+                              textAnswer: txt,
+                            })
+                            .catch(() => {});
+                        }
+                      }}
+                      placeholder="Type your answer here..."
+                      placeholderTextColor="rgba(255,255,255,0.4)"
+                    />
+                  </View>
+                )}
 
                 {/* Per-Question Workbook Upload Box if Required or Allowed */}
                 {(questions[currentIdx].requiresWorkbook ||

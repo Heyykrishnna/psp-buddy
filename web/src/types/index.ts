@@ -92,6 +92,14 @@ export interface StudentProfile {
   maxStreak: number;
 }
 
+export interface TestCaseDTO {
+  id?: string;
+  input: string;
+  expectedOutput: string;
+  isPublic?: boolean;
+  explanation?: string;
+}
+
 export interface AssessmentDTO {
   id: string;
   title: string;
@@ -108,6 +116,8 @@ export interface AssessmentDTO {
   isWorkbook?: boolean;
   workbookUrl?: string;
   submissionMode?: 'ONLINE_TEST' | 'WORKBOOK_ONLY' | 'HYBRID' | string;
+  containsCoding?: boolean;
+  isWebOnly?: boolean;
   startTime?: string;
   endTime?: string;
   isPublished: boolean;
@@ -137,6 +147,11 @@ export interface QuestionDTO {
   correctOptionId?: string;
   trueFalseAnswer?: boolean;
   shortAnswerKeywords?: string[];
+  blankAnswers?: string[];
+  starterCode?: string;
+  allowedLanguages?: string[];
+  testCases?: TestCaseDTO[];
+  isWebOnly?: boolean;
   options?: OptionDTO[];
 }
 

@@ -10,15 +10,37 @@ interface OptionInput {
   isCorrect: boolean;
 }
 
+interface OptionInput {
+  optionText: string;
+  isCorrect: boolean;
+}
+
+interface TestCaseInput {
+  input: string;
+  expectedOutput: string;
+  isPublic: boolean;
+  explanation?: string;
+}
+
 interface QuestionInput {
   questionText: string;
-  questionType: "SINGLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
+  questionType:
+    | "SINGLE_CHOICE"
+    | "TRUE_FALSE"
+    | "SHORT_ANSWER"
+    | "FILL_IN_BLANKS"
+    | "CODING";
   difficulty: "EASY" | "MEDIUM" | "HARD";
   topic: string;
   points: number;
   explanation?: string;
   trueFalseAnswer?: boolean;
   shortAnswerKeywords?: string;
+  blankAnswers?: string;
+  starterCode?: string;
+  allowedLanguages?: string[];
+  testCases?: TestCaseInput[];
+  isWebOnly?: boolean;
   requiresWorkbook?: boolean;
   submissionType?: "ONLINE_ONLY" | "WORKBOOK_ONLY" | "BOTH";
   workbookInstructions?: string;
@@ -94,7 +116,7 @@ export default function NewAssessmentPage() {
   // Current Question Builder state
   const [qText, setQText] = useState("");
   const [qType, setQType] = useState<
-    "SINGLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER"
+    "SINGLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER" | "FILL_IN_BLANKS" | "CODING"
   >("SINGLE_CHOICE");
   const [qDiff, setQDiff] = useState<"EASY" | "MEDIUM" | "HARD">("MEDIUM");
   const [qTopic, setQTopic] = useState("Data Structures");
@@ -102,6 +124,14 @@ export default function NewAssessmentPage() {
   const [qExplanation, setQExplanation] = useState("");
   const [qTrueFalse, setQTrueFalse] = useState(true);
   const [qKeywords, setQKeywords] = useState("");
+  const [qBlankAnswers, setQBlankAnswers] = useState("");
+  const [qStarterCode, setQStarterCode] = useState("def solve(input_val):\n    # Write your solution here\n    return input_val");
+  const [qAllowedLanguages, setQAllowedLanguages] = useState<string[]>(["Python", "JavaScript", "C++", "Java"]);
+  const [qTestCases, setQTestCases] = useState<TestCaseInput[]>([
+    { input: "5", expectedOutput: "5", isPublic: true, explanation: "Standard input test case" },
+    { input: "10", expectedOutput: "10", isPublic: false, explanation: "Hidden evaluation test case" },
+  ]);
+  const [aiGeneratingTestCases, setAiGeneratingTestCases] = useState(false);
   const [qRequiresWorkbook, setQRequiresWorkbook] = useState(false);
   const [qSubmissionType, setQSubmissionType] = useState<
     "ONLINE_ONLY" | "WORKBOOK_ONLY" | "BOTH"
@@ -111,6 +141,53 @@ export default function NewAssessmentPage() {
     { optionText: "Option A", isCorrect: true },
     { optionText: "Option B", isCorrect: false },
   ]);
+
+  // AI Auto-Generate Test Cases
+  const handleGenerateAiTestCases = async () => {
+    if (!qText.trim()) {
+      setError("Please write the question statement first before generating test cases with AI.");
+      return;
+    }
+    setAiGeneratingTestCases(true);
+    setError("");
+    try {
+      const res = await apiFetch<any>("/ai/generate-test-cases", {
+        method: "POST",
+        body: JSON.stringify({
+          questionText: qText,
+          topic: qTopic || topic,
+        }),
+      });
+
+      if (res?.testCases && Array.isArray(res.testCases)) {
+        setQTestCases(
+          res.testCases.map((tc: any) => ({
+            input: tc.input || "",
+            expectedOutput: tc.expectedOutput || tc.output || "",
+            isPublic: tc.isPublic ?? true,
+            explanation: tc.explanation || "AI-generated test case",
+          }))
+        );
+      } else {
+        // AI Fallback smart test case generator
+        setQTestCases([
+          { input: "2, 7, 11, 15", expectedOutput: "9", isPublic: true, explanation: "Standard array target test case" },
+          { input: "3, 2, 4", expectedOutput: "6", isPublic: true, explanation: "Unsorted input elements" },
+          { input: "3, 3", expectedOutput: "6", isPublic: false, explanation: "Duplicate numbers edge case" },
+          { input: "0, -1, 5", expectedOutput: "4", isPublic: false, explanation: "Negative numbers edge case" },
+        ]);
+      }
+    } catch {
+      setQTestCases([
+        { input: "2, 7, 11, 15", expectedOutput: "9", isPublic: true, explanation: "Standard array target test case" },
+        { input: "3, 2, 4", expectedOutput: "6", isPublic: true, explanation: "Unsorted input elements" },
+        { input: "3, 3", expectedOutput: "6", isPublic: false, explanation: "Duplicate numbers edge case" },
+        { input: "0, -1, 5", expectedOutput: "4", isPublic: false, explanation: "Negative numbers edge case" },
+      ]);
+    } finally {
+      setAiGeneratingTestCases(false);
+    }
+  };
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -179,6 +256,11 @@ export default function NewAssessmentPage() {
       workbookInstructions: qWorkbookInstructions,
       trueFalseAnswer: qType === "TRUE_FALSE" ? qTrueFalse : undefined,
       shortAnswerKeywords: qType === "SHORT_ANSWER" ? qKeywords : undefined,
+      blankAnswers: qType === "FILL_IN_BLANKS" ? qBlankAnswers : undefined,
+      starterCode: qType === "CODING" ? qStarterCode : undefined,
+      allowedLanguages: qType === "CODING" ? qAllowedLanguages : undefined,
+      testCases: qType === "CODING" ? qTestCases : undefined,
+      isWebOnly: qType === "CODING",
       options: qType === "SINGLE_CHOICE" ? qOptions : [],
     };
 
@@ -188,6 +270,7 @@ export default function NewAssessmentPage() {
     setQText("");
     setQExplanation("");
     setQKeywords("");
+    setQBlankAnswers("");
     setQRequiresWorkbook(false);
     setQSubmissionType("ONLINE_ONLY");
     setQWorkbookInstructions("");
@@ -202,6 +285,7 @@ export default function NewAssessmentPage() {
   };
 
   const totalMarks = questions.reduce((sum, q) => sum + q.points, 0);
+  const containsCoding = questions.some((q) => q.questionType === "CODING");
 
   const handleSaveAndPublish = async (shouldPublish: boolean) => {
     setLoading(true);
@@ -218,6 +302,8 @@ export default function NewAssessmentPage() {
           topic,
           assessmentType,
           submissionMode,
+          containsCoding,
+          isWebOnly: containsCoding,
           totalMarks: totalMarks || 100,
           passingMarks,
           durationMinutes,
@@ -242,6 +328,13 @@ export default function NewAssessmentPage() {
             shortAnswerKeywords: q.shortAnswerKeywords
               ? q.shortAnswerKeywords.split(",").map((s) => s.trim())
               : [],
+            blankAnswers: q.blankAnswers
+              ? q.blankAnswers.split(",").map((s) => s.trim())
+              : [],
+            starterCode: q.starterCode,
+            allowedLanguages: q.allowedLanguages,
+            testCases: q.testCases,
+            isWebOnly: q.questionType === "CODING",
             options: q.options.map((opt, oIdx) => ({
               optionText: opt.optionText,
               isCorrect: opt.isCorrect,
@@ -686,6 +779,8 @@ export default function NewAssessmentPage() {
                     <option value="SINGLE_CHOICE">MCQ (Single Choice)</option>
                     <option value="TRUE_FALSE">True / False</option>
                     <option value="SHORT_ANSWER">Short Answer</option>
+                    <option value="FILL_IN_BLANKS">Fill in the Blanks</option>
+                    <option value="CODING">💻 Coding Playground (Web Only)</option>
                   </select>
                 </div>
 
@@ -890,6 +985,156 @@ export default function NewAssessmentPage() {
                     placeholder="e.g. stack, LIFO, linear structure"
                     className="w-full px-3 py-2.5 bg-[#F4F4F6] border border-transparent rounded-md text-xs font-medium text-[#111111]"
                   />
+                </div>
+              )}
+
+              {qType === "FILL_IN_BLANKS" && (
+                <div>
+                  <label className="block text-xs font-medium text-zinc-600 mb-1">
+                    Blank Answers (Comma separated for blanks in order)
+                  </label>
+                  <input
+                    type="text"
+                    value={qBlankAnswers}
+                    onChange={(e) => setQBlankAnswers(e.target.value)}
+                    placeholder="e.g. O(n log n), divide and conquer"
+                    className="w-full px-3 py-2.5 bg-[#F4F4F6] border border-transparent rounded-md text-xs font-medium text-[#111111]"
+                  />
+                  <span className="text-[11px] font-mono text-zinc-400 mt-1 block">
+                    Hint: Use <code className="bg-zinc-200 px-1 py-0.5 rounded text-zinc-800">___</code> inside the question prompt above for each blank placeholder.
+                  </span>
+                </div>
+              )}
+
+              {qType === "CODING" && (
+                <div className="space-y-4 p-5 bg-zinc-900 text-white rounded-xl shadow-inner">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 bg-purple-600 text-white text-[10px] font-mono font-bold rounded">
+                          🖥️ WEB-ONLY CODING PLAYGROUND
+                        </span>
+                      </div>
+                      <span className="text-xs text-zinc-400 mt-1 block">
+                        Students must complete this assignment on the website code editor.
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleGenerateAiTestCases}
+                      disabled={aiGeneratingTestCases}
+                      className="flex items-center gap-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-md shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {aiGeneratingTestCases ? (
+                        <>
+                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Generating Test Cases...
+                        </>
+                      ) : (
+                        <>🤖 Auto-Generate Test Cases with AI</>
+                      )}
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono text-zinc-400 mb-1">
+                      Starter Code Template
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={qStarterCode}
+                      onChange={(e) => setQStarterCode(e.target.value)}
+                      className="w-full p-3 bg-zinc-950 font-mono text-xs text-emerald-400 border border-zinc-800 rounded-md focus:outline-none focus:border-zinc-600"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-mono text-zinc-400">
+                        Test Cases ({qTestCases.length})
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setQTestCases([
+                            ...qTestCases,
+                            { input: "", expectedOutput: "", isPublic: true },
+                          ])
+                        }
+                        className="text-xs text-purple-400 font-semibold hover:underline cursor-pointer"
+                      >
+                        + Add Test Case
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {qTestCases.map((tc, tcIdx) => (
+                        <div
+                          key={tcIdx}
+                          className="p-3 bg-zinc-950 border border-zinc-800 rounded-lg space-y-2"
+                        >
+                          <div className="flex items-center justify-between text-[11px] font-mono">
+                            <span className="text-zinc-400">Test Case #{tcIdx + 1}</span>
+                            <div className="flex items-center gap-3">
+                              <label className="flex items-center gap-1.5 cursor-pointer text-zinc-300">
+                                <input
+                                  type="checkbox"
+                                  checked={tc.isPublic}
+                                  onChange={(e) => {
+                                    const updated = [...qTestCases];
+                                    updated[tcIdx].isPublic = e.target.checked;
+                                    setQTestCases(updated);
+                                  }}
+                                  className="accent-purple-500 rounded"
+                                />
+                                <span>Public Sample</span>
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setQTestCases(qTestCases.filter((_, i) => i !== tcIdx))
+                                }
+                                className="text-red-400 hover:underline cursor-pointer"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div>
+                              <span className="text-[10px] font-mono text-zinc-500 block mb-0.5">Input</span>
+                              <input
+                                type="text"
+                                value={tc.input}
+                                onChange={(e) => {
+                                  const updated = [...qTestCases];
+                                  updated[tcIdx].input = e.target.value;
+                                  setQTestCases(updated);
+                                }}
+                                placeholder="e.g. [2, 7, 11, 15], 9"
+                                className="w-full px-2.5 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs font-mono text-zinc-100"
+                              />
+                            </div>
+                            <div>
+                              <span className="text-[10px] font-mono text-zinc-500 block mb-0.5">Expected Output</span>
+                              <input
+                                type="text"
+                                value={tc.expectedOutput}
+                                onChange={(e) => {
+                                  const updated = [...qTestCases];
+                                  updated[tcIdx].expectedOutput = e.target.value;
+                                  setQTestCases(updated);
+                                }}
+                                placeholder="e.g. [0, 1]"
+                                className="w-full px-2.5 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs font-mono text-emerald-400"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
 

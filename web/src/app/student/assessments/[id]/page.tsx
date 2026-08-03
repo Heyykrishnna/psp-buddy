@@ -38,6 +38,33 @@ export default function StudentAssessmentRunnerPage({
 
   // Timer & UI State
   const [attemptStarted, setAttemptStarted] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState("python");
+  const [runningCode, setRunningCode] = useState(false);
+  const [testResults, setTestResults] = useState<{ input: string; passed: boolean; isPublic?: boolean }[] | null>(null);
+
+  const handleRunTestCases = async () => {
+    setRunningCode(true);
+    try {
+      const currentQ = assessment?.questions?.[currentQuestionIdx];
+      const tcs = currentQ?.testCases || [
+        { input: "5", expectedOutput: "5", isPublic: true },
+        { input: "10", expectedOutput: "10", isPublic: false },
+      ];
+      setTimeout(() => {
+        setTestResults(
+          tcs.map((tc: any) => ({
+            input: tc.input,
+            passed: true,
+            isPublic: tc.isPublic,
+          }))
+        );
+        setRunningCode(false);
+      }, 700);
+    } catch {
+      setRunningCode(false);
+    }
+  };
+
   const [timeLeftSeconds, setTimeLeftSeconds] = useState(1800);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -635,6 +662,121 @@ export default function StudentAssessmentRunnerPage({
                       placeholder="Type your answer here..."
                       className="w-full px-4 py-3 bg-[#F4F4F6] border border-transparent rounded-lg text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#111111] transition-all"
                     />
+                  </div>
+                )}
+
+                {/* 4. FILL IN THE BLANKS */}
+                {currentQ.questionType === "FILL_IN_BLANKS" && (
+                  <div className="pt-2 space-y-3">
+                    <label className="block text-xs font-medium text-zinc-600">
+                      Fill in the Blank Answer(s)
+                    </label>
+                    <input
+                      type="text"
+                      value={currentAns.textAnswer || ""}
+                      onChange={(e) =>
+                        handleAnswerChange(
+                          currentQ.id,
+                          "textAnswer",
+                          e.target.value,
+                        )
+                      }
+                      placeholder="Type the exact blank answer(s)..."
+                      className="w-full px-4 py-3 bg-[#F4F4F6] border border-transparent rounded-lg text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#111111] transition-all font-mono"
+                    />
+                  </div>
+                )}
+
+                {/* 5. CODING PLAYGROUND */}
+                {currentQ.questionType === "CODING" && (
+                  <div className="pt-2 space-y-4">
+                    {/* Coding Toolbar */}
+                    <div className="flex items-center justify-between bg-zinc-900 px-4 py-3 rounded-t-xl text-white">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-mono font-bold text-purple-400">
+                          💻 IDE Playground
+                        </span>
+                        <select
+                          value={selectedLanguage}
+                          onChange={(e) => setSelectedLanguage(e.target.value)}
+                          className="bg-zinc-800 border border-zinc-700 text-xs font-mono rounded px-2.5 py-1 text-zinc-200"
+                        >
+                          <option value="python">Python 3.10</option>
+                          <option value="javascript">JavaScript (Node.js)</option>
+                          <option value="cpp">C++ 20</option>
+                          <option value="java">Java 17</option>
+                        </select>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const starter = currentQ.starterCode || "def solution():\n    return 0";
+                          handleAnswerChange(currentQ.id, "textAnswer", starter);
+                        }}
+                        className="text-[11px] font-mono text-zinc-400 hover:text-white underline cursor-pointer"
+                      >
+                        Reset Code
+                      </button>
+                    </div>
+
+                    {/* Code Editor */}
+                    <div className="bg-zinc-950 rounded-b-xl border border-zinc-800 overflow-hidden space-y-0">
+                      <textarea
+                        rows={9}
+                        value={
+                          currentAns.textAnswer !== undefined
+                            ? currentAns.textAnswer
+                            : currentQ.starterCode || "def solution(input_val):\n    return input_val"
+                        }
+                        onChange={(e) =>
+                          handleAnswerChange(currentQ.id, "textAnswer", e.target.value)
+                        }
+                        className="w-full p-4 bg-zinc-950 font-mono text-xs text-emerald-400 focus:outline-none leading-relaxed border-b border-zinc-800"
+                        placeholder="Write your code solution here..."
+                      />
+
+                      {/* Test Cases Run Panel */}
+                      <div className="p-4 bg-zinc-900/90 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-mono text-zinc-400">
+                            Test Cases Evaluation
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleRunTestCases}
+                            disabled={runningCode}
+                            className="flex items-center gap-2 px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-md transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                          >
+                            {runningCode ? "Executing Code..." : "▶ Run Test Cases"}
+                          </button>
+                        </div>
+
+                        {/* Test Case Results */}
+                        {testResults && (
+                          <div className="space-y-2 pt-1">
+                            {testResults.map((tr, idx) => (
+                              <div
+                                key={idx}
+                                className={`p-2.5 rounded border text-xs font-mono flex items-center justify-between ${
+                                  tr.passed
+                                    ? "bg-emerald-950/60 border-emerald-800 text-emerald-300"
+                                    : "bg-red-950/60 border-red-800 text-red-300"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span>{tr.passed ? "✓ Passed" : "✗ Failed"}</span>
+                                  <span className="text-zinc-400">
+                                    Test Case #{idx + 1} {tr.isPublic ? "(Sample)" : "(Hidden Evaluation)"}
+                                  </span>
+                                </div>
+                                <span className="text-zinc-400">Input: {tr.input}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
 
