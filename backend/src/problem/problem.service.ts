@@ -43,10 +43,20 @@ export class ProblemService {
     });
   }
 
-  async getProblems(query?: { difficulty?: DifficultyLevel; search?: string }) {
+  async getProblems(query?: {
+    difficulty?: DifficultyLevel;
+    topic?: string;
+    search?: string;
+    userId?: string;
+    status?: 'SOLVED' | 'ATTEMPTED' | 'UNATTEMPTED';
+    bookmarked?: boolean;
+  }) {
     const where: any = {};
     if (query?.difficulty) {
       where.difficulty = query.difficulty;
+    }
+    if (query?.topic) {
+      where.topics = { has: query.topic };
     }
     if (query?.search) {
       where.OR = [
@@ -56,7 +66,7 @@ export class ProblemService {
       ];
     }
 
-    return db.problem.findMany({
+    const problems = await db.problem.findMany({
       where,
       include: {
         testCases: {
@@ -65,6 +75,56 @@ export class ProblemService {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    if (!query?.userId) {
+      return problems.map((p: any) => ({
+        ...p,
+        userStatus: 'UNATTEMPTED',
+        isBookmarked: false,
+      }));
+    }
+
+    const userProgress = await db.userProblemProgress.findMany({
+      where: { userId: query.userId },
+    });
+
+    const userBookmarks = await db.problemBookmark.findMany({
+      where: { userId: query.userId },
+    });
+
+    const progressMap = new Map<string, any>();
+    userProgress.forEach((pr: any) => progressMap.set(pr.problemId, pr));
+
+    const bookmarkSet = new Set<string>();
+    userBookmarks.forEach((b: any) => bookmarkSet.add(b.problemId));
+
+    let result = problems.map((p: any) => {
+      const pr = progressMap.get(p.id);
+      const isBookmarked = bookmarkSet.has(p.id);
+      const status = pr
+        ? pr.status === 'SOLVED'
+          ? 'SOLVED'
+          : 'ATTEMPTED'
+        : 'UNATTEMPTED';
+
+      return {
+        ...p,
+        userStatus: status,
+        isBookmarked,
+        attempts: pr?.attempts || 0,
+        bestScore: pr?.bestScore || 0,
+      };
+    });
+
+    if (query?.status) {
+      result = result.filter((p: any) => p.userStatus === query.status);
+    }
+
+    if (query?.bookmarked !== undefined) {
+      result = result.filter((p: any) => Boolean(p.isBookmarked) === query.bookmarked);
+    }
+
+    return result;
   }
 
   async getProblemBySlugOrId(slugOrId: string) {

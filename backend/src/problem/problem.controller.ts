@@ -16,13 +16,27 @@ export class ProblemController {
     return this.problemService.createProblem(body);
   }
 
-  // 2. GET /problems - List Problems
+  // 2. GET /problems - List Problems with filters & progress indicators
   @Get()
   async getProblems(
     @Query('difficulty') difficulty?: DifficultyLevel,
+    @Query('topic') topic?: string,
     @Query('search') search?: string,
+    @Query('userId') userId?: string,
+    @Query('status') status?: 'SOLVED' | 'ATTEMPTED' | 'UNATTEMPTED',
+    @Query('bookmarked') bookmarked?: string,
   ) {
-    return this.problemService.getProblems({ difficulty, search });
+    const isBookmarked =
+      bookmarked === 'true' ? true : bookmarked === 'false' ? false : undefined;
+
+    return this.problemService.getProblems({
+      difficulty,
+      topic,
+      search,
+      userId,
+      status,
+      bookmarked: isBookmarked,
+    });
   }
 
   // 3. GET /problems/user/progress - Get User Progress across Problems

@@ -29,6 +29,13 @@ import {
   Sliders,
   Eye,
   EyeOff,
+  ListFilter,
+  Search,
+  Star,
+  Check,
+  PieChart,
+  Circle,
+  Filter,
 } from "lucide-react";
 
 // Dynamically import Monaco Editor to prevent SSR issues
@@ -63,11 +70,72 @@ export default function StudentPlaygroundPage() {
 
   // Left Panel & Resizer State
   const [activeLeftTab, setActiveLeftTab] = useState<
-    "question" | "ai" | "hints" | "settings"
+    "problems" | "question" | "ai" | "hints" | "settings"
   >("question");
   const [leftWidthPercent, setLeftWidthPercent] = useState<number>(42);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isLeftCollapsed, setIsLeftCollapsed] = useState<boolean>(false);
+
+  // Execution & Output state
+  const [running, setRunning] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [output, setOutput] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [testResults, setTestResults] = useState<any[] | null>(null);
+
+  // Step 9 & 10 Filter State
+  const [problemSearch, setProblemSearch] = useState<string>("");
+  const [difficultyFilter, setDifficultyFilter] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [topicFilter, setTopicFilter] = useState<string>("ALL");
+  const [filteredProblemsList, setFilteredProblemsList] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchFilteredProblems() {
+      try {
+        const queryParams = new URLSearchParams();
+        if (difficultyFilter !== "ALL") queryParams.append("difficulty", difficultyFilter);
+        if (topicFilter !== "ALL") queryParams.append("topic", topicFilter);
+        if (problemSearch.trim()) queryParams.append("search", problemSearch.trim());
+        if (user?.id) queryParams.append("userId", user.id);
+        if (statusFilter === "SOLVED" || statusFilter === "ATTEMPTED" || statusFilter === "UNATTEMPTED") {
+          queryParams.append("status", statusFilter);
+        } else if (statusFilter === "BOOKMARKED") {
+          queryParams.append("bookmarked", "true");
+        }
+
+        const res = await apiFetch<any[]>(`/problems?${queryParams.toString()}`);
+        if (res && Array.isArray(res)) {
+          setFilteredProblemsList(res);
+        }
+      } catch {
+        let list = PLAYGROUND_EXAMPLES.map((ex) => ({
+          ...ex,
+          userStatus: ex.id === currentExample.id && submitting ? "SOLVED" : "UNATTEMPTED",
+          isBookmarked,
+        }));
+
+        if (difficultyFilter !== "ALL") {
+          list = list.filter((p) => p.difficulty.toUpperCase() === difficultyFilter);
+        }
+        if (problemSearch.trim()) {
+          const q = problemSearch.toLowerCase();
+          list = list.filter(
+            (p) =>
+              p.title.toLowerCase().includes(q) ||
+              p.description.toLowerCase().includes(q),
+          );
+        }
+        if (statusFilter === "SOLVED") list = list.filter((p) => p.userStatus === "SOLVED");
+        if (statusFilter === "ATTEMPTED") list = list.filter((p) => p.userStatus === "ATTEMPTED");
+        if (statusFilter === "UNATTEMPTED") list = list.filter((p) => p.userStatus === "UNATTEMPTED");
+        if (statusFilter === "BOOKMARKED") list = list.filter((p) => p.isBookmarked);
+
+        setFilteredProblemsList(list);
+      }
+    }
+    fetchFilteredProblems();
+  }, [difficultyFilter, topicFilter, problemSearch, statusFilter, user?.id, isBookmarked, submitting, currentExample.id]);
 
   // IDE Settings
   const [editorFontSize, setEditorFontSize] = useState<number>(14);
@@ -83,13 +151,6 @@ export default function StudentPlaygroundPage() {
   const [customInput, setCustomInput] = useState<string>(
     PLAYGROUND_EXAMPLES[0].sampleInput,
   );
-
-  // Execution & Output state
-  const [running, setRunning] = useState<boolean>(false);
-  const [submitting, setSubmitting] = useState<boolean>(false);
-  const [output, setOutput] = useState<string>("");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [testResults, setTestResults] = useState<any[] | null>(null);
 
   // AI Tutor Chat state inside Left Panel
   const [aiPrompt, setAiPrompt] = useState<string>("");
@@ -361,6 +422,21 @@ export default function StudentPlaygroundPage() {
           <div className="flex flex-col items-center gap-4">
             <button
               onClick={() => {
+                setActiveLeftTab("problems");
+                setIsLeftCollapsed(false);
+              }}
+              title="Problem List & Filters"
+              className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                activeLeftTab === "problems" && !isLeftCollapsed
+                  ? "text-zinc-900 bg-zinc-100 font-bold"
+                  : "text-zinc-400 hover:text-zinc-800 hover:bg-zinc-50"
+              }`}
+            >
+              <ListFilter className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={() => {
                 setActiveLeftTab("question");
                 setIsLeftCollapsed(false);
               }}
@@ -429,6 +505,12 @@ export default function StudentPlaygroundPage() {
           {/* Top Header Bar */}
           <div className="h-10 border-b border-zinc-200 px-4 flex items-center justify-between bg-zinc-50/60 shrink-0">
             <div className="flex items-center gap-2 text-[11px] font-mono font-bold uppercase text-zinc-500 tracking-wider">
+              {activeLeftTab === "problems" && (
+                <>
+                  <ListFilter className="w-3.5 h-3.5 text-zinc-800" />
+                  <span>PROBLEMS & FILTERS</span>
+                </>
+              )}
               {activeLeftTab === "question" && (
                 <>
                   <FileText className="w-3.5 h-3.5 text-blue-600" />
@@ -464,6 +546,169 @@ export default function StudentPlaygroundPage() {
               </button>
             </div>
           </div>
+
+          {/* TAB CONTENT 0: PROBLEMS & FILTERS (Step 9 & 10) */}
+          {activeLeftTab === "problems" && (
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 text-zinc-800 text-xs font-sans">
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-zinc-400" />
+                <input
+                  type="text"
+                  value={problemSearch}
+                  onChange={(e) => setProblemSearch(e.target.value)}
+                  placeholder="Search problem title or topic..."
+                  className="w-full pl-9 pr-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white"
+                />
+              </div>
+
+              {/* Filter Controls: Difficulty */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-mono font-bold text-zinc-500 uppercase tracking-wider">
+                  Difficulty
+                </label>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {(["ALL", "EASY", "MEDIUM", "HARD"] as const).map((d) => (
+                    <button
+                      key={d}
+                      onClick={() => setDifficultyFilter(d)}
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-mono font-bold transition-all cursor-pointer ${
+                        difficultyFilter === d
+                          ? "bg-zinc-900 text-white"
+                          : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                      }`}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Filter Controls: Status (Step 10 Progress Badges) */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-mono font-bold text-zinc-500 uppercase tracking-wider">
+                  Status
+                </label>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[
+                    { id: "ALL", label: "All" },
+                    { id: "SOLVED", label: "✓ Solved" },
+                    { id: "ATTEMPTED", label: "◐ Attempted" },
+                    { id: "UNATTEMPTED", label: "○ Unattempted" },
+                    { id: "BOOKMARKED", label: "★ Bookmarked" },
+                  ].map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => setStatusFilter(s.id)}
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+                        statusFilter === s.id
+                          ? "bg-blue-600 text-white"
+                          : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Filter Controls: Topic */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-mono font-bold text-zinc-500 uppercase tracking-wider">
+                  Topic
+                </label>
+                <select
+                  value={topicFilter}
+                  onChange={(e) => setTopicFilter(e.target.value)}
+                  className="w-full px-3 py-1.5 bg-zinc-50 border border-zinc-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
+                >
+                  <option value="ALL">All Topics</option>
+                  <option value="Array">Array</option>
+                  <option value="Hash Table">Hash Table</option>
+                  <option value="String">String</option>
+                  <option value="Algorithms">Algorithms</option>
+                  <option value="Dynamic Programming">Dynamic Programming</option>
+                </select>
+              </div>
+
+              {/* Problems List */}
+              <div className="space-y-2 pt-2 border-t border-zinc-100">
+                <div className="flex items-center justify-between text-[11px] font-mono text-zinc-500">
+                  <span>Found {filteredProblemsList.length} Problems</span>
+                </div>
+
+                {filteredProblemsList.length === 0 ? (
+                  <div className="p-6 text-center text-zinc-400 font-mono text-xs">
+                    No problems match your selected filters.
+                  </div>
+                ) : (
+                  filteredProblemsList.map((p) => (
+                    <div
+                      key={p.id || p.slug}
+                      onClick={() => {
+                        handleProblemChange(p.id || p.slug);
+                        setActiveLeftTab("question");
+                      }}
+                      className={`p-3 rounded-xl border transition-all cursor-pointer space-y-2 ${
+                        currentExample.id === p.id || currentExample.title === p.title
+                          ? "bg-blue-50/70 border-blue-200 shadow-2xs"
+                          : "bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="font-bold text-xs text-zinc-900 line-clamp-1">
+                          {p.title}
+                        </h4>
+
+                        {/* Step 10 Status Badges */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {p.isBookmarked && (
+                            <span className="px-1.5 py-0.5 bg-amber-100 text-amber-800 border border-amber-300 rounded text-[10px] font-semibold flex items-center gap-1">
+                              ★ Bookmarked
+                            </span>
+                          )}
+
+                          {p.userStatus === "SOLVED" && (
+                            <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded text-[10px] font-semibold flex items-center gap-1">
+                              ✓ Solved
+                            </span>
+                          )}
+
+                          {p.userStatus === "ATTEMPTED" && (
+                            <span className="px-1.5 py-0.5 bg-amber-100 text-amber-800 border border-amber-300 rounded text-[10px] font-semibold flex items-center gap-1">
+                              ◐ Attempted
+                            </span>
+                          )}
+
+                          {(!p.userStatus || p.userStatus === "UNATTEMPTED") && (
+                            <span className="px-1.5 py-0.5 bg-zinc-100 text-zinc-600 border border-zinc-200 rounded text-[10px] font-semibold flex items-center gap-1">
+                              ○ Unattempted
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
+                        <span
+                          className={`font-bold ${
+                            p.difficulty?.toUpperCase() === "EASY"
+                              ? "text-emerald-700"
+                              : p.difficulty?.toUpperCase() === "MEDIUM"
+                                ? "text-blue-700"
+                                : "text-red-700"
+                          }`}
+                        >
+                          {p.difficulty}
+                        </span>
+
+                        <span>{p.points || 10} XP</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
 
           {/* TAB CONTENT 1: QUESTION STATEMENT */}
           {activeLeftTab === "question" && (
