@@ -11,6 +11,7 @@ import {
   Dimensions,
   Platform,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -237,7 +238,11 @@ export function DashboardScreen({
       >
         {/* TOP NAVIGATION */}
         <View style={styles.topNav}>
-          <Text style={styles.topNavBrand}>PSP LUMORA</Text>
+          <Image
+            source={require("../../assets/PSP-LOGO-B.png")}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <View style={styles.topNavRight}>
             <TouchableOpacity
               style={styles.signOutPill}
@@ -545,6 +550,10 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: "#121316",
     letterSpacing: 0.8,
+  },
+  logoImage: {
+    height: 32,
+    width: 140,
   },
   topNavRight: {
     flexDirection: "row",

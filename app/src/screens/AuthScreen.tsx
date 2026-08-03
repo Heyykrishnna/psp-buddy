@@ -258,9 +258,7 @@ export function AuthScreen() {
                   <ActivityIndicator color="#ffffff" />
                 ) : (
                   <Text style={styles.primaryPillBtnText}>
-                    {isSignUp
-                      ? "Continue with email →"
-                      : "Continue with email →"}
+                    {isSignUp ? "Sign Up" : "Sign In"}
                   </Text>
                 )}
               </TouchableOpacity>

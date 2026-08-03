@@ -139,9 +139,7 @@ export default function AuthPage() {
               <button
                 onClick={() => setError("")}
                 className="text-red-400 hover:text-red-700 ml-2"
-              >
-                
-              </button>
+              ></button>
             </div>
           )}
 
@@ -151,9 +149,7 @@ export default function AuthPage() {
               <button
                 onClick={() => setInfoMessage("")}
                 className="text-emerald-500 hover:text-emerald-800 ml-2"
-              >
-                
-              </button>
+              ></button>
             </div>
           )}
 

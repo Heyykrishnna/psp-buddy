@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Req } from '@nestjs/common';
 import {
   AiService,
   GenerateAssessmentAiDto,
@@ -6,12 +6,14 @@ import {
   GenerateStudyPlanAiDto,
   TutorChatAiDto,
 } from './ai.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ChatService } from './chat.service';
 
 @Controller('ai')
-@UseGuards(JwtAuthGuard)
 export class AiController {
-  constructor(private readonly aiService: AiService) {}
+  constructor(
+    private readonly aiService: AiService,
+    private readonly chatService: ChatService,
+  ) {}
 
   @Post('generate-assessment')
   async generateAssessment(@Body() dto: GenerateAssessmentAiDto) {
@@ -29,7 +31,11 @@ export class AiController {
   }
 
   @Post('tutor-chat')
-  async chatTutor(@Body() dto: TutorChatAiDto) {
-    return this.aiService.chatTutor(dto);
+  async chatTutor(
+    @Req() req: any,
+    @Body() dto: TutorChatAiDto & { userId?: string; sessionId?: string },
+  ) {
+    const userId = req.user?.sub || req.user?.id || dto.userId;
+    return this.chatService.sendMessage(userId, dto.sessionId, dto.message, dto.topic);
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -24,7 +24,8 @@ const QUICK_PROMPTS = [
 ];
 
 export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
-  const { apiClient: client } = useAuth();
+  const { apiClient: client, user } = useAuth();
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([
     {
       role: 'assistant',
@@ -34,25 +35,74 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+
+  const studentId = user?.id;
+
+  // Load chat history from DB on mount
+  useEffect(() => {
+    async function loadChatHistory() {
+      if (!client) {
+        setLoadingHistory(false);
+        return;
+      }
+      try {
+        const sessions = await client.getChatSessions(studentId);
+        if (sessions && Array.isArray(sessions) && sessions.length > 0) {
+          const latestSession = sessions[0];
+          setActiveSessionId(latestSession.id);
+          const historyMsgs = await client.getChatMessages(latestSession.id, studentId);
+          if (historyMsgs && Array.isArray(historyMsgs) && historyMsgs.length > 0) {
+            setMessages(
+              historyMsgs.map((m: any) => ({
+                role: m.role === 'user' ? 'user' : 'assistant',
+                content: m.content,
+              }))
+            );
+          }
+        }
+      } catch {
+        // Keep default greeting
+      } finally {
+        setLoadingHistory(false);
+      }
+    }
+    loadChatHistory();
+  }, [client, studentId]);
 
   const handleSend = async (textToSend?: string) => {
     const query = textToSend || input.trim();
     if (!query || loading) return;
 
     setInput('');
-    const updatedHistory = [...messages, { role: 'user' as const, content: query }];
-    setMessages(updatedHistory);
+    const userMsgObj = { role: 'user' as const, content: query };
+    setMessages((prev) => [...prev, userMsgObj]);
     setLoading(true);
 
     try {
       if (client) {
+        let currentSId = activeSessionId;
+        if (!currentSId) {
+          const newSession = await client.createChatSession('General CS', studentId);
+          if (newSession && newSession.id) {
+            currentSId = newSession.id;
+            setActiveSessionId(newSession.id);
+          }
+        }
+
         const res = await client.chatTutor({
           message: query,
-          conversationHistory: updatedHistory,
+          sessionId: currentSId || undefined,
+          userId: studentId,
         });
 
-        if (res && res.message) {
-          setMessages((prev) => [...prev, { role: 'assistant', content: res.message }]);
+        if (res && res.sessionId && !activeSessionId) {
+          setActiveSessionId(res.sessionId);
+        }
+
+        const reply = res?.reply || res?.message;
+        if (reply) {
+          setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
           return;
         }
       }
@@ -106,36 +156,43 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
 
       {/* Chat Messages List */}
       <ScrollView style={styles.chatArea} contentContainerStyle={styles.chatPadding}>
-        {messages.map((m, idx) => (
-          <View
-            key={idx}
-            style={[
-              styles.bubbleContainer,
-              m.role === 'user' ? styles.userBubbleContainer : styles.aiBubbleContainer,
-            ]}
-          >
-            {m.role === 'assistant' && (
-              <View style={styles.aiBadge}>
-                <Text style={styles.aiBadgeText}>AI TUTOR</Text>
-              </View>
-            )}
+        {loadingHistory ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color="#5451FF" />
+            <Text style={styles.loadingText}>SYNCING CHAT HISTORY FROM DB...</Text>
+          </View>
+        ) : (
+          messages.map((m, idx) => (
             <View
+              key={idx}
               style={[
-                styles.bubble,
-                m.role === 'user' ? styles.userBubble : styles.aiBubble,
+                styles.bubbleContainer,
+                m.role === 'user' ? styles.userBubbleContainer : styles.aiBubbleContainer,
               ]}
             >
-              <Text
+              {m.role === 'assistant' && (
+                <View style={styles.aiBadge}>
+                  <Text style={styles.aiBadgeText}>AI TUTOR</Text>
+                </View>
+              )}
+              <View
                 style={[
-                  styles.bubbleText,
-                  m.role === 'user' ? styles.userBubbleText : styles.aiBubbleText,
+                  styles.bubble,
+                  m.role === 'user' ? styles.userBubble : styles.aiBubble,
                 ]}
               >
-                {m.content}
-              </Text>
+                <Text
+                  style={[
+                    styles.bubbleText,
+                    m.role === 'user' ? styles.userBubbleText : styles.aiBubbleText,
+                  ]}
+                >
+                  {m.content}
+                </Text>
+              </View>
             </View>
-          </View>
-        ))}
+          ))
+        )}
 
         {loading && (
           <View style={styles.loadingContainer}>
@@ -282,8 +339,9 @@ const styles = StyleSheet.create({
   loadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
-    padding: 8,
+    padding: 16,
   },
   loadingText: {
     fontSize: 10,

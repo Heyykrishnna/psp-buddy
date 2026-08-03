@@ -218,8 +218,32 @@ export class PSPBuddyApiClient {
     return res.data;
   }
 
-  async chatTutor(data: { message: string; conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>; topic?: string }) {
+  async chatTutor(data: { message: string; conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>; topic?: string; userId?: string; sessionId?: string }) {
     const res = await this.http.post('/ai/tutor-chat', data);
+    return res.data;
+  }
+
+  async getChatSessions(userId?: string) {
+    const p = userId ? `?userId=${userId}` : '';
+    const res = await this.http.get(`/chat/sessions${p}`);
+    return res.data;
+  }
+
+  async createChatSession(topic?: string, userId?: string) {
+    const p = userId ? `?userId=${userId}` : '';
+    const res = await this.http.post(`/chat/sessions${p}`, { topic, userId });
+    return res.data;
+  }
+
+  async getChatMessages(sessionId: string, userId?: string) {
+    const p = userId ? `?userId=${userId}` : '';
+    const res = await this.http.get(`/chat/sessions/${sessionId}/messages${p}`);
+    return res.data;
+  }
+
+  async sendChatMessage(sessionId: string, message: string, topic?: string, userId?: string) {
+    const p = userId ? `?userId=${userId}` : '';
+    const res = await this.http.post(`/chat/sessions/${sessionId}/messages${p}`, { message, topic, userId });
     return res.data;
   }
 

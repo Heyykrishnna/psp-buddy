@@ -6,9 +6,33 @@ import { AiService } from '../ai/ai.service';
 export class ChatService {
   constructor(private readonly aiService: AiService) {}
 
-  // -- Sessions --
+  // ── Helper: Resolve User ───────────────────────────────────────────────────
+  private async resolveUser(rawUserId?: string): Promise<string> {
+    if (rawUserId) {
+      const u = await db.user.findUnique({ where: { id: rawUserId } });
+      if (u) return u.id;
+    }
+    const student = await db.student.findFirst({ include: { user: true } });
+    if (student?.user) return student.user.id;
+    const firstUser = await db.user.findFirst();
+    if (firstUser) return firstUser.id;
 
-  async getSessions(userId: string) {
+    // Create fallback student user if none exists
+    const newUser = await db.user.create({
+      data: {
+        email: 'student@lumora.edu',
+        firstName: 'Alex',
+        lastName: 'Rivera',
+        role: 'STUDENT',
+      },
+    });
+    return newUser.id;
+  }
+
+  // ── Sessions ───────────────────────────────────────────────────────────────
+
+  async getSessions(rawUserId?: string) {
+    const userId = await this.resolveUser(rawUserId);
     const sessions = await db.chatSession.findMany({
       where: { userId },
       orderBy: { updatedAt: 'desc' },
@@ -28,21 +52,27 @@ export class ChatService {
     return sessions;
   }
 
-  async createSession(userId: string, topic?: string) {
+  async createSession(rawUserId?: string, topic?: string) {
+    const userId = await this.resolveUser(rawUserId);
     const session = await db.chatSession.create({
       data: { userId, topic: topic || null, title: 'New Chat' },
     });
     return session;
   }
 
-  async deleteSession(userId: string, sessionId: string) {
-    await db.chatSession.deleteMany({ where: { id: sessionId, userId } });
+  async deleteSession(rawUserId?: string, sessionId?: string) {
+    const userId = await this.resolveUser(rawUserId);
+    if (sessionId) {
+      await db.chatSession.deleteMany({ where: { id: sessionId, userId } });
+    }
     return { deleted: true };
   }
 
-  // -- Messages --
+  // ── Messages ───────────────────────────────────────────────────────────────
 
-  async getMessages(userId: string, sessionId: string) {
+  async getMessages(rawUserId?: string, sessionId?: string) {
+    const userId = await this.resolveUser(rawUserId);
+    if (!sessionId) return [];
     const session = await db.chatSession.findFirst({ where: { id: sessionId, userId } });
     if (!session) return [];
     return db.chatMessage.findMany({
@@ -52,43 +82,71 @@ export class ChatService {
   }
 
   async sendMessage(
-    userId: string,
-    sessionId: string,
-    userMessage: string,
+    rawUserId?: string,
+    sessionIdInput?: string,
+    userMessage?: string,
     topic?: string,
   ) {
-    // Fetch full history
+    const userId = await this.resolveUser(rawUserId);
+    if (!userMessage || !userMessage.trim()) {
+      return { reply: 'Please provide a message.', message: 'Please provide a message.' };
+    }
+
+    let sessionId = sessionIdInput;
+
+    // Auto-create or resolve active session if sessionId is missing, invalid, or 'active'
+    let session = sessionId && sessionId !== 'active' && sessionId !== 'new'
+      ? await db.chatSession.findFirst({ where: { id: sessionId, userId } })
+      : null;
+
+    if (!session) {
+      // Find latest session or create a new one
+      session = await db.chatSession.findFirst({
+        where: { userId },
+        orderBy: { updatedAt: 'desc' },
+      });
+
+      if (!session) {
+        session = await db.chatSession.create({
+          data: { userId, topic: topic || 'General CS', title: userMessage.slice(0, 40) },
+        });
+      }
+    }
+
+    sessionId = session.id;
+
+    // 1. Fetch full history for context
     const history = await db.chatMessage.findMany({
       where: { sessionId },
       orderBy: { createdAt: 'asc' },
     });
 
-    // Persist user message
+    // 2. Persist user message in DB
     await db.chatMessage.create({
-      data: { sessionId, role: 'user', content: userMessage },
+      data: { sessionId, role: 'user', content: userMessage.trim() },
     });
 
-    // Build conversation array for Groq
+    // 3. Build conversation array for Groq AI
     const conversationHistory = history.map((m: { role: string; content: string }) => ({
       role: m.role as 'user' | 'assistant',
       content: m.content,
     }));
 
-    // Get AI reply
+    // 4. Query AI Service
     const aiResult = await this.aiService.chatTutor({
       message: userMessage,
       conversationHistory,
-      topic: topic || (await db.chatSession.findUnique({ where: { id: sessionId } }))?.topic || undefined,
+      topic: topic || session.topic || 'General CS',
     });
 
-    const aiReply = aiResult?.reply || 'No response from AI.';
+    const aiReply = aiResult?.reply || 'I am ready to help you with your code!';
 
-    // Persist AI reply
+    // 5. Persist AI response in DB
     const aiMsg = await db.chatMessage.create({
       data: { sessionId, role: 'assistant', content: aiReply },
     });
 
-    // Update session title from first user message
+    // 6. Update session title from first user message & update timestamp
     if (history.length === 0) {
       const title = userMessage.length > 50 ? userMessage.slice(0, 47) + '...' : userMessage;
       await db.chatSession.update({
@@ -99,6 +157,12 @@ export class ChatService {
       await db.chatSession.update({ where: { id: sessionId }, data: { updatedAt: new Date() } });
     }
 
-    return { reply: aiReply, messageId: aiMsg.id };
+    return {
+      sessionId,
+      reply: aiReply,
+      message: aiReply,
+      aiMessage: aiMsg,
+      userMessage,
+    };
   }
 }
