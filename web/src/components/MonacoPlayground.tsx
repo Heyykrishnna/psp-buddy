@@ -12,6 +12,9 @@ interface MonacoPlaygroundProps {
   fontSize?: number;
   readOnly?: boolean;
   showMinimap?: boolean;
+  onRun?: () => void;
+  onSubmit?: () => void;
+  onSaveLocal?: () => void;
   onMount?: OnMount;
 }
 
@@ -24,6 +27,9 @@ export default function MonacoPlayground({
   fontSize = 14,
   readOnly = false,
   showMinimap = true,
+  onRun,
+  onSubmit,
+  onSaveLocal,
   onMount: externalOnMount,
 }: MonacoPlaygroundProps) {
   const editorRef = useRef<any>(null);
@@ -31,9 +37,22 @@ export default function MonacoPlayground({
   const handleEditorDidMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
 
-    // Custom keybinding for Cmd+Enter / Ctrl+Enter
+    // Keyboard Shortcut 1: Cmd+Enter / Ctrl+Enter -> Run Code
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-      // Trigger execution via command if needed
+      if (onRun) onRun();
+    });
+
+    // Keyboard Shortcut 2: Cmd+Shift+Enter / Ctrl+Shift+Enter -> Submit Code
+    editor.addCommand(
+      monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
+      () => {
+        if (onSubmit) onSubmit();
+      },
+    );
+
+    // Keyboard Shortcut 3: Cmd+S / Ctrl+S -> Save Local
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+      if (onSaveLocal) onSaveLocal();
     });
 
     if (externalOnMount) {
@@ -41,7 +60,7 @@ export default function MonacoPlayground({
     }
   };
 
-  // Map language string to Monaco language string
+  // Map language string to Monaco syntax highlighting language
   const getMonacoLanguage = (lang: string): string => {
     const l = lang.toLowerCase();
     if (l === "c++" || l === "cpp") return "cpp";
@@ -68,7 +87,7 @@ export default function MonacoPlayground({
 
   return (
     <div
-      className={`w-full h-full relative overflow-hidden rounded-b-xl border transition-colors ${
+      className={`w-full h-full relative overflow-hidden border transition-colors ${
         isDark ? "bg-[#1e1e1e] border-zinc-800" : "bg-white border-zinc-200"
       }`}
     >
@@ -86,6 +105,10 @@ export default function MonacoPlayground({
           automaticLayout: true,
           readOnly,
           lineNumbers: "on",
+          autoIndent: "full",
+          matchBrackets: "always",
+          autoClosingBrackets: "always",
+          autoClosingQuotes: "always",
           renderWhitespace: "selection",
           wordWrap: "on",
           tabSize: 4,

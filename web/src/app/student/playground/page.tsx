@@ -94,29 +94,42 @@ export default function StudentPlaygroundPage() {
     async function fetchFilteredProblems() {
       try {
         const queryParams = new URLSearchParams();
-        if (difficultyFilter !== "ALL") queryParams.append("difficulty", difficultyFilter);
+        if (difficultyFilter !== "ALL")
+          queryParams.append("difficulty", difficultyFilter);
         if (topicFilter !== "ALL") queryParams.append("topic", topicFilter);
-        if (problemSearch.trim()) queryParams.append("search", problemSearch.trim());
+        if (problemSearch.trim())
+          queryParams.append("search", problemSearch.trim());
         if (user?.id) queryParams.append("userId", user.id);
-        if (statusFilter === "SOLVED" || statusFilter === "ATTEMPTED" || statusFilter === "UNATTEMPTED") {
+        if (
+          statusFilter === "SOLVED" ||
+          statusFilter === "ATTEMPTED" ||
+          statusFilter === "UNATTEMPTED"
+        ) {
           queryParams.append("status", statusFilter);
         } else if (statusFilter === "BOOKMARKED") {
           queryParams.append("bookmarked", "true");
         }
 
-        const res = await apiFetch<any[]>(`/problems?${queryParams.toString()}`);
+        const res = await apiFetch<any[]>(
+          `/problems?${queryParams.toString()}`,
+        );
         if (res && Array.isArray(res)) {
           setFilteredProblemsList(res);
         }
       } catch {
         let list = PLAYGROUND_EXAMPLES.map((ex) => ({
           ...ex,
-          userStatus: ex.id === currentExample.id && submitting ? "SOLVED" : "UNATTEMPTED",
+          userStatus:
+            ex.id === currentExample.id && submitting
+              ? "SOLVED"
+              : "UNATTEMPTED",
           isBookmarked,
         }));
 
         if (difficultyFilter !== "ALL") {
-          list = list.filter((p) => p.difficulty.toUpperCase() === difficultyFilter);
+          list = list.filter(
+            (p) => p.difficulty.toUpperCase() === difficultyFilter,
+          );
         }
         if (problemSearch.trim()) {
           const q = problemSearch.toLowerCase();
@@ -126,16 +139,29 @@ export default function StudentPlaygroundPage() {
               p.description.toLowerCase().includes(q),
           );
         }
-        if (statusFilter === "SOLVED") list = list.filter((p) => p.userStatus === "SOLVED");
-        if (statusFilter === "ATTEMPTED") list = list.filter((p) => p.userStatus === "ATTEMPTED");
-        if (statusFilter === "UNATTEMPTED") list = list.filter((p) => p.userStatus === "UNATTEMPTED");
-        if (statusFilter === "BOOKMARKED") list = list.filter((p) => p.isBookmarked);
+        if (statusFilter === "SOLVED")
+          list = list.filter((p) => p.userStatus === "SOLVED");
+        if (statusFilter === "ATTEMPTED")
+          list = list.filter((p) => p.userStatus === "ATTEMPTED");
+        if (statusFilter === "UNATTEMPTED")
+          list = list.filter((p) => p.userStatus === "UNATTEMPTED");
+        if (statusFilter === "BOOKMARKED")
+          list = list.filter((p) => p.isBookmarked);
 
         setFilteredProblemsList(list);
       }
     }
     fetchFilteredProblems();
-  }, [difficultyFilter, topicFilter, problemSearch, statusFilter, user?.id, isBookmarked, submitting, currentExample.id]);
+  }, [
+    difficultyFilter,
+    topicFilter,
+    problemSearch,
+    statusFilter,
+    user?.id,
+    isBookmarked,
+    submitting,
+    currentExample.id,
+  ]);
 
   // IDE Settings
   const [editorFontSize, setEditorFontSize] = useState<number>(14);
@@ -199,14 +225,39 @@ export default function StudentPlaygroundPage() {
     };
   }, [isDragging]);
 
-  // Change selected problem
+  const [saveToast, setSaveToast] = useState<string | null>(null);
+
+  const getStorageKey = (problemIdOrSlug: string) => {
+    return `psp_code_solution_${problemIdOrSlug}`;
+  };
+
+  // Save Code locally
+  const handleSaveLocalCode = () => {
+    if (currentExample.id && code) {
+      localStorage.setItem(getStorageKey(currentExample.id), code);
+      setSaveToast("Code saved locally!");
+      setTimeout(() => setSaveToast(null), 2000);
+    }
+  };
+
+  // Auto save code to local storage on code change
+  useEffect(() => {
+    if (currentExample.id && code) {
+      localStorage.setItem(getStorageKey(currentExample.id), code);
+    }
+  }, [code, currentExample.id]);
+
+  // Change selected problem & restore local code if present
   const handleProblemChange = (id: string) => {
     const found = PLAYGROUND_EXAMPLES.find((ex) => ex.id === id);
     if (found) {
       setSelectedExampleId(found.id);
       setCurrentExample(found);
       setLanguage(found.language);
-      setCode(found.starterCode);
+
+      const savedCode = localStorage.getItem(getStorageKey(found.id));
+      setCode(savedCode || found.starterCode);
+
       setCustomInput(found.sampleInput);
       setOutput("");
       setErrorMessage(null);
@@ -627,7 +678,9 @@ export default function StudentPlaygroundPage() {
                   <option value="Hash Table">Hash Table</option>
                   <option value="String">String</option>
                   <option value="Algorithms">Algorithms</option>
-                  <option value="Dynamic Programming">Dynamic Programming</option>
+                  <option value="Dynamic Programming">
+                    Dynamic Programming
+                  </option>
                 </select>
               </div>
 
@@ -650,7 +703,8 @@ export default function StudentPlaygroundPage() {
                         setActiveLeftTab("question");
                       }}
                       className={`p-3 rounded-xl border transition-all cursor-pointer space-y-2 ${
-                        currentExample.id === p.id || currentExample.title === p.title
+                        currentExample.id === p.id ||
+                        currentExample.title === p.title
                           ? "bg-blue-50/70 border-blue-200 shadow-2xs"
                           : "bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
                       }`}
@@ -680,7 +734,8 @@ export default function StudentPlaygroundPage() {
                             </span>
                           )}
 
-                          {(!p.userStatus || p.userStatus === "UNATTEMPTED") && (
+                          {(!p.userStatus ||
+                            p.userStatus === "UNATTEMPTED") && (
                             <span className="px-1.5 py-0.5 bg-zinc-100 text-zinc-600 border border-zinc-200 rounded text-[10px] font-semibold flex items-center gap-1">
                               ○ Unattempted
                             </span>
@@ -998,7 +1053,7 @@ export default function StudentPlaygroundPage() {
         <section className="flex-1 flex flex-col overflow-hidden bg-white">
           {/* Top Monaco Bar */}
           <div className="h-10 border-b border-zinc-200 px-4 flex items-center justify-between bg-zinc-50/60 shrink-0 font-mono text-xs">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
@@ -1010,21 +1065,54 @@ export default function StudentPlaygroundPage() {
                 <option value="cpp">C++</option>
                 <option value="java">Java</option>
               </select>
+
+              {/* Theme Quick Toggle */}
+              <button
+                onClick={() =>
+                  setEditorTheme((prev) =>
+                    prev === "vs-dark" ? "light" : "vs-dark",
+                  )
+                }
+                title="Toggle Theme (Dark / Light)"
+                className="px-2 py-1 bg-white border border-zinc-200 hover:bg-zinc-100 rounded text-[11px] font-mono text-zinc-700 cursor-pointer"
+              >
+                {editorTheme === "vs-dark" ? "🌙 Dark" : "☀️ Light"}
+              </button>
+
+              {/* Font Size Control */}
+              <select
+                value={editorFontSize}
+                onChange={(e) => setEditorFontSize(Number(e.target.value))}
+                className="bg-white border border-zinc-200 text-zinc-700 rounded px-2 py-1 text-xs focus:outline-none cursor-pointer"
+              >
+                <option value={12}>12px</option>
+                <option value={14}>14px</option>
+                <option value={16}>16px</option>
+                <option value={18}>18px</option>
+                <option value={20}>20px</option>
+              </select>
+
+              {/* Local Save Status / Button */}
+              <button
+                onClick={handleSaveLocalCode}
+                title="Save solution locally (Ctrl+S / Cmd+S)"
+                className="px-2 py-1 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
+              >
+                💾 {saveToast || "Save Local"}
+              </button>
             </div>
 
             <div className="flex items-center gap-3 text-zinc-400">
+              <span className="text-[10px] text-zinc-400 font-mono hidden md:inline">
+                Ctrl+Enter: Run | Ctrl+Shift+Enter: Submit | Ctrl+S: Save
+              </span>
+
               <button
                 onClick={() => setCode(currentExample.starterCode)}
                 title="Reset Starter Code"
                 className="hover:text-zinc-700 transition-colors cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-              </button>
-              <button
-                title="Fullscreen Toggle"
-                className="hover:text-zinc-700 transition-colors cursor-pointer"
-              >
-                <Maximize2 className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
@@ -1038,6 +1126,9 @@ export default function StudentPlaygroundPage() {
               theme={editorTheme}
               fontSize={editorFontSize}
               showMinimap={showMinimap}
+              onRun={handleRunCode}
+              onSubmit={handleSubmitCode}
+              onSaveLocal={handleSaveLocalCode}
               height="100%"
             />
           </div>
