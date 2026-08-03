@@ -851,9 +851,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: "#191a1e",
+    backgroundColor: "rgba(25, 26, 30, 0.75)",
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.08)",
+    borderBottomColor: "rgba(255, 255, 255, 0.08)",
+    ...(Platform.OS === "web"
+      ? ({
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+        } as any)
+      : {}),
   },
   backBtn: {
     paddingVertical: 4,
