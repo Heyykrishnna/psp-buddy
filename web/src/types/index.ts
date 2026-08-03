@@ -129,6 +129,7 @@ export interface QuestionDTO {
   negativeMarks?: number;
   orderIndex: number;
   explanation?: string;
+  correctOptionId?: string;
   trueFalseAnswer?: boolean;
   shortAnswerKeywords?: string[];
   options?: OptionDTO[];
@@ -138,6 +139,7 @@ export interface OptionDTO {
   id: string;
   questionId?: string;
   optionText: string;
+  text?: string;
   isCorrect?: boolean;
   orderIndex: number;
 }

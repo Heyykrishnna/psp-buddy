@@ -710,13 +710,18 @@ export function AssessmentScreen({
 
             {questions.map((q, idx) => {
               const userAnsId = selectedAnswers[q.id];
-              const isCorrect = userAnsId === q.correctOptionId;
-              const userAnsText = q.options?.find(
-                (o) => o.id === userAnsId,
-              )?.text;
-              const correctAnsText = q.options?.find(
-                (o) => o.id === q.correctOptionId,
-              )?.text;
+              const userOption = q.options?.find((o) => o.id === userAnsId);
+              const correctOption = q.options?.find(
+                (o) =>
+                  o.isCorrect ||
+                  (q.correctOptionId && o.id === q.correctOptionId),
+              );
+              const isCorrect = userOption
+                ? userOption.isCorrect || userOption.id === q.correctOptionId
+                : false;
+              const userAnsText = userOption?.optionText || userOption?.text;
+              const correctAnsText =
+                correctOption?.optionText || correctOption?.text;
 
               return (
                 <View key={q.id} style={styles.reviewCard}>
