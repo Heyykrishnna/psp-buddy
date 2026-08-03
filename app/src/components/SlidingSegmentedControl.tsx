@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -15,15 +15,18 @@ interface SlidingSegmentedControlProps<T extends string> {
   formatLabel?: (option: T) => string;
 }
 
+const PADDING = 5;
+
 export function SlidingSegmentedControl<T extends string>({
   options,
   selectedOption,
   onSelect,
   formatLabel,
 }: SlidingSegmentedControlProps<T>) {
+  const [containerWidth, setContainerWidth] = useState<number>(0);
   const selectedIndex = options.indexOf(selectedOption);
   const animValue = useRef(
-    new Animated.Value(selectedIndex < 0 ? 0 : selectedIndex),
+    new Animated.Value(selectedIndex < 0 ? 0 : selectedIndex)
   ).current;
 
   useEffect(() => {
@@ -37,65 +40,79 @@ export function SlidingSegmentedControl<T extends string>({
   }, [selectedIndex]);
 
   const numOptions = options.length;
+  const innerTrackWidth = containerWidth > 0 ? containerWidth - PADDING * 2 : 0;
+  const itemWidth = innerTrackWidth > 0 ? innerTrackWidth / numOptions : 0;
 
   const leftPosition = animValue.interpolate({
     inputRange: options.map((_, i) => i),
-    outputRange: options.map((_, i) => `${(i * 100) / numOptions}%`),
+    outputRange: options.map((_, i) => PADDING + i * itemWidth),
   });
 
   return (
-    <View style={styles.container}>
-      <Animated.View
-        style={[
-          styles.activeIndicator,
-          {
-            width: `${100 / numOptions}%`,
-            left: leftPosition,
-          },
-        ]}
-      />
-      {options.map((opt) => {
-        const isActive = selectedOption === opt;
-        return (
-          <TouchableOpacity
-            key={opt}
-            style={styles.tab}
-            onPress={() => onSelect(opt)}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.tabText, isActive && styles.activeTabText]}>
-              {formatLabel ? formatLabel(opt) : opt.replace("_", " ")}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
+    <View
+      style={styles.container}
+      onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
+    >
+      {containerWidth > 0 && itemWidth > 0 && (
+        <Animated.View
+          style={[
+            styles.activeIndicator,
+            {
+              width: itemWidth,
+              left: leftPosition,
+            },
+          ]}
+        />
+      )}
+      <View style={styles.track}>
+        {options.map((opt) => {
+          const isActive = selectedOption === opt;
+          return (
+            <TouchableOpacity
+              key={opt}
+              style={styles.tab}
+              onPress={() => onSelect(opt)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.tabText, isActive && styles.activeTabText]}>
+                {formatLabel ? formatLabel(opt) : opt.replace("_", " ")}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: "row",
     backgroundColor: "#191a1e",
-    borderRadius: 20,
-    padding: 4,
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.08)",
     position: "relative",
     overflow: "hidden",
-    height: 48,
+    height: 52,
+    justifyContent: "center",
+    marginVertical: 4,
+  },
+  track: {
+    flexDirection: "row",
+    height: "100%",
     alignItems: "center",
+    paddingHorizontal: PADDING,
   },
   activeIndicator: {
     position: "absolute",
-    top: 4,
-    bottom: 4,
+    top: PADDING,
+    bottom: PADDING,
     backgroundColor: "#5451FF",
-    borderRadius: 16,
+    borderRadius: 17,
     shadowColor: "#5451FF",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
+    shadowOpacity: 0.45,
+    shadowRadius: 8,
     elevation: 4,
   },
   tab: {

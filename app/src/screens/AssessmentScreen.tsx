@@ -924,6 +924,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   timerWarning: {
     backgroundColor: "rgba(239,68,68,0.2)",
