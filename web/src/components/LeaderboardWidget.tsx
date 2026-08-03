@@ -11,10 +11,8 @@ export interface LeaderboardWidgetProps {
 export const LeaderboardWidget: React.FC<LeaderboardWidgetProps> = ({ entries, currentUserId }) => {
   return (
     <div>
-      <h3 className="font-serif text-xl font-normal text-[#111111] mb-6 flex items-center gap-2">
-        🏆 Live Synchronized Leaderboard
-      </h3>
       <div className="flex flex-col gap-2.5">
+
         {entries.slice(0, 5).map((entry) => {
           const isCurrentUser = entry.studentId === currentUserId;
           return (

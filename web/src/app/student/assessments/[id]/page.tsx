@@ -224,25 +224,19 @@ export default function StudentAssessmentRunnerPage({
               {/* Live Autosave Indicator */}
               <div className="flex items-center gap-1.5 text-xs font-mono">
                 {autosaveStatus === "SAVING" && (
-                  <span className="text-amber-600 animate-pulse">
-                    ● Saving to DB...
-                  </span>
+                  <span className="text-amber-600 animate-pulse">Saving...</span>
                 )}
                 {autosaveStatus === "SAVED" && (
-                  <span className="text-emerald-600 font-medium">
-                    ✓ Autosaved to PostgreSQL
-                  </span>
+                  <span className="text-emerald-600 font-medium">Saved</span>
                 )}
                 {autosaveStatus === "ERROR" && (
-                  <span className="text-red-600 font-medium">
-                    ⚠️ Autosave Error
-                  </span>
+                  <span className="text-red-600 font-medium">Save failed</span>
                 )}
               </div>
 
               {/* Timer Badge */}
               <div className="px-3.5 py-1.5 bg-[#111111] text-white rounded-md text-xs font-mono font-bold">
-                ⏱ {formatTime(timeLeftSeconds)}
+                {formatTime(timeLeftSeconds)}
               </div>
             </div>
           )}
@@ -250,7 +244,7 @@ export default function StudentAssessmentRunnerPage({
 
         {error && (
           <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-xs rounded-md">
-            ⚠️ {error}
+            {error}
           </div>
         )}
 
@@ -293,10 +287,7 @@ export default function StudentAssessmentRunnerPage({
             <div className="p-4 border border-zinc-200 rounded-lg space-y-2 text-xs text-zinc-600 font-sans">
               <p className="font-semibold text-[#111111]">Key Instructions:</p>
               <ul className="list-disc pl-5 space-y-1">
-                <li>
-                  Every answer change is automatically saved in real time to
-                  PostgreSQL.
-                </li>
+                <li>Your answers are saved automatically as you go.</li>
                 {assessment.hasNegativeMarking && (
                   <li className="text-red-600 font-semibold">
                     Negative marking is active: -{assessment.negativeMarkValue}{" "}
@@ -325,7 +316,6 @@ export default function StudentAssessmentRunnerPage({
             </div>
           </div>
         ) : (
-          /* LIVE QUESTION ATTEMPT RUNNER WITH AUTOSAVE */
           <div className="space-y-6">
             {/* Question Navigator Bar */}
             <div className="bg-white border border-zinc-200 rounded-xl p-4 flex items-center justify-between gap-4 overflow-x-auto shadow-sm">

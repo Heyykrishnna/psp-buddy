@@ -202,7 +202,6 @@ export default function AnalyticsPage() {
                 <TargetIcon className="w-4 h-4 text-[#111111]" />
                 <div>
                   <h3 className="font-serif text-xl font-normal text-[#111111]">Topic Mastery Breakdown</h3>
-                  <p className="text-xs text-zinc-500 mt-0.5">Deterministic — computed from {overview.totalAssessmentsAttempted} assessments</p>
                 </div>
               </div>
 

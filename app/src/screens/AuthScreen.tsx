@@ -89,10 +89,6 @@ export function AuthScreen() {
           {/* Wordmark */}
           <View style={styles.wordmarkRow}>
             <Text style={styles.wordmark}>PSP LUMORA</Text>
-            <View style={styles.livePill}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveText}>LIVE</Text>
-            </View>
           </View>
 
           {/* Large Heading */}
