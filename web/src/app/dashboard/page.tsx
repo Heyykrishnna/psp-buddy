@@ -20,6 +20,7 @@ import {
   StarIcon,
   PersonIcon,
   LightningBoltIcon,
+  CodeIcon,
 } from "@radix-ui/react-icons";
 
 export default function DashboardPage() {
@@ -239,6 +240,13 @@ export default function DashboardPage() {
             >
               <ReaderIcon className="w-3.5 h-3.5" />
               Assessments
+            </button>
+            <button
+              onClick={() => router.push("/student/playground")}
+              className="flex items-center gap-1.5 px-3.5 py-2 border border-zinc-200 text-xs font-medium text-zinc-700 rounded-md hover:bg-zinc-100 transition-all cursor-pointer"
+            >
+              <CodeIcon className="w-3.5 h-3.5 text-purple-600" />
+              IDE Playground
             </button>
             <button
               onClick={() => router.push("/student/ai-tutor")}

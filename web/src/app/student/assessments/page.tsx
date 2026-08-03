@@ -17,124 +17,6 @@ import {
   ExclamationTriangleIcon,
 } from "@radix-ui/react-icons";
 
-const MOCK_ASSESSMENTS: AssessmentDTO[] = [
-  {
-    id: "demo-asm-coding",
-    title: "Python & Algorithms Coding Playground Assessment",
-    description:
-      "Interactive Coding Playground assessment covering Two Sum, Array Reversal, and Algorithm optimization. Solve in the web IDE and pass test cases.",
-    className: "1st Sem",
-    topic: "Data Structures & Algorithms",
-    assessmentType: "PRACTICE",
-    totalMarks: 50,
-    passingMarks: 30,
-    durationMinutes: 45,
-    hasNegativeMarking: false,
-    containsCoding: true,
-    isWebOnly: true,
-    isPublished: true,
-    createdById: "teacher-1",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    _count: { questions: 2, attempts: 18 },
-  },
-  {
-    id: "demo-asm-1",
-    title: "Algorithm Complexity & Data Structures Quiz",
-    description:
-      "Evaluates Big-O notation, stacks, queues, hash tables, and sorting algorithms.",
-    className: "Data Structures II",
-    topic: "Computer Science",
-    assessmentType: "QUIZ",
-    totalMarks: 10,
-    passingMarks: 6,
-    durationMinutes: 15,
-    hasNegativeMarking: true,
-    negativeMarkValue: 0.5,
-    isPublished: true,
-    createdById: "teacher-1",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    _count: { questions: 5, attempts: 12 },
-  },
-  {
-    id: "demo-asm-2",
-    title: "System Architecture & Operating Systems Exam",
-    description:
-      "Deep dive into process scheduling, memory allocation, page faults, and threads.",
-    className: "Operating Systems",
-    topic: "Computer Science",
-    assessmentType: "EXAM",
-    totalMarks: 25,
-    passingMarks: 15,
-    durationMinutes: 30,
-    hasNegativeMarking: false,
-    negativeMarkValue: 0,
-    isPublished: true,
-    createdById: "teacher-1",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    _count: { questions: 10, attempts: 8 },
-  },
-  {
-    id: "demo-asm-3",
-    title: "Database Design & SQL Fundamentals",
-    description:
-      "Practice on relational schema, normalization (1NF–3NF), joins, and query optimization.",
-    className: "Database Management",
-    topic: "Computer Science",
-    assessmentType: "PRACTICE",
-    totalMarks: 15,
-    passingMarks: 9,
-    durationMinutes: 20,
-    hasNegativeMarking: false,
-    negativeMarkValue: 0,
-    isPublished: true,
-    createdById: "teacher-2",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    _count: { questions: 8, attempts: 25 },
-  },
-  {
-    id: "demo-asm-4",
-    title: "Object Oriented Programming Concepts",
-    description:
-      "Tests understanding of inheritance, polymorphism, encapsulation, and abstraction.",
-    className: "1st Sem",
-    topic: "Programming",
-    assessmentType: "QUIZ",
-    totalMarks: 20,
-    passingMarks: 12,
-    durationMinutes: 25,
-    hasNegativeMarking: true,
-    negativeMarkValue: 0.25,
-    isPublished: true,
-    createdById: "teacher-1",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    _count: { questions: 12, attempts: 18 },
-  },
-  {
-    id: "demo-asm-5",
-    title: "Discrete Mathematics & Logic Gates",
-    description:
-      "Propositional logic, set theory, graph theory, and boolean algebra.",
-    className: "2nd Sem",
-    topic: "Mathematics",
-    assessmentType: "EXAM",
-    totalMarks: 30,
-    passingMarks: 18,
-    durationMinutes: 45,
-    hasNegativeMarking: true,
-    negativeMarkValue: 0.5,
-    isPublished: true,
-    createdById: "teacher-3",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    _count: { questions: 15, attempts: 6 },
-  },
-];
-
 const FILTER_TABS = ["ALL", "QUIZ", "EXAM", "PRACTICE"];
 
 const TYPE_STYLES: Record<string, string> = {
@@ -162,13 +44,9 @@ export default function StudentAssessmentsPage() {
     async function loadAssessments() {
       try {
         const data = await apiFetch<AssessmentDTO[]>("/assessments");
-        if (data && data.length > 0) {
-          setAssessments(data);
-        } else {
-          setAssessments(MOCK_ASSESSMENTS);
-        }
+        setAssessments(data || []);
       } catch {
-        setAssessments(MOCK_ASSESSMENTS);
+        setAssessments([]);
       } finally {
         setLoading(false);
       }

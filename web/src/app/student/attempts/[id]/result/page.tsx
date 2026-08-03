@@ -195,7 +195,7 @@ export default function AssessmentResultPage({
               disabled={aiStudyPlanLoading}
               className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-md shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
-              <span>🧠 Generate AI Remediation Plan</span>
+              <span>Generate AI Remediation Plan</span>
             </button>
           </div>
 

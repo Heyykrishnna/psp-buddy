@@ -158,13 +158,9 @@ export function AssessmentScreen({
       setLoading(true);
       try {
         const list = await apiClient.getAssessments();
-        if (list && list.length > 0) {
-          setAssessments(list);
-        } else {
-          setAssessments(DEFAULT_MOCK_ASSESSMENTS);
-        }
+        setAssessments(list || []);
       } catch {
-        setAssessments(DEFAULT_MOCK_ASSESSMENTS);
+        setAssessments([]);
       } finally {
         setLoading(false);
       }
@@ -1740,105 +1736,7 @@ export function AssessmentScreen({
   );
 }
 
-const DEFAULT_MOCK_ASSESSMENTS: AssessmentDTO[] = [
-  {
-    id: "demo-asm-coding",
-    title: "Python & Algorithms Coding Playground",
-    description:
-      "Interactive Coding Playground assessment covering Two Sum, Array Reversal, and Algorithm optimization. Requires Web Browser IDE.",
-    className: "1st Sem",
-    topic: "Data Structures & Algorithms",
-    assessmentType: "PRACTICE",
-    submissionMode: "ONLINE_TEST",
-    containsCoding: true,
-    isWebOnly: true,
-    totalMarks: 50,
-    passingMarks: 30,
-    durationMinutes: 45,
-    hasNegativeMarking: false,
-    isPublished: true,
-    createdById: "teacher-1",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "demo-asm-1",
-    title: "Algorithm Complexity & Data Structures Quiz",
-    description:
-      "Evaluates Big-O notation, stacks, queues, hash tables, and sorting algorithms.",
-    className: "Data Structures II",
-    assessmentType: "QUIZ",
-    submissionMode: "HYBRID",
-    isWorkbook: true,
-    totalMarks: 10,
-    passingMarks: 6,
-    durationMinutes: 15,
-    hasNegativeMarking: true,
-    negativeMarkValue: 0.5,
-    isPublished: true,
-    createdById: "teacher-1",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "demo-asm-2",
-    title: "System Architecture & Operating Systems Exam",
-    description:
-      "Deep dive into process scheduling, memory allocation, page faults, and threads.",
-    className: "Operating Systems",
-    assessmentType: "EXAM",
-    submissionMode: "ONLINE_TEST",
-    isWorkbook: false,
-    totalMarks: 25,
-    passingMarks: 15,
-    durationMinutes: 30,
-    hasNegativeMarking: false,
-    negativeMarkValue: 0,
-    isPublished: true,
-    createdById: "teacher-1",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "demo-asm-3",
-    title: "Discrete Math Proofs & Logic Workbook",
-    description:
-      "Physical workbook assignment requiring step-by-step mathematical proofs and truth tables.",
-    className: "Discrete Math",
-    assessmentType: "PRACTICE",
-    submissionMode: "WORKBOOK_ONLY",
-    isWorkbook: true,
-    totalMarks: 20,
-    passingMarks: 12,
-    durationMinutes: 45,
-    hasNegativeMarking: false,
-    negativeMarkValue: 0,
-    dueDate: "2026-08-10T23:59:59.000Z",
-    isPublished: true,
-    createdById: "teacher-1",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "demo-asm-4",
-    title: "Binary Trees & Graph Traversal Practice",
-    description:
-      "Interactive practice set combining digital quiz questions and handwritten tree drawing.",
-    className: "Data Structures II",
-    assessmentType: "PRACTICE",
-    submissionMode: "HYBRID",
-    isWorkbook: true,
-    totalMarks: 15,
-    passingMarks: 9,
-    durationMinutes: 20,
-    hasNegativeMarking: true,
-    negativeMarkValue: 0.25,
-    isPublished: true,
-    createdById: "teacher-1",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+
 
 const styles = StyleSheet.create({
   safeArea: {

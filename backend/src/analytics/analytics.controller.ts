@@ -44,6 +44,33 @@ export class AnalyticsController {
   // ── Class Analytics (Teacher View) ────────────────────────────────────────
 
   /**
+   * GET /analytics/class/students
+   * Per-student mastery rankings for default class (teacher view)
+   */
+  @Get('class/students')
+  async getClassStudentsDefault() {
+    return this.analyticsService.getClassStudentRankings('1st Sem');
+  }
+
+  /**
+   * GET /analytics/class/topics
+   * Aggregate topic mastery across default class
+   */
+  @Get('class/topics')
+  async getClassTopicsDefault() {
+    return this.analyticsService.getClassTopicBreakdown('1st Sem');
+  }
+
+  /**
+   * GET /analytics/student/:studentId/performance
+   * Specific student performance history
+   */
+  @Get('student/:studentId/performance')
+  async getStudentPerformanceById(@Param('studentId') studentId: string) {
+    return this.analyticsService.getStudentPerformance(studentId);
+  }
+
+  /**
    * GET /analytics/classes/:id
    * Class-level summary — total assessments, average score, etc.
    */

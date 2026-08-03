@@ -435,25 +435,18 @@ export default function TeacherDashboardPage() {
           ]);
 
         setStudents(
-          studentsRes.status === "fulfilled" && studentsRes.value?.length > 0
-            ? studentsRes.value
-            : MOCK_STUDENTS,
+          studentsRes.status === "fulfilled" ? studentsRes.value || [] : [],
         );
         setTopics(
-          topicsRes.status === "fulfilled" && topicsRes.value?.length > 0
-            ? topicsRes.value
-            : MOCK_TOPICS,
+          topicsRes.status === "fulfilled" ? topicsRes.value || [] : [],
         );
         setAssessments(
-          assessmentsRes.status === "fulfilled" &&
-            assessmentsRes.value?.length > 0
-            ? assessmentsRes.value
-            : MOCK_ASSESSMENTS,
+          assessmentsRes.status === "fulfilled" ? assessmentsRes.value || [] : [],
         );
       } catch {
-        setStudents(MOCK_STUDENTS);
-        setTopics(MOCK_TOPICS);
-        setAssessments(MOCK_ASSESSMENTS);
+        setStudents([]);
+        setTopics([]);
+        setAssessments([]);
       } finally {
         setLoading(false);
       }
@@ -468,11 +461,9 @@ export default function TeacherDashboardPage() {
       const data = await apiFetch<StudentPerformanceDTO[]>(
         `/analytics/student/${studentId}/performance`,
       );
-      setStudentHistory(
-        data?.length > 0 ? data : MOCK_STUDENT_HISTORY[studentId] || [],
-      );
+      setStudentHistory(data || []);
     } catch {
-      setStudentHistory(MOCK_STUDENT_HISTORY[studentId] || []);
+      setStudentHistory([]);
     } finally {
       setHistoryLoading(false);
     }
