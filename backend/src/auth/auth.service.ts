@@ -11,7 +11,7 @@ export class AuthService {
   constructor(
     private jwtService: JwtService,
     private mailService: MailService,
-  ) {}
+  ) { }
 
   async sendVerificationCode(email: string) {
     const existing = await db.user.findUnique({ where: { email } });
@@ -55,10 +55,10 @@ export class AuthService {
     // Clean up used code
     try {
       await db.verificationCode.delete({ where: { email: input.email } });
-    } catch {}
+    } catch { }
 
     const hashedPassword = await argon2.hash(input.password);
-    
+
     let assignedRole: RoleName = RoleName.STUDENT;
     if (input.role) {
       assignedRole = input.role as RoleName;
@@ -169,21 +169,18 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    if (input.avatarUrl) {
-      await db.user.update({
-        where: { id: userId },
-        data: { avatarUrl: input.avatarUrl, isOnboarded: true },
-      });
-    } else {
-      await db.user.update({
-        where: { id: userId },
-        data: { isOnboarded: true },
-      });
-    }
-
     if (user.role === RoleName.STUDENT) {
-      const regNo = input.studentRegistrationNo?.trim() || user.student?.studentRegistrationNo || `STU-${Date.now().toString().slice(-6)}`;
+      const regNo = input.studentRegistrationNo?.trim() || user.studentRegistrationNo || user.student?.studentRegistrationNo || `STU-${Date.now().toString().slice(-6)}`;
       const grade = input.gradeLevel || user.student?.gradeLevel || '1st Sem';
+
+      await db.user.update({
+        where: { id: userId },
+        data: {
+          studentRegistrationNo: regNo,
+          isOnboarded: true,
+          ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
+        },
+      });
 
       if (user.student) {
         await db.student.update({
@@ -202,7 +199,17 @@ export class AuthService {
           },
         });
       }
-    } else if (user.role === RoleName.TEACHER) {
+    } else {
+      await db.user.update({
+        where: { id: userId },
+        data: {
+          isOnboarded: true,
+          ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
+        },
+      });
+    }
+
+    if (user.role === RoleName.TEACHER) {
       const empId = input.employeeId?.trim() || user.teacher?.employeeId || `EMP-${Date.now().toString().slice(-6)}`;
       const dept = input.department || user.teacher?.department || 'Computer Science';
 
@@ -322,7 +329,7 @@ export class AuthService {
       isActive: user.isActive,
       isEmailVerified: user.isEmailVerified,
       isOnboarded: user.isOnboarded,
-      studentRegistrationNo: user.student?.studentRegistrationNo || null,
+      studentRegistrationNo: user.studentRegistrationNo || user.student?.studentRegistrationNo || null,
       gradeLevel: user.student?.gradeLevel || null,
       employeeId: user.teacher?.employeeId || null,
       department: user.teacher?.department || null,
