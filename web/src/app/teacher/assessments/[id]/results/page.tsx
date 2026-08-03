@@ -4,20 +4,27 @@ import React, { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
-import { SlidingTabs } from "@/components/SlidingTabs";
 import {
-  BarChartIcon,
   ArrowLeftIcon,
-  CheckCircledIcon,
-  CrossCircledIcon,
+  CheckIcon,
+  Cross2Icon,
   PersonIcon,
-  ClockIcon,
-  TargetIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  BarChartIcon,
+  ClockIcon,
+  ReaderIcon,
 } from "@radix-ui/react-icons";
 
-interface StudentResult {
+export interface QuestionAnswerDetail {
+  questionText: string;
+  topic: string;
+  isCorrect: boolean;
+  marksObtained: number;
+  maxMarks: number;
+}
+
+export interface StudentResult {
   studentId: string;
   studentName: string;
   email: string;
@@ -27,20 +34,14 @@ interface StudentResult {
   timeTakenMinutes: number;
   submittedAt: string;
   passed: boolean;
-  answers: {
-    questionText: string;
-    topic: string;
-    isCorrect: boolean | null;
-    marksObtained: number;
-    maxMarks: number;
-  }[];
+  answers: QuestionAnswerDetail[];
 }
 
-interface AssessmentResultsSummary {
+export interface AssessmentResultsSummary {
   assessmentId: string;
   assessmentTitle: string;
-  className: string;
-  topic: string;
+  className?: string;
+  topic?: string;
   assessmentType: string;
   totalMarks: number;
   passingMarks: number;
@@ -60,303 +61,6 @@ interface AssessmentResultsSummary {
   }[];
   studentResults: StudentResult[];
 }
-
-// ── Mock data for demo ──
-const buildMockResults = (id: string): AssessmentResultsSummary => ({
-  assessmentId: id,
-  assessmentTitle: "Algorithm Complexity & Data Structures Quiz",
-  className: "1st Sem",
-  topic: "Computer Science",
-  assessmentType: "QUIZ",
-  totalMarks: 25,
-  passingMarks: 15,
-  durationMinutes: 30,
-  totalAttempts: 5,
-  avgScore: 78,
-  passCount: 4,
-  failCount: 1,
-  highestScore: 92,
-  lowestScore: 48,
-  questionAnalysis: [
-    {
-      questionText: "What is the avg time complexity of QuickSort?",
-      topic: "Sorting",
-      totalAnswered: 5,
-      correctCount: 4,
-      accuracy: 80,
-    },
-    {
-      questionText: "Which data structure uses LIFO?",
-      topic: "Data Structures",
-      totalAnswered: 5,
-      correctCount: 5,
-      accuracy: 100,
-    },
-    {
-      questionText: "What is the space complexity of Merge Sort?",
-      topic: "Sorting",
-      totalAnswered: 5,
-      correctCount: 3,
-      accuracy: 60,
-    },
-    {
-      questionText: "True or False: BFS uses a queue?",
-      topic: "Graphs",
-      totalAnswered: 5,
-      correctCount: 4,
-      accuracy: 80,
-    },
-    {
-      questionText: "Define recursion and give an example.",
-      topic: "Recursion",
-      totalAnswered: 5,
-      correctCount: 2,
-      accuracy: 40,
-    },
-  ],
-  studentResults: [
-    {
-      studentId: "stu-001",
-      studentName: "Aarav Mehta",
-      email: "aarav.mehta@student.edu",
-      score: 23,
-      maxScore: 25,
-      percentage: 92,
-      timeTakenMinutes: 24,
-      submittedAt: "2026-07-28T09:45:00Z",
-      passed: true,
-      answers: [
-        {
-          questionText: "What is the avg time complexity of QuickSort?",
-          topic: "Sorting",
-          isCorrect: true,
-          marksObtained: 5,
-          maxMarks: 5,
-        },
-        {
-          questionText: "Which data structure uses LIFO?",
-          topic: "Data Structures",
-          isCorrect: true,
-          marksObtained: 5,
-          maxMarks: 5,
-        },
-        {
-          questionText: "What is the space complexity of Merge Sort?",
-          topic: "Sorting",
-          isCorrect: true,
-          marksObtained: 5,
-          maxMarks: 5,
-        },
-        {
-          questionText: "True or False: BFS uses a queue?",
-          topic: "Graphs",
-          isCorrect: true,
-          marksObtained: 5,
-          maxMarks: 5,
-        },
-        {
-          questionText: "Define recursion and give an example.",
-          topic: "Recursion",
-          isCorrect: false,
-          marksObtained: 3,
-          maxMarks: 5,
-        },
-      ],
-    },
-    {
-      studentId: "stu-002",
-      studentName: "Priya Sharma",
-      email: "priya.sharma@student.edu",
-      score: 20,
-      maxScore: 25,
-      percentage: 80,
-      timeTakenMinutes: 27,
-      submittedAt: "2026-07-28T10:20:00Z",
-      passed: true,
-      answers: [
-        {
-          questionText: "What is the avg time complexity of QuickSort?",
-          topic: "Sorting",
-          isCorrect: true,
-          marksObtained: 5,
-          maxMarks: 5,
-        },
-        {
-          questionText: "Which data structure uses LIFO?",
-          topic: "Data Structures",
-          isCorrect: true,
-          marksObtained: 5,
-          maxMarks: 5,
-        },
-        {
-          questionText: "What is the space complexity of Merge Sort?",
-          topic: "Sorting",
-          isCorrect: false,
-          marksObtained: 0,
-          maxMarks: 5,
-        },
-        {
-          questionText: "True or False: BFS uses a queue?",
-          topic: "Graphs",
-          isCorrect: true,
-          marksObtained: 5,
-          maxMarks: 5,
-        },
-        {
-          questionText: "Define recursion and give an example.",
-          topic: "Recursion",
-          isCorrect: true,
-          marksObtained: 5,
-          maxMarks: 5,
-        },
-      ],
-    },
-    {
-      studentId: "stu-003",
-      studentName: "Rohan Kulkarni",
-      email: "rohan.k@student.edu",
-      score: 17,
-      maxScore: 25,
-      percentage: 68,
-      timeTakenMinutes: 29,
-      submittedAt: "2026-07-28T10:00:00Z",
-      passed: true,
-      answers: [
-        {
-          questionText: "What is the avg time complexity of QuickSort?",
-          topic: "Sorting",
-          isCorrect: true,
-          marksObtained: 5,
-          maxMarks: 5,
-        },
-        {
-          questionText: "Which data structure uses LIFO?",
-          topic: "Data Structures",
-          isCorrect: true,
-          marksObtained: 5,
-          maxMarks: 5,
-        },
-        {
-          questionText: "What is the space complexity of Merge Sort?",
-          topic: "Sorting",
-          isCorrect: true,
-          marksObtained: 5,
-          maxMarks: 5,
-        },
-        {
-          questionText: "True or False: BFS uses a queue?",
-          topic: "Graphs",
-          isCorrect: false,
-          marksObtained: 0,
-          maxMarks: 5,
-        },
-        {
-          questionText: "Define recursion and give an example.",
-          topic: "Recursion",
-          isCorrect: false,
-          marksObtained: 2,
-          maxMarks: 5,
-        },
-      ],
-    },
-    {
-      studentId: "stu-005",
-      studentName: "Dev Agarwal",
-      email: "dev.a@student.edu",
-      score: 16,
-      maxScore: 25,
-      percentage: 64,
-      timeTakenMinutes: 30,
-      submittedAt: "2026-07-28T10:45:00Z",
-      passed: true,
-      answers: [
-        {
-          questionText: "What is the avg time complexity of QuickSort?",
-          topic: "Sorting",
-          isCorrect: false,
-          marksObtained: 0,
-          maxMarks: 5,
-        },
-        {
-          questionText: "Which data structure uses LIFO?",
-          topic: "Data Structures",
-          isCorrect: true,
-          marksObtained: 5,
-          maxMarks: 5,
-        },
-        {
-          questionText: "What is the space complexity of Merge Sort?",
-          topic: "Sorting",
-          isCorrect: true,
-          marksObtained: 5,
-          maxMarks: 5,
-        },
-        {
-          questionText: "True or False: BFS uses a queue?",
-          topic: "Graphs",
-          isCorrect: true,
-          marksObtained: 5,
-          maxMarks: 5,
-        },
-        {
-          questionText: "Define recursion and give an example.",
-          topic: "Recursion",
-          isCorrect: false,
-          marksObtained: 1,
-          maxMarks: 5,
-        },
-      ],
-    },
-    {
-      studentId: "stu-006",
-      studentName: "Ananya Singh",
-      email: "ananya.s@student.edu",
-      score: 12,
-      maxScore: 25,
-      percentage: 48,
-      timeTakenMinutes: 30,
-      submittedAt: "2026-07-28T11:00:00Z",
-      passed: false,
-      answers: [
-        {
-          questionText: "What is the avg time complexity of QuickSort?",
-          topic: "Sorting",
-          isCorrect: false,
-          marksObtained: 0,
-          maxMarks: 5,
-        },
-        {
-          questionText: "Which data structure uses LIFO?",
-          topic: "Data Structures",
-          isCorrect: true,
-          marksObtained: 5,
-          maxMarks: 5,
-        },
-        {
-          questionText: "What is the space complexity of Merge Sort?",
-          topic: "Sorting",
-          isCorrect: false,
-          marksObtained: 0,
-          maxMarks: 5,
-        },
-        {
-          questionText: "True or False: BFS uses a queue?",
-          topic: "Graphs",
-          isCorrect: false,
-          marksObtained: 0,
-          maxMarks: 5,
-        },
-        {
-          questionText: "Define recursion and give an example.",
-          topic: "Recursion",
-          isCorrect: false,
-          marksObtained: 2,
-          maxMarks: 5,
-        },
-      ],
-    },
-  ],
-});
 
 function ScoreBadge({ pct }: { pct: number }) {
   const color =
@@ -393,13 +97,14 @@ export default function AssessmentResultsPage({
 
   useEffect(() => {
     async function loadResults() {
+      setLoading(true);
       try {
         const res = await apiFetch<AssessmentResultsSummary>(
           `/assessments/${assessmentId}/results`,
         );
-        setData(res ?? buildMockResults(assessmentId));
+        setData(res || null);
       } catch {
-        setData(buildMockResults(assessmentId));
+        setData(null);
       } finally {
         setLoading(false);
       }
@@ -407,16 +112,39 @@ export default function AssessmentResultsPage({
     loadResults();
   }, [assessmentId]);
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#F9F9FB] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-[#111111] border-t-transparent rounded-full animate-spin" />
           <span className="text-xs font-mono text-zinc-400">
-            Loading results...
+            Fetching Assessment Results from Backend...
           </span>
         </div>
       </div>
+    );
+  }
+
+  if (!data || data.totalAttempts === 0) {
+    return (
+      <main className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans px-6 pt-6 pb-24 md:px-12 md:pt-12">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <button
+            onClick={() => router.push("/teacher/dashboard")}
+            className="flex items-center gap-1.5 px-3 py-1.5 border border-zinc-200 text-xs font-medium text-zinc-700 rounded-md hover:bg-zinc-100 transition-all cursor-pointer"
+          >
+            <ArrowLeftIcon className="w-3.5 h-3.5" /> Back to Dashboard
+          </button>
+          <div className="bg-white border border-zinc-200 rounded-xl p-16 text-center space-y-3 shadow-2xs">
+            <h2 className="text-base font-semibold text-[#111111]">
+              No Submission Results Found
+            </h2>
+            <p className="text-xs text-zinc-500 max-w-md mx-auto">
+              Students have not submitted any attempts for this assessment yet. Evaluation analytics will appear here automatically once submissions are received.
+            </p>
+          </div>
+        </div>
+      </main>
     );
   }
 
@@ -426,329 +154,303 @@ export default function AssessmentResultsPage({
       : 0;
 
   return (
-    <main className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans px-6 pt-6 pb-24 md:px-12 md:pt-12 selection:bg-[#111111] selection:text-white">
+    <main className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans px-6 pt-6 pb-24 md:px-12 md:pt-12 md:pb-24 selection:bg-[#111111] selection:text-white">
       <div className="max-w-6xl mx-auto space-y-8">
-        {/* Header */}
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-zinc-200">
-          <div className="flex items-center gap-3">
+        {/* Top Header & Breadcrumb */}
+        <header className="space-y-4 pb-6 border-b border-zinc-200">
+          <div className="flex items-center justify-between">
             <button
               onClick={() => router.push("/teacher/dashboard")}
-              className="p-2 hover:bg-zinc-100 rounded-md transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 border border-zinc-200 text-xs font-medium text-zinc-700 rounded-md hover:bg-zinc-100 transition-all cursor-pointer"
             >
-              <ArrowLeftIcon className="w-4 h-4 text-zinc-600" />
+              <ArrowLeftIcon className="w-3.5 h-3.5" /> Back to Teacher Dashboard
             </button>
-            <div className="w-9 h-9 bg-[#111111] rounded-lg flex items-center justify-center">
-              <BarChartIcon className="text-white w-4 h-4" />
-            </div>
+            <span className="text-xs font-mono text-zinc-400">
+              Assessment ID: {assessmentId}
+            </span>
+          </div>
+
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2 py-0.5 bg-[#111111] text-white text-[10px] font-mono font-bold rounded">
+                  {data.className || "General"}
+                </span>
+                <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-mono font-semibold rounded">
+                  {data.assessmentType}
+                </span>
+                {data.topic && (
+                  <span className="px-2 py-0.5 bg-zinc-100 text-zinc-600 text-[10px] font-mono rounded">
+                    {data.topic}
+                  </span>
+                )}
+              </div>
               <h1 className="font-serif text-2xl font-normal text-[#111111]">
-                Assessment Results
+                {data.assessmentTitle}
               </h1>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                Teacher: {user?.firstName} {user?.lastName}
-              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="text-right font-mono">
+                <span className="text-xs text-zinc-400 block">Passing Criteria</span>
+                <span className="text-sm font-bold text-[#111111]">
+                  {data.passingMarks} / {data.totalMarks} marks
+                </span>
+              </div>
             </div>
           </div>
         </header>
 
-        {/* Assessment Info Banner */}
-        <div className="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm">
-          <div className="flex flex-col md:flex-row justify-between gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 bg-[#111111] text-white text-[10px] font-mono font-bold rounded">
-                  {data.className}
-                </span>
-                <span className="px-2 py-0.5 bg-zinc-100 text-zinc-600 text-[10px] font-mono rounded">
-                  {data.assessmentType}
-                </span>
-                <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-mono rounded border border-blue-200">
-                  {data.topic}
-                </span>
-              </div>
-              <h2 className="font-serif text-xl font-normal text-[#111111]">
-                {data.assessmentTitle}
-              </h2>
-              <p className="text-xs font-mono text-zinc-400">
-                {data.totalMarks} total marks · {data.passingMarks} passing ·{" "}
-                {data.durationMinutes} mins
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-3 md:gap-6 shrink-0">
-              <div className="text-center">
-                <p
-                  className={`text-3xl font-bold font-mono ${data.avgScore >= 70 ? "text-emerald-600" : data.avgScore >= 50 ? "text-blue-600" : "text-red-600"}`}
-                >
-                  {Math.round(data.avgScore)}%
-                </p>
-                <p className="text-[10px] font-mono text-zinc-400 uppercase mt-0.5">
-                  Avg Score
-                </p>
-              </div>
-              <div className="text-center">
-                <p
-                  className={`text-3xl font-bold font-mono ${passRate >= 70 ? "text-emerald-600" : passRate >= 50 ? "text-blue-600" : "text-red-600"}`}
-                >
-                  {passRate}%
-                </p>
-                <p className="text-[10px] font-mono text-zinc-400 uppercase mt-0.5">
-                  Pass Rate
-                </p>
-              </div>
-            </div>
+        {/* Overview Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="bg-white border border-zinc-200 rounded-xl p-4 shadow-2xs space-y-1">
+            <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider block">
+              Total Submissions
+            </span>
+            <span className="text-2xl font-bold font-mono text-[#111111]">
+              {data.totalAttempts}
+            </span>
+          </div>
+
+          <div className="bg-white border border-zinc-200 rounded-xl p-4 shadow-2xs space-y-1">
+            <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider block">
+              Class Average
+            </span>
+            <span className="text-2xl font-bold font-mono text-[#111111]">
+              {Math.round(data.avgScore)}%
+            </span>
+          </div>
+
+          <div className="bg-white border border-zinc-200 rounded-xl p-4 shadow-2xs space-y-1">
+            <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider block">
+              Pass Rate
+            </span>
+            <span className="text-2xl font-bold font-mono text-emerald-700">
+              {passRate}%
+            </span>
+          </div>
+
+          <div className="bg-white border border-zinc-200 rounded-xl p-4 shadow-2xs space-y-1">
+            <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider block">
+              Highest Score
+            </span>
+            <span className="text-2xl font-bold font-mono text-blue-700">
+              {data.highestScore}
+            </span>
+          </div>
+
+          <div className="bg-white border border-zinc-200 rounded-xl p-4 shadow-2xs space-y-1">
+            <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider block">
+              Lowest Score
+            </span>
+            <span className="text-2xl font-bold font-mono text-amber-700">
+              {data.lowestScore}
+            </span>
           </div>
         </div>
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {[
-            { label: "Total Attempts", value: data.totalAttempts, color: "" },
-            {
-              label: "Passed",
-              value: data.passCount,
-              color: "text-emerald-600",
-            },
-            { label: "Failed", value: data.failCount, color: "text-red-600" },
-            {
-              label: "Highest Score",
-              value: `${data.highestScore}%`,
-              color: "text-emerald-600",
-            },
-            {
-              label: "Lowest Score",
-              value: `${data.lowestScore}%`,
-              color: "text-red-600",
-            },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              className="bg-white border border-zinc-200 rounded-xl p-4 shadow-sm text-center"
-            >
-              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider block">
-                {stat.label}
-              </span>
-              <span
-                className={`text-2xl font-bold font-mono mt-1 block ${stat.color || "text-[#111111]"}`}
-              >
-                {stat.value}
-              </span>
-            </div>
-          ))}
+        {/* Section Selector Tabs */}
+        <div className="flex items-center gap-2 border-b border-zinc-200 pb-2">
+          <button
+            onClick={() => setActiveSection("students")}
+            className={`px-4 py-2 text-xs font-medium rounded-md transition-all cursor-pointer ${
+              activeSection === "students"
+                ? "bg-[#111111] text-white shadow-2xs"
+                : "bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100"
+            }`}
+          >
+            Student Results ({data.studentResults?.length || 0})
+          </button>
+          <button
+            onClick={() => setActiveSection("questions")}
+            className={`px-4 py-2 text-xs font-medium rounded-md transition-all cursor-pointer ${
+              activeSection === "questions"
+                ? "bg-[#111111] text-white shadow-2xs"
+                : "bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100"
+            }`}
+          >
+            Question Item Analysis ({data.questionAnalysis?.length || 0})
+          </button>
         </div>
 
-        {/* Section Toggle */}
-        <SlidingTabs<"students" | "questions">
-          tabs={[
-            {
-              id: "students",
-              label: "Student Results",
-              icon: <PersonIcon className="w-3.5 h-3.5" />,
-            },
-            {
-              id: "questions",
-              label: "Question Analysis",
-              icon: <TargetIcon className="w-3.5 h-3.5" />,
-            },
-          ]}
-          activeId={activeSection}
-          onChange={setActiveSection}
-        />
-
-        {/* ── Student Results ── */}
+        {/* Section 1: Student Roster Submissions */}
         {activeSection === "students" && (
-          <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
-            <div className="p-5 border-b border-zinc-100 flex items-center gap-2">
-              <PersonIcon className="w-4 h-4 text-[#111111]" />
-              <h3 className="font-serif text-lg font-normal text-[#111111]">
-                Individual Student Results ({data.studentResults.length})
-              </h3>
+          <div className="bg-white border border-zinc-200 rounded-xl shadow-2xs overflow-hidden">
+            <div className="p-4 bg-[#F4F4F6] border-b border-zinc-200 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[#111111]">
+                Evaluated Student Submissions
+              </h2>
+              <span className="text-xs font-mono text-zinc-500">
+                Click any student row to expand full answer breakdown
+              </span>
             </div>
 
-            <div className="divide-y divide-zinc-100">
-              {data.studentResults
-                .sort((a, b) => b.percentage - a.percentage)
-                .map((student, idx) => (
-                  <div key={student.studentId}>
+            <div className="divide-y divide-zinc-200">
+              {data.studentResults?.map((stu) => {
+                const isExpanded = expandedStudent === stu.studentId;
+                return (
+                  <div key={stu.studentId} className="transition-all">
                     <div
-                      className="flex items-center gap-4 px-5 py-4 hover:bg-[#F9F9FB] cursor-pointer transition-colors"
                       onClick={() =>
-                        setExpandedStudent(
-                          expandedStudent === student.studentId
-                            ? null
-                            : student.studentId,
-                        )
+                        setExpandedStudent(isExpanded ? null : stu.studentId)
                       }
+                      className="p-4 hover:bg-[#F9F9FB] flex items-center justify-between cursor-pointer"
                     >
-                      {/* Rank */}
-                      <span
-                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold font-mono shrink-0 ${idx === 0 ? "bg-amber-100 text-amber-700" : idx === 1 ? "bg-zinc-200 text-zinc-700" : idx === 2 ? "bg-orange-100 text-orange-700" : "bg-zinc-100 text-zinc-500"}`}
-                      >
-                        {idx + 1}
-                      </span>
-
-                      {/* Avatar */}
-                      <div className="w-9 h-9 bg-[#5451FF]/10 border border-[#5451FF]/20 rounded-full flex items-center justify-center text-sm font-bold text-[#5451FF] shrink-0">
-                        {student.studentName.charAt(0)}
-                      </div>
-
-                      {/* Name */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[#111111] truncate">
-                          {student.studentName}
-                        </p>
-                        <p className="text-[11px] font-mono text-zinc-400">
-                          {student.email}
-                        </p>
-                      </div>
-
-                      {/* Score */}
-                      <div className="text-right shrink-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-mono font-bold text-[#111111]">
-                            {student.score}/{student.maxScore}
-                          </span>
-                          <ScoreBadge pct={student.percentage} />
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center font-bold text-xs text-[#111111]">
+                          {stu.studentName.charAt(0)}
                         </div>
-                        <p className="text-[11px] font-mono text-zinc-400 mt-0.5">
-                          {student.passed ? (
-                            <span className="text-emerald-600 flex items-center gap-1 justify-end">
-                              <CheckCircledIcon className="w-3 h-3" /> Passed
-                            </span>
-                          ) : (
-                            <span className="text-red-500 flex items-center gap-1 justify-end">
-                              <CrossCircledIcon className="w-3 h-3" /> Failed
-                            </span>
-                          )}
-                        </p>
+                        <div>
+                          <h3 className="text-sm font-semibold text-[#111111]">
+                            {stu.studentName}
+                          </h3>
+                          <span className="text-xs text-zinc-400 font-mono">
+                            {stu.email}
+                          </span>
+                        </div>
                       </div>
 
-                      {/* Time */}
-                      <div className="text-right shrink-0 hidden md:block">
-                        <p className="text-xs font-mono text-zinc-400 flex items-center gap-1">
-                          <ClockIcon className="w-3 h-3" />
-                          {student.timeTakenMinutes} min
-                        </p>
-                        <p className="text-[10px] font-mono text-zinc-300 mt-0.5">
-                          {new Date(student.submittedAt).toLocaleDateString(
-                            "en-IN",
-                            {
-                              day: "numeric",
-                              month: "short",
-                            },
-                          )}
-                        </p>
-                      </div>
+                      <div className="flex items-center gap-6">
+                        <div className="text-right font-mono">
+                          <span className="text-xs font-bold text-[#111111]">
+                            {stu.score} / {stu.maxScore} marks
+                          </span>
+                          <span className="text-[11px] text-zinc-400 block">
+                            Time: {stu.timeTakenMinutes} mins
+                          </span>
+                        </div>
 
-                      {/* Expand toggle */}
-                      <div className="shrink-0 ml-2">
-                        {expandedStudent === student.studentId ? (
-                          <ChevronUpIcon className="w-4 h-4 text-zinc-400" />
+                        <ScoreBadge pct={stu.percentage} />
+
+                        <span
+                          className={`px-2.5 py-1 text-[11px] font-mono font-bold rounded ${
+                            stu.passed
+                              ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                              : "bg-rose-100 text-rose-800 border border-rose-300"
+                          }`}
+                        >
+                          {stu.passed ? "PASSED" : "NEEDS REVISION"}
+                        </span>
+
+                        {isExpanded ? (
+                          <ChevronUpIcon className="w-4 h-4 text-zinc-500" />
                         ) : (
-                          <ChevronDownIcon className="w-4 h-4 text-zinc-400" />
+                          <ChevronDownIcon className="w-4 h-4 text-zinc-500" />
                         )}
                       </div>
                     </div>
 
-                    {/* Expanded: Per-question breakdown */}
-                    {expandedStudent === student.studentId && (
-                      <div className="px-5 pb-5 bg-[#F9F9FB] border-t border-zinc-100">
-                        <p className="text-[10px] font-mono font-semibold text-zinc-400 uppercase tracking-wider py-3">
-                          Question-by-Question Breakdown
-                        </p>
+                    {/* Expanded Answer Breakdown */}
+                    {isExpanded && (
+                      <div className="p-4 bg-[#F9F9FB] border-t border-zinc-200 space-y-3 text-xs">
+                        <h4 className="font-mono font-bold text-zinc-800 uppercase tracking-wider text-[11px]">
+                          Individual Answer Breakdown
+                        </h4>
                         <div className="space-y-2">
-                          {student.answers.map((ans, i) => (
+                          {stu.answers?.map((ans, aIdx) => (
                             <div
-                              key={i}
-                              className="flex items-center justify-between p-3 bg-white rounded-lg border border-zinc-200"
+                              key={aIdx}
+                              className="p-3 bg-white border border-zinc-200 rounded-lg flex items-center justify-between gap-4"
                             >
-                              <div className="flex items-start gap-3 flex-1 min-w-0">
-                                <span
-                                  className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${ans.isCorrect === true ? "bg-emerald-100 text-emerald-600" : ans.isCorrect === false ? "bg-red-100 text-red-500" : "bg-zinc-100 text-zinc-400"}`}
-                                >
-                                  {ans.isCorrect === true ? (
-                                    <CheckCircledIcon className="w-3.5 h-3.5" />
-                                  ) : ans.isCorrect === false ? (
-                                    <CrossCircledIcon className="w-3.5 h-3.5" />
-                                  ) : (
-                                    <span className="text-[10px] font-mono">
-                                      ?
-                                    </span>
-                                  )}
-                                </span>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-medium text-[#111111] truncate">
-                                    Q{i + 1}. {ans.questionText}
-                                  </p>
-                                  <span className="text-[10px] font-mono text-zinc-400">
-                                    {ans.topic}
+                              <div className="space-y-0.5 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-[#111111]">
+                                    Q{aIdx + 1}.
+                                  </span>
+                                  <span className="text-zinc-800">
+                                    {ans.questionText}
                                   </span>
                                 </div>
+                                <span className="text-[11px] font-mono text-zinc-400">
+                                  Topic: {ans.topic}
+                                </span>
                               </div>
-                              <span className="text-xs font-mono font-bold text-[#111111] shrink-0 ml-4">
-                                {ans.marksObtained}/{ans.maxMarks}
-                              </span>
+
+                              <div className="flex items-center gap-3 font-mono">
+                                <span
+                                  className={`px-2 py-0.5 text-[10px] font-bold rounded ${
+                                    ans.isCorrect
+                                      ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                      : "bg-rose-100 text-rose-800 border border-rose-300"
+                                  }`}
+                                >
+                                  {ans.isCorrect ? "Correct" : "Incorrect"}
+                                </span>
+                                <span className="font-semibold text-[#111111]">
+                                  {ans.marksObtained} / {ans.maxMarks} pts
+                                </span>
+                              </div>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
                   </div>
-                ))}
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* ── Question Analysis ── */}
+        {/* Section 2: Question Item Analysis */}
         {activeSection === "questions" && (
-          <div className="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-5 border-b border-zinc-100 pb-3">
-              <TargetIcon className="w-4 h-4 text-[#111111]" />
-              <h3 className="font-serif text-xl font-normal text-[#111111]">
-                Question Difficulty Analysis
-              </h3>
+          <div className="bg-white border border-zinc-200 rounded-xl shadow-2xs overflow-hidden">
+            <div className="p-4 bg-[#F4F4F6] border-b border-zinc-200 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[#111111]">
+                Question Difficulty & Accuracy Analysis
+              </h2>
+              <span className="text-xs font-mono text-zinc-500">
+                Identify questions where students struggled
+              </span>
             </div>
-            <div className="space-y-4">
-              {data.questionAnalysis
-                .sort((a, b) => a.accuracy - b.accuracy)
-                .map((q, idx) => (
-                  <div key={idx} className="space-y-2">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-[#111111] truncate">
-                          Q{idx + 1}. {q.questionText}
-                        </p>
-                        <div className="flex items-center gap-3 text-[11px] font-mono text-zinc-400 mt-0.5">
-                          <span>{q.topic}</span>
-                          <span>·</span>
-                          <span>
-                            {q.correctCount}/{q.totalAnswered} correct
-                          </span>
-                        </div>
+
+            <div className="p-4 space-y-4">
+              {data.questionAnalysis?.map((q, idx) => (
+                <div
+                  key={idx}
+                  className="p-4 bg-[#F9F9FB] border border-zinc-200 rounded-lg space-y-2"
+                >
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-xs text-[#111111]">
+                          Q{idx + 1}.
+                        </span>
+                        <span className="text-xs font-semibold text-[#111111]">
+                          {q.questionText}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {q.accuracy < 50 && (
-                          <span className="px-2 py-0.5 bg-red-50 text-red-600 text-[10px] font-mono rounded border border-red-200">
-                            Hard
-                          </span>
-                        )}
-                        <ScoreBadge pct={q.accuracy} />
-                      </div>
+                      <span className="text-[11px] font-mono text-zinc-400">
+                        Topic: {q.topic}
+                      </span>
                     </div>
-                    <div className="w-full bg-zinc-100 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full transition-all duration-500 ${q.accuracy >= 70 ? "bg-emerald-500" : q.accuracy >= 50 ? "bg-blue-500" : "bg-red-400"}`}
-                        style={{ width: `${q.accuracy}%` }}
-                      />
+
+                    <div className="flex items-center gap-4 font-mono text-xs">
+                      <span className="text-zinc-500">
+                        Answered: {q.totalAnswered}
+                      </span>
+                      <span className="text-emerald-700 font-bold">
+                        {q.correctCount} Correct
+                      </span>
+                      <ScoreBadge pct={q.accuracy} />
                     </div>
-                    <p className="text-[10px] font-mono text-zinc-400">
-                      {q.accuracy < 50
-                        ? "️ Most students struggled — review this topic in class"
-                        : q.accuracy >= 90
-                          ? " Well understood by class"
-                          : "Average performance"}
-                    </p>
                   </div>
-                ))}
+
+                  {/* Accuracy Bar */}
+                  <div className="w-full h-2 bg-zinc-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${
+                        q.accuracy >= 75
+                          ? "bg-emerald-600"
+                          : q.accuracy >= 50
+                            ? "bg-blue-600"
+                            : "bg-rose-500"
+                      }`}
+                      style={{ width: `${q.accuracy}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

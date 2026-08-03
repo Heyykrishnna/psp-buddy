@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
+import { evaluateCodeSolution } from "@/lib/codeEvaluator";
 import { AssessmentDTO, QuestionDTO } from "@/types";
 import {
   CodeIcon,
@@ -56,27 +57,38 @@ export default function StudentAssessmentRunnerPage({
   const [selectedLanguage, setSelectedLanguage] = useState("python");
   const [runningCode, setRunningCode] = useState(false);
   const [testResults, setTestResults] = useState<
-    { input: string; passed: boolean; isPublic?: boolean }[] | null
+    | {
+        input: string;
+        expectedOutput?: string;
+        actualOutput?: string;
+        passed: boolean;
+        isPublic?: boolean;
+      }[]
+    | null
   >(null);
 
   const handleRunTestCases = async () => {
     setRunningCode(true);
     try {
       const currentQ = assessment?.questions?.[currentQuestionIdx];
-      const tcs = currentQ?.testCases || [
-        { input: "5", expectedOutput: "5", isPublic: true },
-        { input: "10", expectedOutput: "10", isPublic: false },
-      ];
+      const currentAns = currentQ ? answers[currentQ.id] : null;
+      const userCode = currentAns?.textAnswer || currentQ?.starterCode || "";
+      const tcs = (currentQ?.testCases as any[]) || [];
+
+      const outcome = evaluateCodeSolution(userCode, selectedLanguage, tcs);
+
       setTimeout(() => {
         setTestResults(
-          tcs.map((tc: any) => ({
-            input: tc.input,
-            passed: true,
-            isPublic: tc.isPublic,
+          outcome.testResults.map((tr) => ({
+            input: tr.input,
+            expectedOutput: tr.expectedOutput,
+            actualOutput: tr.actualOutput,
+            passed: tr.passed,
+            isPublic: tr.isPublic,
           })),
         );
         setRunningCode(false);
-      }, 700);
+      }, 350);
     } catch {
       setRunningCode(false);
     }
@@ -119,6 +131,25 @@ export default function StudentAssessmentRunnerPage({
     setError("");
 
     try {
+      // 1. Flush & save all pending answers to backend
+      const answerEntries = Object.entries(answers);
+      for (const [qId, ansObj] of answerEntries) {
+        if (ansObj) {
+          try {
+            await apiFetch(`/attempts/${attemptId}/answers`, {
+              method: "PATCH",
+              body: JSON.stringify({
+                questionId: qId,
+                ...ansObj,
+              }),
+            });
+          } catch {
+            // ignore individual save error and proceed
+          }
+        }
+      }
+
+      // 2. Submit & evaluate attempt
       await apiFetch<any>(`/attempts/${attemptId}/submit`, {
         method: "POST",
       });
@@ -128,7 +159,7 @@ export default function StudentAssessmentRunnerPage({
     } finally {
       setSubmitting(false);
     }
-  }, [attemptId, router]);
+  }, [attemptId, answers, router]);
 
   // Live Timer Countdown
   useEffect(() => {
@@ -812,25 +843,54 @@ export default function StudentAssessmentRunnerPage({
                                   : "bg-red-50/80 border-red-200 text-red-900"
                               }`}
                             >
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold flex items-center gap-1">
-                                  {tr.passed ? (
-                                    <CheckIcon className="w-3.5 h-3.5 text-emerald-700" />
-                                  ) : (
-                                    <Cross2Icon className="w-3.5 h-3.5 text-red-700" />
+                              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 w-full">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold flex items-center gap-1">
+                                    {tr.passed ? (
+                                      <CheckIcon className="w-3.5 h-3.5 text-emerald-700" />
+                                    ) : (
+                                      <Cross2Icon className="w-3.5 h-3.5 text-red-700" />
+                                    )}
+                                    {tr.passed ? "Passed" : "Failed"}
+                                  </span>
+                                  <span className="text-zinc-500">
+                                    Test Case #{idx + 1}{" "}
+                                    {tr.isPublic
+                                      ? "(Sample)"
+                                      : "(Hidden Evaluation)"}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-3 text-[11px]">
+                                  <span>
+                                    Input:{" "}
+                                    <code className="font-semibold">
+                                      {tr.input}
+                                    </code>
+                                  </span>
+                                  {tr.expectedOutput && (
+                                    <span>
+                                      Expected:{" "}
+                                      <code className="text-emerald-700 font-semibold">
+                                        {tr.expectedOutput}
+                                      </code>
+                                    </span>
                                   )}
-                                  {tr.passed ? "Passed" : "Failed"}
-                                </span>
-                                <span className="text-zinc-500">
-                                  Test Case #{idx + 1}{" "}
-                                  {tr.isPublic
-                                    ? "(Sample)"
-                                    : "(Hidden Evaluation)"}
-                                </span>
+                                  {tr.actualOutput && (
+                                    <span>
+                                      Actual:{" "}
+                                      <code
+                                        className={
+                                          tr.passed
+                                            ? "text-emerald-700 font-semibold"
+                                            : "text-red-700 font-semibold"
+                                        }
+                                      >
+                                        {tr.actualOutput}
+                                      </code>
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                              <span className="text-zinc-600">
-                                Input: {tr.input}
-                              </span>
                             </div>
                           ))}
                         </div>

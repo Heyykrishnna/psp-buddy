@@ -80,6 +80,7 @@ async function main() {
             points: 25,
             orderIndex: 1,
             topic: 'Arrays & Hashing',
+            shortAnswerKeywords: ['seen', 'target', 'return'],
             explanation: 'Use a hash map to store complement values for O(n) time complexity.',
           },
           {
@@ -90,6 +91,7 @@ async function main() {
             points: 25,
             orderIndex: 2,
             topic: 'Strings',
+            shortAnswerKeywords: ['return', 'reverse'],
             explanation: 'Use two pointers or string slicing s[::-1].',
           },
         ],

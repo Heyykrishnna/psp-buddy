@@ -16,64 +16,6 @@ import { AssessmentDTO, StudentTopicMasteryDTO } from "../types";
 
 const { width } = Dimensions.get("window");
 
-const DEMO_TOPICS: StudentTopicMasteryDTO[] = [
-  {
-    topic: "Arrays",
-    masteryScore: 82,
-    accuracy: 82,
-    totalAttempts: 10,
-    correctAnswers: 8,
-    assessmentCount: 3,
-    lastPracticedAt: "",
-    status: "Mastered",
-    isWeak: false,
-  },
-  {
-    topic: "Loops",
-    masteryScore: 64,
-    accuracy: 64,
-    totalAttempts: 8,
-    correctAnswers: 5,
-    assessmentCount: 2,
-    lastPracticedAt: "",
-    status: "Proficient",
-    isWeak: false,
-  },
-  {
-    topic: "Recursion",
-    masteryScore: 31,
-    accuracy: 31,
-    totalAttempts: 6,
-    correctAnswers: 2,
-    assessmentCount: 2,
-    lastPracticedAt: "",
-    status: "Needs Improvement",
-    isWeak: true,
-  },
-  {
-    topic: "Graphs",
-    masteryScore: 20,
-    accuracy: 20,
-    totalAttempts: 3,
-    correctAnswers: 0,
-    assessmentCount: 1,
-    lastPracticedAt: "",
-    status: "Needs Improvement",
-    isWeak: true,
-  },
-  {
-    topic: "Sorting",
-    masteryScore: 55,
-    accuracy: 55,
-    totalAttempts: 4,
-    correctAnswers: 2,
-    assessmentCount: 1,
-    lastPracticedAt: "",
-    status: "Proficient",
-    isWeak: false,
-  },
-];
-
 // Animated mastery bar component with smooth spring entry
 function MasteryBar({
   topic,
@@ -203,28 +145,15 @@ export interface DashboardScreenProps {
   onOpenLeaderboard?: () => void;
 }
 
-export function DashboardScreen({ onOpenAssessments, onOpenLeaderboard }: DashboardScreenProps) {
+export function DashboardScreen({
+  onOpenAssessments,
+  onOpenLeaderboard,
+}: DashboardScreenProps) {
   const { user, logout, apiClient } = useAuth();
-  const [xp, setXp] = useState(1250);
-  const [streak] = useState(5);
-  const [assessments, setAssessments] = useState<AssessmentDTO[]>([
-    {
-      id: "demo-asm-1",
-      title: "Algorithm Complexity & Data Structures Quiz",
-      description:
-        "Mid-term evaluation covering Big-O, sorting algorithms and boolean logic.",
-      className: "Class 10-A",
-      topic: "Computer Science",
-      assessmentType: "QUIZ" as any,
-      totalMarks: 25,
-      passingMarks: 15,
-      durationMinutes: 30,
-      hasNegativeMarking: true,
-      negativeMarkValue: 0.25,
-      isPublished: true,
-    },
-  ]);
-  const [topics, setTopics] = useState<StudentTopicMasteryDTO[]>(DEMO_TOPICS);
+  const [xp, setXp] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [assessments, setAssessments] = useState<AssessmentDTO[]>([]);
+  const [topics, setTopics] = useState<StudentTopicMasteryDTO[]>([]);
 
   useEffect(() => {
     async function loadData() {
@@ -233,9 +162,9 @@ export function DashboardScreen({ onOpenAssessments, onOpenLeaderboard }: Dashbo
           apiClient.getAssessments(),
           apiClient.getTopicMastery(),
         ]);
-        if (list.status === "fulfilled" && list.value?.length > 0)
+        if (list.status === "fulfilled" && Array.isArray(list.value))
           setAssessments(list.value);
-        if (topicData.status === "fulfilled" && topicData.value?.length > 0)
+        if (topicData.status === "fulfilled" && Array.isArray(topicData.value))
           setTopics(topicData.value);
       } catch {}
     }
@@ -312,7 +241,9 @@ export function DashboardScreen({ onOpenAssessments, onOpenLeaderboard }: Dashbo
         {/* ACTIVE ASSESSMENTS (Coral Card) */}
         <View style={styles.assessmentSection}>
           <View style={styles.sectionHeaderRow}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+            >
               <Text style={styles.sectionTitle}>ASSESSMENTS</Text>
               <View style={styles.countPill}>
                 <Text style={styles.countPillText}>{assessments.length}</Text>
@@ -545,7 +476,8 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 9,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     letterSpacing: 1,
   },
   signOutPill: {
@@ -558,7 +490,8 @@ const styles = StyleSheet.create({
     color: "#121316",
     fontSize: 9,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     letterSpacing: 0.8,
   },
 
@@ -584,7 +517,8 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 10,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     letterSpacing: 0.5,
   },
   activeTag: {
@@ -599,13 +533,17 @@ const styles = StyleSheet.create({
     color: "#4ade80",
     fontSize: 10,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     letterSpacing: 0.5,
   },
   greetingText: {
     fontSize: 32,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
+    fontFamily:
+      Platform.OS === "web"
+        ? "'Space Grotesk', sans-serif"
+        : "SpaceGrotesk_600SemiBold",
     color: "#ffffff",
     letterSpacing: -0.5,
   },
@@ -613,7 +551,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#71717a",
     fontWeight: "500",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_500Medium',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_500Medium",
   },
   greetingStats: {
     flexDirection: "row",
@@ -627,13 +566,15 @@ const styles = StyleSheet.create({
   greetingStatVal: {
     fontSize: 20,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     color: "#ffffff",
   },
   greetingStatLabel: {
     fontSize: 9,
     fontWeight: "500",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_500Medium',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_500Medium",
     color: "#71717a",
     letterSpacing: 0.5,
     marginTop: 1,
@@ -659,7 +600,8 @@ const styles = StyleSheet.create({
   cardSectionLabel: {
     fontSize: 11,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     color: "rgba(255,255,255,0.7)",
     letterSpacing: 1.5,
   },
@@ -673,12 +615,16 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 10,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
   masteryTitle: {
     fontSize: 20,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
+    fontFamily:
+      Platform.OS === "web"
+        ? "'Space Grotesk', sans-serif"
+        : "SpaceGrotesk_600SemiBold",
     color: "#ffffff",
     letterSpacing: -0.3,
   },
@@ -697,7 +643,10 @@ const styles = StyleSheet.create({
   xpValue: {
     fontSize: 32,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
+    fontFamily:
+      Platform.OS === "web"
+        ? "'Space Grotesk', sans-serif"
+        : "SpaceGrotesk_600SemiBold",
     color: "#F4C463",
     letterSpacing: -0.5,
     marginTop: 2,
@@ -706,7 +655,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: "#71717a",
     fontWeight: "500",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_500Medium',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_500Medium",
     marginBottom: 4,
   },
   xpBtn: {
@@ -719,7 +669,8 @@ const styles = StyleSheet.create({
     color: "#121316",
     fontSize: 11,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     letterSpacing: 0.5,
   },
 
@@ -736,7 +687,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 13,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
+    fontFamily:
+      Platform.OS === "web"
+        ? "'Space Grotesk', sans-serif"
+        : "SpaceGrotesk_600SemiBold",
     color: "#121316",
     letterSpacing: 1,
   },
@@ -750,7 +704,8 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 10,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
   viewAllPill: {
     backgroundColor: "#121316",
@@ -762,7 +717,8 @@ const styles = StyleSheet.create({
     color: "#5451FF",
     fontSize: 10,
     fontWeight: "700",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     letterSpacing: 0.5,
   },
   openPortalButton: {
@@ -779,7 +735,8 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 11,
     fontWeight: "700",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     letterSpacing: 0.5,
   },
   arrowCircleSmall: {
@@ -816,7 +773,8 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 10,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     letterSpacing: 0.5,
   },
   asmArrow: {
@@ -831,12 +789,16 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 15,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
   asmTitle: {
     fontSize: 17,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
+    fontFamily:
+      Platform.OS === "web"
+        ? "'Space Grotesk', sans-serif"
+        : "SpaceGrotesk_600SemiBold",
     color: "#ffffff",
     lineHeight: 22,
   },
@@ -844,7 +806,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "rgba(255,255,255,0.8)",
     lineHeight: 17,
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_500Medium',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_500Medium",
   },
   asmMeta: {
     flexDirection: "row",
@@ -862,7 +825,8 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 10,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
 
   // Leaderboard Card (dark)
@@ -875,7 +839,8 @@ const styles = StyleSheet.create({
   leaderSubLabel: {
     fontSize: 10,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     color: "#3f3f46",
     letterSpacing: 0.8,
   },
@@ -897,7 +862,8 @@ const styles = StyleSheet.create({
   leaderRank: {
     fontSize: 12,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     color: "#3f3f46",
     letterSpacing: 0.5,
     width: 24,
@@ -909,7 +875,8 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     color: "#ffffff",
   },
   leaderNameUser: {
@@ -918,7 +885,8 @@ const styles = StyleSheet.create({
   leaderXp: {
     fontSize: 12,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     color: "#F4C463",
     fontVariant: ["tabular-nums"],
   },

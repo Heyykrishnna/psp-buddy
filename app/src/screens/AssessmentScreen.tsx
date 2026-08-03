@@ -23,103 +23,6 @@ interface AssessmentScreenProps {
   selectedAssessmentId?: string | null;
 }
 
-const DEMO_QUESTIONS: QuestionDTO[] = [
-  {
-    id: "q-1",
-    assessmentId: "demo-asm-1",
-    questionText: "What is the average time complexity of QuickSort?",
-    questionType: "SINGLE_CHOICE",
-    difficulty: "MEDIUM",
-    points: 2,
-    orderIndex: 1,
-    explanation:
-      "QuickSort has an average-case time complexity of O(n log n) when partitioning divides the array reasonably well.",
-    options: [
-      {
-        id: "opt-1",
-        questionId: "q-1",
-        optionText: "O(n²)",
-        isCorrect: false,
-        orderIndex: 1,
-      },
-      {
-        id: "opt-2",
-        questionId: "q-1",
-        optionText: "O(n log n)",
-        isCorrect: true,
-        orderIndex: 2,
-      },
-      {
-        id: "opt-3",
-        questionId: "q-1",
-        optionText: "O(n)",
-        isCorrect: false,
-        orderIndex: 3,
-      },
-      {
-        id: "opt-4",
-        questionId: "q-1",
-        optionText: "O(log n)",
-        isCorrect: false,
-        orderIndex: 4,
-      },
-    ],
-  },
-  {
-    id: "q-2",
-    assessmentId: "demo-asm-1",
-    questionText:
-      "Draw the step-by-step state of a Stack during push(5), push(12), pop(), push(8). Show physical layout.",
-    questionType: "SINGLE_CHOICE",
-    difficulty: "EASY",
-    points: 3,
-    orderIndex: 2,
-    requiresWorkbook: true,
-    submissionType: "WORKBOOK_ONLY",
-    workbookInstructions:
-      "Draw the stack diagram in your physical workbook notebook and upload a clear photo or URL below.",
-    explanation:
-      "Stack operates on LIFO principle where the element inserted last is removed first.",
-    options: [
-      {
-        id: "opt-5",
-        questionId: "q-2",
-        optionText: "Completed in Physical Workbook Notebook",
-        isCorrect: true,
-        orderIndex: 1,
-      },
-    ],
-  },
-  {
-    id: "q-3",
-    assessmentId: "demo-asm-1",
-    questionText:
-      "In a Hash Table with open addressing, primary clustering happens when key collisions resolve to adjacent slots.",
-    questionType: "SINGLE_CHOICE",
-    difficulty: "HARD",
-    points: 2,
-    orderIndex: 3,
-    explanation:
-      "Linear probing creates long consecutive occupied blocks called primary clusters.",
-    options: [
-      {
-        id: "opt-9",
-        questionId: "q-3",
-        optionText: "True",
-        isCorrect: true,
-        orderIndex: 1,
-      },
-      {
-        id: "opt-10",
-        questionId: "q-3",
-        optionText: "False",
-        isCorrect: false,
-        orderIndex: 2,
-      },
-    ],
-  },
-];
-
 export function AssessmentScreen({
   onBackToDashboard,
   selectedAssessmentId,
@@ -129,7 +32,7 @@ export function AssessmentScreen({
   const [mode, setMode] = useState<"LIST" | "RUNNER" | "RESULT">("LIST");
   const [assessments, setAssessments] = useState<AssessmentDTO[]>([]);
   const [selectedAsm, setSelectedAsm] = useState<AssessmentDTO | null>(null);
-  const [questions, setQuestions] = useState<QuestionDTO[]>(DEMO_QUESTIONS);
+  const [questions, setQuestions] = useState<QuestionDTO[]>([]);
 
   const [filterType, setFilterType] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -220,7 +123,7 @@ export function AssessmentScreen({
       if (details.questions && details.questions.length > 0) {
         setQuestions(details.questions);
       } else {
-        setQuestions(DEMO_QUESTIONS);
+        setQuestions([]);
       }
       const attempt = await apiClient.startAttempt(
         asm.id,
@@ -228,7 +131,7 @@ export function AssessmentScreen({
       );
       setAttemptId(attempt.id);
     } catch {
-      setQuestions(DEMO_QUESTIONS);
+      setQuestions([]);
       setAttemptId(`attempt-${Date.now()}`);
     } finally {
       setTimeLeftSeconds((asm.durationMinutes || 15) * 60);

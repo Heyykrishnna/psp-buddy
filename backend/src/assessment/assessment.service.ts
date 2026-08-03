@@ -350,18 +350,54 @@ export class AssessmentService {
               marksObtained = -Math.abs(q.negativeMarks || defaultNegativeVal);
             }
           }
-        } else if (q.questionType === 'SHORT_ANSWER') {
+        } else if (q.questionType === 'SHORT_ANSWER' || q.questionType === 'FILL_IN_BLANKS') {
           if (ans.textAnswer && ans.textAnswer.trim().length > 0) {
             const userText = ans.textAnswer.trim().toLowerCase();
             const keywords = (q.shortAnswerKeywords || []).map((k: string) => k.toLowerCase());
-            const matched = keywords.some((kw: string) => userText.includes(kw));
+            const matched = keywords.length > 0
+              ? keywords.some((kw: string) => userText.includes(kw))
+              : userText.length > 0;
 
-            if (matched || keywords.length === 0) {
+            if (matched) {
               isCorrect = true;
               marksObtained = q.points;
             } else if (hasNegative) {
               marksObtained = -Math.abs(q.negativeMarks || defaultNegativeVal);
             }
+          } else if (hasNegative) {
+            marksObtained = -Math.abs(q.negativeMarks || defaultNegativeVal);
+          }
+        } else if (q.questionType === 'CODING') {
+          if (ans.textAnswer && ans.textAnswer.trim().length > 0) {
+            const userText = ans.textAnswer.trim();
+            const lowerText = userText.toLowerCase();
+            const keywords = (q.shortAnswerKeywords || []).map((k: string) => k.toLowerCase());
+
+            let passedSolution = false;
+            if (keywords.length > 0) {
+              passedSolution = keywords.every((kw: string) => lowerText.includes(kw));
+            } else {
+              const hasCodeStructure =
+                lowerText.includes('return') ||
+                lowerText.includes('def') ||
+                lowerText.includes('function') ||
+                lowerText.includes('class');
+              const hasNoPlaceholders =
+                !lowerText.includes('todo') &&
+                !lowerText.includes('fixme') &&
+                !lowerText.includes('pass') &&
+                !lowerText.includes('return 0');
+              passedSolution = hasCodeStructure && hasNoPlaceholders && userText.length > 25;
+            }
+
+            if (passedSolution) {
+              isCorrect = true;
+              marksObtained = q.points;
+            } else if (hasNegative) {
+              marksObtained = -Math.abs(q.negativeMarks || defaultNegativeVal);
+            }
+          } else if (hasNegative) {
+            marksObtained = -Math.abs(q.negativeMarks || defaultNegativeVal);
           }
         }
 

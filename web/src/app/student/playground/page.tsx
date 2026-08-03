@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { PLAYGROUND_EXAMPLES, CodeExample } from "@/lib/playgroundExamples";
+import { evaluateCodeSolution } from "@/lib/codeEvaluator";
 import { apiFetch } from "@/lib/api";
 import {
   CodeIcon,
@@ -70,9 +71,12 @@ export default function StudentPlaygroundPage() {
   const [output, setOutput] = useState<string>("");
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const [testResults, setTestResults] = useState<Array<{
-    id: number;
+    id: string | number;
     passed: boolean;
-    details: string;
+    input: string;
+    expectedOutput: string;
+    actualOutput: string;
+    details?: string;
   }> | null>(null);
   const [consoleCollapsed, setConsoleCollapsed] = useState<boolean>(false);
 
@@ -128,53 +132,66 @@ export default function StudentPlaygroundPage() {
     setRunning(true);
     setConsoleCollapsed(false);
     setActiveTab("output");
-    setOutput(" Executing code in Monaco Sandbox environment...\n");
-    const startTime = performance.now();
+    setOutput("Executing code in Monaco Sandbox environment...\n");
 
     setTimeout(() => {
-      const endTime = performance.now();
-      const duration = Math.round(endTime - startTime);
-      setExecutionTime(duration);
+      const tcs = currentExample?.testCases || [];
+      const outcome = evaluateCodeSolution(code, language, tcs);
 
-      if (language === "javascript" || language === "typescript") {
-        try {
-          const logs: string[] = [];
-          const customConsole = {
-            log: (...args: any[]) =>
-              logs.push(
-                args
-                  .map((a) =>
-                    typeof a === "object"
-                      ? JSON.stringify(a, null, 2)
-                      : String(a),
-                  )
-                  .join(" "),
-              ),
-            error: (...args: any[]) => logs.push(" Error: " + args.join(" ")),
-            warn: (...args: any[]) =>
-              logs.push("️ Warning: " + args.join(" ")),
-          };
+      setExecutionTime(outcome.executionTimeMs);
 
-          const cleanCode = code.replace(/import\s+.*?;?/g, "");
-          const runFn = new Function("console", cleanCode);
-          runFn(customConsole);
+      if (outcome.testResults && outcome.testResults.length > 0) {
+        setTestResults(
+          outcome.testResults.map((r) => ({
+            id: r.id,
+            passed: r.passed,
+            input: r.input,
+            expectedOutput: r.expectedOutput,
+            actualOutput: r.actualOutput,
+            details: `Input: ${r.input} | Expected: ${r.expectedOutput} | Actual: ${r.actualOutput}`,
+          })),
+        );
 
-          setOutput(
-            logs.length > 0
-              ? logs.join("\n")
-              : " Program executed successfully (No output returned).",
-          );
-        } catch (err: any) {
-          setOutput(` Runtime Error:\n${err.message || err}`);
-        }
+        const logsStr = outcome.logs
+          ? `--- STDOUT & Evaluation ---\n${outcome.logs}`
+          : "";
+        const summaryStr = outcome.allPassed
+          ? `\n\nAll ${outcome.totalTests} test cases PASSED!`
+          : `\n\n${outcome.totalPassed} of ${outcome.totalTests} test cases passed.`;
+        setOutput(
+          `${logsStr}${summaryStr}\nProcess finished in ${outcome.executionTimeMs}ms`,
+        );
       } else {
-        if (
-          currentExample &&
-          currentExample.starterCode.trim() === code.trim()
-        ) {
-          setOutput(
-            `--- STDOUT ---\n${currentExample.expectedOutput}\n\n Program finished with exit code 0`,
-          );
+        if (language === "javascript" || language === "typescript") {
+          try {
+            const logs: string[] = [];
+            const customConsole = {
+              log: (...args: any[]) =>
+                logs.push(
+                  args
+                    .map((a) =>
+                      typeof a === "object"
+                        ? JSON.stringify(a, null, 2)
+                        : String(a),
+                    )
+                    .join(" "),
+                ),
+              error: (...args: any[]) => logs.push("Error: " + args.join(" ")),
+              warn: (...args: any[]) => logs.push("Warning: " + args.join(" ")),
+            };
+
+            const cleanCode = code.replace(/import\s+.*?;?/g, "");
+            const runFn = new Function("console", cleanCode);
+            runFn(customConsole);
+
+            setOutput(
+              logs.length > 0
+                ? logs.join("\n")
+                : "Program executed successfully (No output returned).",
+            );
+          } catch (err: any) {
+            setOutput(`Runtime Error:\n${err.message || err}`);
+          }
         } else {
           setOutput(
             `--- STDOUT ---\nRunning ${language.toUpperCase()} Solution...\nSTDIN: ${
@@ -182,15 +199,6 @@ export default function StudentPlaygroundPage() {
             }\n\nResult:\n[Calculated successfully for ${language}]\nProcess finished with exit code 0`,
           );
         }
-      }
-
-      if (currentExample?.testCases) {
-        const results = currentExample.testCases.map((tc) => ({
-          id: tc.id,
-          passed: true,
-          details: `Input: ${tc.input} | Expected: ${tc.expected}`,
-        }));
-        setTestResults(results);
       }
 
       setRunning(false);
@@ -545,7 +553,7 @@ export default function StudentPlaygroundPage() {
                   className="w-full px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-mono rounded-lg transition-all cursor-pointer flex items-center justify-between font-medium"
                 >
                   <span className="flex items-center gap-1.5">
-                     Find Edge Cases & Bugs
+                    Find Edge Cases & Bugs
                   </span>
                   <span>→</span>
                 </button>
@@ -554,7 +562,7 @@ export default function StudentPlaygroundPage() {
                   className="w-full px-3 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 text-xs font-mono rounded-lg transition-all cursor-pointer flex items-center justify-between font-medium"
                 >
                   <span className="flex items-center gap-1.5">
-                     Analyze Time/Space Complexity
+                    Analyze Time/Space Complexity
                   </span>
                   <span>→</span>
                 </button>
@@ -768,9 +776,15 @@ export default function StudentPlaygroundPage() {
                                     Test Case #{tc.id}
                                   </span>
                                   {res ? (
-                                    <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                      PASSED
-                                    </span>
+                                    res.passed ? (
+                                      <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                        PASSED
+                                      </span>
+                                    ) : (
+                                      <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-rose-100 text-rose-800 border border-rose-300">
+                                        FAILED
+                                      </span>
+                                    )
                                   ) : (
                                     <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-zinc-200 text-zinc-700">
                                       Ready
@@ -784,11 +798,27 @@ export default function StudentPlaygroundPage() {
                                   </code>
                                 </p>
                               </div>
-                              <div className="text-right text-[11px] text-zinc-600">
-                                Expected:{" "}
-                                <code className="text-emerald-800 font-bold">
-                                  {tc.expected}
-                                </code>
+                              <div className="text-right text-[11px] text-zinc-600 space-y-0.5">
+                                <div>
+                                  Expected:{" "}
+                                  <code className="text-emerald-800 font-bold">
+                                    {tc.expected}
+                                  </code>
+                                </div>
+                                {res && (
+                                  <div>
+                                    Actual:{" "}
+                                    <code
+                                      className={
+                                        res.passed
+                                          ? "text-emerald-800 font-bold"
+                                          : "text-rose-800 font-bold"
+                                      }
+                                    >
+                                      {res.actualOutput}
+                                    </code>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           );
