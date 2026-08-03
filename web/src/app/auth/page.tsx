@@ -104,7 +104,7 @@ export default function AuthPage() {
         {/* Top Brand Header */}
         <div className="flex items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-2.5">
-            <span className="text-xl">✳</span>
+            <span className="text-xl"></span>
             <span className="font-semibold text-lg tracking-tight text-[#111111]">
               PSP Lumora
             </span>
@@ -140,7 +140,7 @@ export default function AuthPage() {
                 onClick={() => setError("")}
                 className="text-red-400 hover:text-red-700 ml-2"
               >
-                ✕
+                
               </button>
             </div>
           )}
@@ -152,7 +152,7 @@ export default function AuthPage() {
                 onClick={() => setInfoMessage("")}
                 className="text-emerald-500 hover:text-emerald-800 ml-2"
               >
-                ✕
+                
               </button>
             </div>
           )}

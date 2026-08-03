@@ -151,7 +151,7 @@ export default function AssessmentResultPage({
                     : "bg-red-100 text-red-800"
                 }`}
               >
-                {result.isPassed ? "PASSED ✓" : "NEEDS REVISION"}
+                {result.isPassed ? "PASSED " : "NEEDS REVISION"}
               </span>
               <span className="text-xs font-mono text-zinc-500">
                 Passing Score: {result.passingMarks} Marks
@@ -315,7 +315,7 @@ export default function AssessmentResultPage({
                         onClick={() => handleAskAiExplanation(ans)}
                         className="px-2.5 py-1 bg-purple-100 hover:bg-purple-200 text-purple-900 text-[11px] font-semibold rounded transition-all cursor-pointer"
                       >
-                        🤖 Ask AI Tutor
+                         Ask AI Tutor
                       </button>
                     </div>
                   </div>
@@ -343,12 +343,12 @@ export default function AssessmentResultPage({
                   {aiExplainingQId === ans.questionId && (
                     <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg text-xs text-purple-950 space-y-1">
                       <div className="flex items-center justify-between font-mono font-bold text-purple-800 mb-1">
-                        <span>⚡ AI Tutor Breakdown</span>
+                        <span> AI Tutor Breakdown</span>
                         <button
                           onClick={() => setAiExplainingQId(null)}
                           className="text-zinc-400 hover:text-zinc-700"
                         >
-                          ✕
+                          
                         </button>
                       </div>
                       {aiLoading ? (

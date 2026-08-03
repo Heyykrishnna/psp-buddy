@@ -261,12 +261,12 @@ async function main() {
     },
   });
 
-  console.log('✅ Successfully seeded database with real assessments and questions!');
+  console.log(' Successfully seeded database with real assessments and questions!');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seeding error:', e);
+    console.error(' Seeding error:', e);
     process.exit(1);
   })
   .finally(async () => {

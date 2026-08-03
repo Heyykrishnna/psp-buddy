@@ -83,7 +83,7 @@ export class MailService {
         subject,
         html,
       });
-      this.logger.log(`✉️ Nodemailer successfully sent verification email to ${toEmail} (MessageId: ${info.messageId})`);
+      this.logger.log(`️ Nodemailer successfully sent verification email to ${toEmail} (MessageId: ${info.messageId})`);
       return true;
     } catch (err: any) {
       this.logger.error(`Failed to send email to ${toEmail}: ${err.message}`, err.stack);

@@ -16,7 +16,7 @@ export default function AiTutorPage() {
     {
       role: "assistant",
       content:
-        "Hello! I am **Lumora AI Tutor** powered by AI. 🚀\n\nAsk me anything about your CS concepts, data structures, algorithms, or test preparation!",
+        "Hello! I am **Lumora AI Tutor** powered by AI. \n\nAsk me anything about your CS concepts, data structures, algorithms, or test preparation!",
     },
   ]);
 
@@ -126,7 +126,7 @@ export default function AiTutorPage() {
               >
                 {msg.role === "assistant" && (
                   <span className="text-[10px] font-mono font-bold text-purple-700 block mb-1">
-                    ⚡ AI TUTOR
+                     AI TUTOR
                   </span>
                 )}
                 {msg.content}
@@ -156,7 +156,7 @@ export default function AiTutorPage() {
             disabled={loading || !input.trim()}
             className="px-6 py-3 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-xl shadow-sm transition-all disabled:opacity-50 cursor-pointer"
           >
-            Ask Tutor 🚀
+            Ask Tutor 
           </button>
         </form>
       </div>

@@ -69,9 +69,7 @@ export default function MonacoPlayground({
   return (
     <div
       className={`w-full h-full relative overflow-hidden rounded-b-xl border transition-colors ${
-        isDark
-          ? "bg-[#1e1e1e] border-zinc-800"
-          : "bg-white border-zinc-200"
+        isDark ? "bg-[#1e1e1e] border-zinc-800" : "bg-white border-zinc-200"
       }`}
     >
       <Editor

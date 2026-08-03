@@ -375,7 +375,7 @@ export default function StudentAssessmentRunnerPage({
                             key={oIdx}
                             className={`text-xs flex items-center gap-2 ${opt.isCorrect ? "text-emerald-700 font-semibold" : "text-zinc-500"}`}
                           >
-                            <span>{opt.isCorrect ? "✓" : "○"}</span>
+                            <span>{opt.isCorrect ? "" : "○"}</span>
                             <span>{opt.optionText}</span>
                             {opt.isCorrect && (
                               <span className="text-[10px] font-mono bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">
@@ -420,7 +420,7 @@ export default function StudentAssessmentRunnerPage({
         {/* Top Minimal Bar */}
         <header className="flex items-center justify-between border-b border-zinc-200 pb-4">
           <div className="flex items-center gap-3">
-            <span className="text-xl">✳</span>
+            <span className="text-xl"></span>
             <div>
               <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest block">
                 {assessment.className || "Class Assessment"}
@@ -628,7 +628,7 @@ export default function StudentAssessmentRunnerPage({
                             <span
                               className={`w-4 h-4 rounded-full border flex items-center justify-center text-xs ${isSelected ? "border-white bg-white text-[#111111]" : "border-zinc-400"}`}
                             >
-                              {isSelected && "✓"}
+                              {isSelected && ""}
                             </span>
                           </button>
                         );

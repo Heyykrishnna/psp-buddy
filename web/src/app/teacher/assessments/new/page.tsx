@@ -711,7 +711,7 @@ export default function NewAssessmentPage() {
                       onClick={() => setShowAiModal(false)}
                       className="text-xs text-zinc-500 hover:text-zinc-800"
                     >
-                      ✕
+                      
                     </button>
                   </div>
 
@@ -1384,7 +1384,7 @@ export default function NewAssessmentPage() {
                   onClick={() => handleSaveAndPublish(true)}
                   className="px-6 py-2.5 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all cursor-pointer shadow-sm"
                 >
-                  {loading ? "Publishing..." : "Publish & Notify Students 🚀"}
+                  {loading ? "Publishing..." : "Publish & Notify Students "}
                 </button>
               </div>
             </div>

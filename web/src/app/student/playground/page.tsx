@@ -128,7 +128,7 @@ export default function StudentPlaygroundPage() {
     setRunning(true);
     setConsoleCollapsed(false);
     setActiveTab("output");
-    setOutput("⏳ Executing code in Monaco Sandbox environment...\n");
+    setOutput(" Executing code in Monaco Sandbox environment...\n");
     const startTime = performance.now();
 
     setTimeout(() => {
@@ -150,9 +150,9 @@ export default function StudentPlaygroundPage() {
                   )
                   .join(" "),
               ),
-            error: (...args: any[]) => logs.push("❌ Error: " + args.join(" ")),
+            error: (...args: any[]) => logs.push(" Error: " + args.join(" ")),
             warn: (...args: any[]) =>
-              logs.push("⚠️ Warning: " + args.join(" ")),
+              logs.push("️ Warning: " + args.join(" ")),
           };
 
           const cleanCode = code.replace(/import\s+.*?;?/g, "");
@@ -162,10 +162,10 @@ export default function StudentPlaygroundPage() {
           setOutput(
             logs.length > 0
               ? logs.join("\n")
-              : "✅ Program executed successfully (No output returned).",
+              : " Program executed successfully (No output returned).",
           );
         } catch (err: any) {
-          setOutput(`❌ Runtime Error:\n${err.message || err}`);
+          setOutput(` Runtime Error:\n${err.message || err}`);
         }
       } else {
         if (
@@ -173,7 +173,7 @@ export default function StudentPlaygroundPage() {
           currentExample.starterCode.trim() === code.trim()
         ) {
           setOutput(
-            `--- STDOUT ---\n${currentExample.expectedOutput}\n\n✅ Program finished with exit code 0`,
+            `--- STDOUT ---\n${currentExample.expectedOutput}\n\n Program finished with exit code 0`,
           );
         } else {
           setOutput(
@@ -234,7 +234,7 @@ export default function StudentPlaygroundPage() {
     setConsoleCollapsed(false);
     setActiveTab("ai");
     setAiAnalysis(
-      "🤖 Lumora AI is inspecting your code and analyzing complexity...",
+      " Lumora AI is inspecting your code and analyzing complexity...",
     );
 
     try {
@@ -258,7 +258,7 @@ export default function StudentPlaygroundPage() {
       setAiAnalysis(res?.reply || "No response from AI.");
     } catch (err: any) {
       setAiAnalysis(
-        `⚠️ AI Error: Could not connect to AI assistant (${err.message}). Make sure backend server is running.`,
+        `️ AI Error: Could not connect to AI assistant (${err.message}). Make sure backend server is running.`,
       );
     } finally {
       setAiLoading(false);
@@ -454,7 +454,7 @@ export default function StudentPlaygroundPage() {
             ) : (
               <>
                 <PlayIcon className="w-3.5 h-3.5 fill-current text-emerald-400" />
-                Run Code (⌘↵)
+                Run Code (↵)
               </>
             )}
           </button>
@@ -545,7 +545,7 @@ export default function StudentPlaygroundPage() {
                   className="w-full px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-mono rounded-lg transition-all cursor-pointer flex items-center justify-between font-medium"
                 >
                   <span className="flex items-center gap-1.5">
-                    🐞 Find Edge Cases & Bugs
+                     Find Edge Cases & Bugs
                   </span>
                   <span>→</span>
                 </button>
@@ -554,7 +554,7 @@ export default function StudentPlaygroundPage() {
                   className="w-full px-3 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 text-xs font-mono rounded-lg transition-all cursor-pointer flex items-center justify-between font-medium"
                 >
                   <span className="flex items-center gap-1.5">
-                    ⚡ Analyze Time/Space Complexity
+                     Analyze Time/Space Complexity
                   </span>
                   <span>→</span>
                 </button>
@@ -727,7 +727,7 @@ export default function StudentPlaygroundPage() {
                       </pre>
                     ) : (
                       <p className="text-zinc-400 italic">
-                        Click "Run Code" (⌘↵) above to execute your solution and
+                        Click "Run Code" (↵) above to execute your solution and
                         view standard output here.
                       </p>
                     )}

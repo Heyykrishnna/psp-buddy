@@ -841,7 +841,7 @@ export function AssessmentScreen({
                     />
                     <View style={{ flex: 1, gap: 2 }}>
                       <Text style={styles.previewSuccessText} numberOfLines={1}>
-                        ✓ Image Attached
+                         Image Attached
                       </Text>
                       <Text style={styles.previewSubText} numberOfLines={1}>
                         {workbookUrlInput.startsWith("data:")
@@ -1102,7 +1102,7 @@ export function AssessmentScreen({
                     ]}
                   >
                     <Text style={[styles.insightTitle, { color: "#4ade80" }]}>
-                      ✓ STRENGTHS
+                       STRENGTHS
                     </Text>
                     {(
                       workbookResult.strengths || [
@@ -1123,7 +1123,7 @@ export function AssessmentScreen({
                     ]}
                   >
                     <Text style={[styles.insightTitle, { color: "#F4C463" }]}>
-                      ⚡ IMPROVEMENTS
+                       IMPROVEMENTS
                     </Text>
                     {(
                       workbookResult.improvements || [
@@ -1435,7 +1435,7 @@ export function AssessmentScreen({
                             style={styles.previewSuccessText}
                             numberOfLines={1}
                           >
-                            ✓ Photo Attached
+                             Photo Attached
                           </Text>
                           <Text style={styles.previewSubText} numberOfLines={1}>
                             {questionWorkbooks[

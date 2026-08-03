@@ -742,9 +742,9 @@ export default function AssessmentResultsPage({
                     </div>
                     <p className="text-[10px] font-mono text-zinc-400">
                       {q.accuracy < 50
-                        ? "⚠️ Most students struggled — review this topic in class"
+                        ? "️ Most students struggled — review this topic in class"
                         : q.accuracy >= 90
-                          ? "✓ Well understood by class"
+                          ? " Well understood by class"
                           : "Average performance"}
                     </p>
                   </div>
