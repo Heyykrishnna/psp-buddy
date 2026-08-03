@@ -144,11 +144,19 @@ const chartStyles = StyleSheet.create({
 export interface DashboardScreenProps {
   onOpenAssessments?: (asmId?: string) => void;
   onOpenLeaderboard?: () => void;
+  onOpenPlayground?: () => void;
+  onOpenCompetitive?: () => void;
+  onOpenAiTutor?: () => void;
+  onOpenAnalytics?: () => void;
 }
 
 export function DashboardScreen({
   onOpenAssessments,
   onOpenLeaderboard,
+  onOpenPlayground,
+  onOpenCompetitive,
+  onOpenAiTutor,
+  onOpenAnalytics,
 }: DashboardScreenProps) {
   const { user, logout, apiClient } = useAuth();
   const [xp, setXp] = useState(0);
@@ -251,6 +259,49 @@ export function DashboardScreen({
               <Text style={styles.greetingStatLabel}>WEAK TOPICS</Text>
             </View>
           </View>
+        </View>
+
+        {/* QUICK FEATURE LAUNCH GRID */}
+        <View style={styles.quickGrid}>
+          <TouchableOpacity
+            style={[styles.quickCard, { backgroundColor: "#18181b", borderColor: "#27272a" }]}
+            onPress={() => onOpenPlayground?.()}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.quickCardIcon}>💻</Text>
+            <Text style={styles.quickCardTitle}>Code IDE</Text>
+            <Text style={styles.quickCardSub}>Playground & Judge</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.quickCard, { backgroundColor: "#18181b", borderColor: "#27272a" }]}
+            onPress={() => onOpenCompetitive?.()}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.quickCardIcon}>🏆</Text>
+            <Text style={styles.quickCardTitle}>Competitive</Text>
+            <Text style={styles.quickCardSub}>Daily, Streaks, Badges</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.quickCard, { backgroundColor: "#18181b", borderColor: "#27272a" }]}
+            onPress={() => onOpenAiTutor?.()}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.quickCardIcon}>🤖</Text>
+            <Text style={styles.quickCardTitle}>AI Tutor</Text>
+            <Text style={styles.quickCardSub}>Ask Questions & Hints</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.quickCard, { backgroundColor: "#18181b", borderColor: "#27272a" }]}
+            onPress={() => onOpenAnalytics?.()}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.quickCardIcon}>📊</Text>
+            <Text style={styles.quickCardTitle}>Analytics</Text>
+            <Text style={styles.quickCardSub}>Topic Mastery & Stats</Text>
+          </TouchableOpacity>
         </View>
 
         {/* ACTIVE ASSESSMENTS (Coral Card) */}
@@ -916,5 +967,38 @@ const styles = StyleSheet.create({
   },
   leaderXpUser: {
     color: "#ffffff",
+  },
+
+  // Quick feature launch grid
+  quickGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginVertical: 4,
+  },
+  quickCard: {
+    width: (width - 40 - 10) / 2, // 2 column layout with 20px screen margin each side & 10px gap
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 14,
+    gap: 4,
+  },
+  quickCardIcon: {
+    fontSize: 22,
+    marginBottom: 4,
+  },
+  quickCardTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#ffffff",
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_700Bold",
+  },
+  quickCardSub: {
+    fontSize: 10,
+    color: "#a1a1aa",
+    fontWeight: "500",
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_500Medium",
   },
 });

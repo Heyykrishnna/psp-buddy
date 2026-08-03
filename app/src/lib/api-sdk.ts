@@ -223,6 +223,84 @@ export class PSPBuddyApiClient {
     return res.data;
   }
 
+  // PROBLEMS & PLAYGROUND API
+  async getProblems(params?: { difficulty?: string; topic?: string; search?: string; userId?: string; status?: string; bookmarked?: boolean }) {
+    const p = new URLSearchParams();
+    if (params?.difficulty) p.append('difficulty', params.difficulty);
+    if (params?.topic) p.append('topic', params.topic);
+    if (params?.search) p.append('search', params.search);
+    if (params?.userId) p.append('userId', params.userId);
+    if (params?.status) p.append('status', params.status);
+    if (params?.bookmarked !== undefined) p.append('bookmarked', String(params.bookmarked));
+    const res = await this.http.get(`/problems?${p.toString()}`);
+    return res.data;
+  }
+
+  async getProblemById(id: string, userId?: string) {
+    const p = userId ? `?userId=${userId}` : '';
+    const res = await this.http.get(`/problems/${id}${p}`);
+    return res.data;
+  }
+
+  async runProblemCode(id: string, sourceCode: string, language: string = 'python') {
+    const res = await this.http.post(`/problems/${id}/run`, { sourceCode, language });
+    return res.data;
+  }
+
+  async submitProblem(id: string, sourceCode: string, language: string = 'python') {
+    const res = await this.http.post(`/problems/${id}/submit`, { sourceCode, language });
+    return res.data;
+  }
+
+  async toggleBookmark(id: string, userId?: string) {
+    const p = userId ? `?userId=${userId}` : '';
+    const res = await this.http.post(`/problems/${id}/bookmark${p}`);
+    return res.data;
+  }
+
+  async getProblemSubmissions(id: string) {
+    const res = await this.http.get(`/problems/${id}/submissions`);
+    return res.data;
+  }
+
+  // COMPETITIVE HUB API
+  async getDailyChallenge() {
+    const res = await this.http.get('/competitive/daily-challenge');
+    return res.data;
+  }
+
+  async getWeeklyChallenge() {
+    const res = await this.http.get('/competitive/weekly-challenge');
+    return res.data;
+  }
+
+  async getCompetitiveLeaderboard(timeframe: 'WEEKLY' | 'MONTHLY' | 'ALL_TIME' = 'ALL_TIME') {
+    const res = await this.http.get(`/competitive/leaderboard?timeframe=${timeframe}`);
+    return res.data;
+  }
+
+  async getContests(status?: string) {
+    const p = status ? `?status=${status}` : '';
+    const res = await this.http.get(`/competitive/contests${p}`);
+    return res.data;
+  }
+
+  async registerContest(contestId: string) {
+    const res = await this.http.post(`/competitive/contests/${contestId}/register`);
+    return res.data;
+  }
+
+  async getAchievements() {
+    const res = await this.http.get('/competitive/achievements');
+    return res.data;
+  }
+
+  async getCompetitiveProfile(studentId?: string) {
+    const endpoint = studentId ? `/competitive/profile/${studentId}` : '/competitive/profile';
+    const res = await this.http.get(endpoint);
+    return res.data;
+  }
+
 
   connectRealtimeSync(wsUrl: string, token: string) {
     if (typeof window === 'undefined' && typeof globalThis === 'undefined') return;

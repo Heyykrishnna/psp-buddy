@@ -16,10 +16,23 @@ import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { AssessmentScreen } from './src/screens/AssessmentScreen';
 import { LeaderboardScreen } from './src/screens/LeaderboardScreen';
+import { PlaygroundScreen } from './src/screens/PlaygroundScreen';
+import { CompetitiveScreen } from './src/screens/CompetitiveScreen';
+import { AiTutorScreen } from './src/screens/AiTutorScreen';
+import { AnalyticsScreen } from './src/screens/AnalyticsScreen';
+
+type ScreenType =
+  | 'DASHBOARD'
+  | 'ASSESSMENTS'
+  | 'LEADERBOARD'
+  | 'PLAYGROUND'
+  | 'COMPETITIVE'
+  | 'AITUTOR'
+  | 'ANALYTICS';
 
 function MainNavigator() {
   const { user, loading } = useAuth();
-  const [currentScreen, setCurrentScreen] = useState<'DASHBOARD' | 'ASSESSMENTS' | 'LEADERBOARD'>('DASHBOARD');
+  const [currentScreen, setCurrentScreen] = useState<ScreenType>('DASHBOARD');
   const [selectedAsmId, setSelectedAsmId] = useState<string | null>(null);
 
   if (loading) {
@@ -56,6 +69,38 @@ function MainNavigator() {
     );
   }
 
+  if (currentScreen === 'PLAYGROUND') {
+    return (
+      <PlaygroundScreen
+        onBackToDashboard={() => setCurrentScreen('DASHBOARD')}
+      />
+    );
+  }
+
+  if (currentScreen === 'COMPETITIVE') {
+    return (
+      <CompetitiveScreen
+        onBackToDashboard={() => setCurrentScreen('DASHBOARD')}
+      />
+    );
+  }
+
+  if (currentScreen === 'AITUTOR') {
+    return (
+      <AiTutorScreen
+        onBackToDashboard={() => setCurrentScreen('DASHBOARD')}
+      />
+    );
+  }
+
+  if (currentScreen === 'ANALYTICS') {
+    return (
+      <AnalyticsScreen
+        onBackToDashboard={() => setCurrentScreen('DASHBOARD')}
+      />
+    );
+  }
+
   return (
     <DashboardScreen
       onOpenAssessments={(asmId) => {
@@ -64,6 +109,18 @@ function MainNavigator() {
       }}
       onOpenLeaderboard={() => {
         setCurrentScreen('LEADERBOARD');
+      }}
+      onOpenPlayground={() => {
+        setCurrentScreen('PLAYGROUND');
+      }}
+      onOpenCompetitive={() => {
+        setCurrentScreen('COMPETITIVE');
+      }}
+      onOpenAiTutor={() => {
+        setCurrentScreen('AITUTOR');
+      }}
+      onOpenAnalytics={() => {
+        setCurrentScreen('ANALYTICS');
       }}
     />
   );
@@ -84,7 +141,8 @@ export default function App() {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap';
+      link.href =
+        'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap';
       document.head.appendChild(link);
     }
   }, []);
@@ -100,7 +158,7 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <MainNavigator />
     </AuthProvider>
   );
@@ -109,16 +167,15 @@ export default function App() {
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#B8C6B6',
-    alignItems: 'center',
+    backgroundColor: '#09090b',
     justifyContent: 'center',
-    gap: 12,
+    alignItems: 'center',
+    gap: 16,
   },
   loadingText: {
-    color: '#121316',
-    fontSize: 11,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
-    letterSpacing: 1,
+    color: '#a1a1aa',
+    fontFamily: 'SpaceGrotesk_600SemiBold',
+    fontSize: 12,
+    letterSpacing: 1.5,
   },
 });
