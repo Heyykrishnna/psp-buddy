@@ -1,24 +1,24 @@
 import { z } from 'zod';
 
+export const sendVerificationCodeSchema = z.object({
+  email: z.string().email('Invalid email address'),
+});
+
+export type SendVerificationCodeInput = z.infer<typeof sendVerificationCodeSchema>;
+
 export const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters long'),
+  password: z.string().min(6, 'Password must be at least 6 characters long'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   role: z.enum(['ADMIN', 'TEACHER', 'STUDENT']).optional().default('STUDENT'),
+  verificationCode: z.string().min(4, 'Confirmation code is required'),
   studentRegistrationNo: z.string().optional(),
   employeeId: z.string().optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 
-export const googleAuthSchema = z.object({
-  idToken: z.string().min(1, 'Google ID token is required'),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-});
-
-export type GoogleAuthInput = z.infer<typeof googleAuthSchema>;
 
 export const onboardingSchema = z.object({
   gradeLevel: z.string().optional(),

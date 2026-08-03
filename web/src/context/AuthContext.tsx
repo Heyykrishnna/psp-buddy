@@ -9,8 +9,8 @@ interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: (idToken: string, firstName?: string, lastName?: string) => Promise<void>;
-  register: (firstName: string, lastName: string, email: string, password: string, role?: UserRole) => Promise<void>;
+  sendVerificationCode: (email: string) => Promise<{ message: string; verificationCode?: string }>;
+  register: (firstName: string, lastName: string, email: string, password: string, verificationCode: string, role?: UserRole) => Promise<void>;
   onboard: (data: { gradeLevel?: string; studentRegistrationNo?: string; employeeId?: string; department?: string; avatarUrl?: string }) => Promise<void>;
   loginAsDemo: (role: UserRole) => Promise<void>;
   logout: () => Promise<void>;
@@ -151,49 +151,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const loginWithGoogle = async (idToken: string, firstName?: string, lastName?: string) => {
-    try {
-      const res = await apiFetch<AuthResponse>('/auth/google', {
-        method: 'POST',
-        body: JSON.stringify({ idToken, firstName, lastName }),
-      });
-
-      if (res.tokens) {
-        setAccessToken(res.tokens.accessToken);
-        setRefreshToken(res.tokens.refreshToken);
-      }
-      updateUserCache(res.user);
-
-      if (!res.user.isOnboarded) {
-        router.push('/onboarding');
-      } else {
-        router.push('/dashboard');
-      }
-    } catch (err: any) {
-      if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError')) {
-        const mockUser: UserProfile = {
-          id: `usr_google_${Date.now()}`,
-          email: `${(firstName || 'google').toLowerCase()}@lumora.edu`,
-          firstName: firstName || 'Google',
-          lastName: lastName || 'User',
-          role: 'STUDENT',
-          isOnboarded: false,
-        };
-        setAccessToken(`mock_acc_token_${Date.now()}`);
-        setRefreshToken(`mock_ref_token_${Date.now()}`);
-        updateUserCache(mockUser);
-        router.push('/onboarding');
-        return;
-      }
-      throw err;
-    }
+  const sendVerificationCode = async (email: string) => {
+    return apiFetch<{ message: string; verificationCode?: string }>('/auth/send-verification-code', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
   };
 
-  const register = async (firstName: string, lastName: string, email: string, password: string, role?: UserRole) => {
+  const register = async (firstName: string, lastName: string, email: string, password: string, verificationCode: string, role?: UserRole) => {
     try {
       const res = await apiFetch<AuthResponse>('/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ firstName, lastName, email, password, role }),
+        body: JSON.stringify({ firstName, lastName, email, password, verificationCode, role }),
       });
 
       if (res.tokens) {
@@ -295,7 +264,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, loginWithGoogle, register, onboard, loginAsDemo, logout, checkAuth }}
+      value={{ user, loading, login, sendVerificationCode, register, onboard, loginAsDemo, logout, checkAuth }}
     >
       {children}
     </AuthContext.Provider>

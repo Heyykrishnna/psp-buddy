@@ -3,53 +3,9 @@
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { UserRole } from "@/types";
-import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 
-function GoogleLoginButton({ onCredentialSuccess, disabled }: { onCredentialSuccess: (token: string) => void; disabled: boolean }) {
-  const loginWithGoogleOAuth = useGoogleLogin({
-    onSuccess: (tokenResponse) => {
-      if (tokenResponse.access_token) {
-        onCredentialSuccess(tokenResponse.access_token);
-      }
-    },
-    onError: () => {
-      // Fallback
-      onCredentialSuccess(`google_token_${Date.now()}`);
-    },
-  });
-
-  return (
-    <button
-      type="button"
-      onClick={() => loginWithGoogleOAuth()}
-      disabled={disabled}
-      className="py-3 px-4 bg-white border border-zinc-200 hover:border-zinc-400 text-zinc-700 text-xs font-medium rounded-md transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs w-full"
-    >
-      <svg className="w-4 h-4" viewBox="0 0 24 24">
-        <path
-          fill="#EA4335"
-          d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.2 9 5 12 5z"
-        />
-        <path
-          fill="#4285F4"
-          d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"
-        />
-        <path
-          fill="#FBBC05"
-          d="M5.6 14.8c-.3-.8-.4-1.8-.4-2.8s.1-2 .4-2.8L1.9 6.3C.7 8.7 0 10.3 0 12s.7 3.3 1.9 5.7l3.7-2.9z"
-        />
-        <path
-          fill="#34A853"
-          d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.2-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"
-        />
-      </svg>
-      <span>Sign in with Google</span>
-    </button>
-  );
-}
-
-function AuthFormContent() {
-  const { login, loginWithGoogle, register, loginAsDemo } = useAuth();
+export default function AuthPage() {
+  const { login, sendVerificationCode, register, loginAsDemo } = useAuth();
 
   const [isSignUp, setIsSignUp] = useState(false);
 
@@ -59,36 +15,79 @@ function AuthFormContent() {
   const [lastName, setLastName] = useState("");
   const [role, setRole] = useState<UserRole>("STUDENT");
 
+  // Email Confirmation Code state
+  const [verificationCode, setVerificationCode] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+  const [infoMessage, setInfoMessage] = useState("");
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const validateForm = (): boolean => {
+  const handleSendCode = async () => {
+    setError("");
+    setInfoMessage("");
+
     if (!email.trim() || !email.includes("@")) {
-      setError("Please enter a valid email address.");
-      return false;
+      setError("Please enter a valid email address first.");
+      return;
     }
-    if (!password || password.length < 6) {
-      setError("Password must be at least 6 characters long.");
-      return false;
+
+    setLoading(true);
+    try {
+      const res = await sendVerificationCode(email.trim());
+      setCodeSent(true);
+      if (res.verificationCode) {
+        setVerificationCode(res.verificationCode);
+        setInfoMessage(`Confirmation code sent! (Code: ${res.verificationCode})`);
+      } else {
+        setInfoMessage("Confirmation code sent to your email! Please check your inbox.");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to send confirmation code.");
+    } finally {
+      setLoading(false);
     }
-    if (isSignUp && (!firstName.trim() || !lastName.trim())) {
-      setError("First and Last Name are required for registration.");
-      return false;
-    }
-    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setInfoMessage("");
 
-    if (!validateForm()) return;
+    if (!email.trim() || !email.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+
+    if (isSignUp) {
+      if (!firstName.trim() || !lastName.trim()) {
+        setError("First and Last Name are required.");
+        return;
+      }
+
+      if (!codeSent || !verificationCode.trim()) {
+        setError("Please request and enter your confirmation code first.");
+        return;
+      }
+    }
 
     setLoading(true);
 
     try {
       if (isSignUp) {
-        await register(firstName.trim(), lastName.trim(), email.trim(), password, role);
+        await register(
+          firstName.trim(),
+          lastName.trim(),
+          email.trim(),
+          password,
+          verificationCode.trim(),
+          role
+        );
       } else {
         await login(email.trim(), password);
       }
@@ -99,25 +98,9 @@ function AuthFormContent() {
     }
   };
 
-  const handleGoogleTokenSuccess = async (idToken: string) => {
-    setError("");
-    setLoading(true);
-    try {
-      await loginWithGoogle(
-        idToken,
-        firstName.trim() || "GoogleUser",
-        lastName.trim() || "PSP"
-      );
-    } catch (err: any) {
-      setError(err.message || "Google sign-in failed.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen w-full bg-white text-[#111111] grid grid-cols-1 lg:grid-cols-12 selection:bg-[#111111] selection:text-white font-sans">
-      {/* Left Column: Minimal Form Area (7 Columns) */}
+      {/* Left Column: Form Area (7 Columns) */}
       <div className="lg:col-span-7 flex flex-col justify-between p-6 sm:p-12 lg:p-16 max-w-2xl mx-auto w-full">
         {/* Top Brand Header */}
         <div className="flex items-center justify-between gap-4 mb-8">
@@ -142,6 +125,8 @@ function AuthFormContent() {
               onClick={() => {
                 setIsSignUp(!isSignUp);
                 setError("");
+                setInfoMessage("");
+                setCodeSent(false);
               }}
               className="text-[#111111] font-semibold underline underline-offset-4 hover:opacity-75 transition-opacity ml-1 cursor-pointer"
             >
@@ -153,6 +138,13 @@ function AuthFormContent() {
             <div className="mb-6 p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-md flex items-center justify-between">
               <span>⚠️ {error}</span>
               <button onClick={() => setError("")} className="text-red-400 hover:text-red-700 ml-2">✕</button>
+            </div>
+          )}
+
+          {infoMessage && (
+            <div className="mb-6 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-md flex items-center justify-between">
+              <span>📧 {infoMessage}</span>
+              <button onClick={() => setInfoMessage("")} className="text-emerald-500 hover:text-emerald-800 ml-2">✕</button>
             </div>
           )}
 
@@ -190,7 +182,7 @@ function AuthFormContent() {
                   </div>
                 </div>
 
-                {/* Role Selector for Sign Up */}
+                {/* Role Selector */}
                 <div>
                   <label className="block text-xs text-zinc-600 font-medium mb-1.5">
                     Account Type (Role)
@@ -227,15 +219,43 @@ function AuthFormContent() {
               <label className="block text-xs text-zinc-600 font-medium mb-1.5">
                 Email Address
               </label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
-                className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-[#111111] transition-all"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-[#111111] transition-all"
+                />
+                {isSignUp && (
+                  <button
+                    type="button"
+                    onClick={handleSendCode}
+                    disabled={loading}
+                    className="px-4 py-3 bg-zinc-800 hover:bg-black text-white text-xs font-medium rounded-md whitespace-nowrap transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {codeSent ? "Resend Code" : "Send Code"}
+                  </button>
+                )}
+              </div>
             </div>
+
+            {isSignUp && codeSent && (
+              <div>
+                <label className="block text-xs text-zinc-600 font-medium mb-1.5">
+                  Email Confirmation Code
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  placeholder="Enter 6-digit code"
+                  className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-zinc-300 rounded-md text-sm font-mono text-[#111111] placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-[#111111] transition-all"
+                />
+              </div>
+            )}
 
             <div>
               <label className="block text-xs text-zinc-600 font-medium mb-1.5">
@@ -247,7 +267,7 @@ function AuthFormContent() {
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password (min 6 chars)"
+                placeholder="Enter password (min 6 chars)"
                 className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-[#111111] transition-all"
               />
             </div>
@@ -262,27 +282,11 @@ function AuthFormContent() {
                 {loading
                   ? "Processing..."
                   : isSignUp
-                    ? "Create Account"
-                    : "Login"}
+                    ? "Verify & Create Account"
+                    : "Sign In"}
               </button>
             </div>
           </form>
-
-          {/* Social Auth Separator */}
-          <div className="relative flex items-center justify-center my-6">
-            <div className="border-t border-zinc-200 w-full" />
-            <span className="bg-white px-3 text-[10px] uppercase font-mono text-zinc-400 tracking-wider absolute">
-              OR
-            </span>
-          </div>
-
-          {/* Google OAuth Button */}
-          <div>
-            <GoogleLoginButton
-              onCredentialSuccess={handleGoogleTokenSuccess}
-              disabled={loading}
-            />
-          </div>
 
           {/* Quick Demo Roles Bar */}
           <div className="mt-8 pt-6 border-t border-zinc-100 flex items-center justify-between gap-2">
@@ -329,7 +333,7 @@ function AuthFormContent() {
         </div>
       </div>
 
-      {/* Right Column: Editorial Side Banner */}
+      {/* Right Column: Side Banner */}
       <div className="hidden lg:flex lg:col-span-5 bg-[#111111] text-white p-12 flex-col justify-between relative overflow-hidden">
         <div
           className="absolute inset-0 opacity-10 pointer-events-none"
@@ -341,7 +345,7 @@ function AuthFormContent() {
 
         <div className="relative z-10 flex items-center justify-between">
           <span className="text-xs font-mono text-zinc-400 uppercase tracking-widest">
-            AUTHENTICATION • SYNCHRONIZED
+            AUTHENTICATION • EMAIL CONFIRMATION
           </span>
           <span className="px-2.5 py-1 rounded bg-zinc-800 text-[10px] font-mono text-zinc-300">
             v0.1.0
@@ -350,29 +354,18 @@ function AuthFormContent() {
 
         <div className="relative z-10 max-w-md my-auto space-y-6">
           <h2 className="font-serif text-4xl lg:text-5xl font-normal leading-tight text-zinc-100">
-            Good things are on the way.
+            Secured Email & Password Access.
           </h2>
           <p className="text-sm text-zinc-400 leading-relaxed font-sans">
-            We are building a synchronized, minimal learning & assessment
-            platform for modern students, teachers, and admins.
+            Every user is verified via a 6-digit confirmation code before account registration, ensuring 100% database security and data integrity.
           </p>
         </div>
 
         <div className="relative z-10 pt-8 border-t border-zinc-800 flex items-center justify-between text-xs text-zinc-500 font-mono">
           <span>PSP LUMORA ENGINE</span>
-          <span>NESTJS + PRISMA + GOOGLE OAUTH</span>
+          <span>NESTJS + ARGON2 + EMAIL VERIFICATION</span>
         </div>
       </div>
     </div>
-  );
-}
-
-export default function AuthPage() {
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "dummy_google_client_id.apps.googleusercontent.com";
-
-  return (
-    <GoogleOAuthProvider clientId={clientId}>
-      <AuthFormContent />
-    </GoogleOAuthProvider>
   );
 }

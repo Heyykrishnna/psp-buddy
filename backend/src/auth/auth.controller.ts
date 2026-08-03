@@ -5,18 +5,25 @@ import {
   RegisterInput,
   LoginInput,
   RefreshTokenInput,
-  GoogleAuthInput,
   OnboardingInput,
+  SendVerificationCodeInput,
   registerSchema,
   loginSchema,
   refreshTokenSchema,
-  googleAuthSchema,
   onboardingSchema,
+  sendVerificationCodeSchema,
 } from '@/validation';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
+
+  @Post('send-verification-code')
+  @HttpCode(HttpStatus.OK)
+  async sendVerificationCode(@Body() body: any) {
+    const validated = sendVerificationCodeSchema.parse(body);
+    return this.authService.sendVerificationCode(validated.email);
+  }
 
   @Post('register')
   async register(@Body() body: any) {
@@ -29,13 +36,6 @@ export class AuthController {
   async login(@Body() body: any) {
     const validated = loginSchema.parse(body);
     return this.authService.login(validated);
-  }
-
-  @Post('google')
-  @HttpCode(HttpStatus.OK)
-  async googleAuth(@Body() body: any) {
-    const validated = googleAuthSchema.parse(body);
-    return this.authService.googleAuth(validated);
   }
 
   @UseGuards(JwtAuthGuard)

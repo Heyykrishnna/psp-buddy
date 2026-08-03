@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import {
   StyleSheet,
   Text,
@@ -19,7 +19,7 @@ import { UserRole } from "../types";
 const { width } = Dimensions.get("window");
 
 export function AuthScreen() {
-  const { login, loginWithGoogle, register, loginAsDemo } = useAuth();
+  const { login, sendVerificationCode, register, loginAsDemo } = useAuth();
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
@@ -27,6 +27,12 @@ export function AuthScreen() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  // Email Confirmation Code state
+  const [verificationCode, setVerificationCode] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+  const [infoMessage, setInfoMessage] = useState("");
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -36,12 +42,38 @@ export function AuthScreen() {
   const switchTab = (signUp: boolean) => {
     setIsSignUp(signUp);
     setError("");
+    setInfoMessage("");
+    setCodeSent(false);
     Animated.spring(tabAnim, {
       toValue: signUp ? 1 : 0,
       useNativeDriver: true,
       stiffness: 260,
       damping: 20,
     }).start();
+  };
+
+  const handleSendCode = async () => {
+    if (!email.trim() || !email.includes("@")) {
+      setError("Please enter a valid email address first.");
+      return;
+    }
+    setError("");
+    setInfoMessage("");
+    setLoading(true);
+    try {
+      const res = await sendVerificationCode(email.trim());
+      setCodeSent(true);
+      if (res.verificationCode) {
+        setVerificationCode(res.verificationCode);
+        setInfoMessage(`Code sent! (Code: ${res.verificationCode})`);
+      } else {
+        setInfoMessage("Confirmation code sent to your email!");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to send code.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -54,6 +86,7 @@ export function AuthScreen() {
       return;
     }
     setError("");
+    setInfoMessage("");
     setLoading(true);
     try {
       if (isSignUp) {
@@ -62,11 +95,17 @@ export function AuthScreen() {
           setLoading(false);
           return;
         }
+        if (!codeSent || !verificationCode.trim()) {
+          setError("Please request and enter your confirmation code first.");
+          setLoading(false);
+          return;
+        }
         await register(
           firstName.trim(),
           lastName.trim(),
           email.trim(),
           password,
+          verificationCode.trim(),
         );
       } else {
         await login(email.trim(), password);
@@ -106,7 +145,7 @@ export function AuthScreen() {
             </Text>
             <Text style={styles.heroSub}>
               {isSignUp
-                ? "Join PSP Lumora and start tracking your academic progress."
+                ? "Verify your email with a confirmation code to get started."
                 : "Access your personalised learning dashboard."}
             </Text>
           </View>
@@ -143,10 +182,16 @@ export function AuthScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Error */}
+          {/* Messages */}
           {!!error && (
             <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{error}</Text>
+              <Text style={styles.errorText}>⚠️ {error}</Text>
+            </View>
+          )}
+
+          {!!infoMessage && (
+            <View style={styles.infoBox}>
+              <Text style={styles.infoText}>📧 {infoMessage}</Text>
             </View>
           )}
 
@@ -161,7 +206,7 @@ export function AuthScreen() {
                       style={styles.input}
                       value={firstName}
                       onChangeText={setFirstName}
-                      placeholder="Hanna"
+                      placeholder="Jane"
                       placeholderTextColor="#71717a"
                       autoCapitalize="words"
                     />
@@ -172,7 +217,7 @@ export function AuthScreen() {
                       style={styles.input}
                       value={lastName}
                       onChangeText={setLastName}
-                      placeholder="Vance"
+                      placeholder="Doe"
                       placeholderTextColor="#71717a"
                       autoCapitalize="words"
                     />
@@ -183,16 +228,43 @@ export function AuthScreen() {
 
             <View>
               <Text style={styles.fieldLabel}>EMAIL</Text>
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="hanna@lumora.edu"
-                placeholderTextColor="#71717a"
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+              <View style={styles.emailRow}>
+                <TextInput
+                  style={[styles.input, { flex: 1 }]}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="jane@lumora.edu"
+                  placeholderTextColor="#71717a"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+                {isSignUp && (
+                  <TouchableOpacity
+                    style={styles.codeBtn}
+                    onPress={handleSendCode}
+                    disabled={loading}
+                  >
+                    <Text style={styles.codeBtnText}>
+                      {codeSent ? "RESEND" : "GET CODE"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
+
+            {isSignUp && codeSent && (
+              <View>
+                <Text style={styles.fieldLabel}>CONFIRMATION CODE</Text>
+                <TextInput
+                  style={styles.input}
+                  value={verificationCode}
+                  onChangeText={setVerificationCode}
+                  placeholder="Enter 6-digit code"
+                  placeholderTextColor="#71717a"
+                  keyboardType="number-pad"
+                />
+              </View>
+            )}
 
             <View>
               <Text style={styles.fieldLabel}>PASSWORD</Text>
@@ -226,17 +298,9 @@ export function AuthScreen() {
                 <ActivityIndicator color="#ffffff" />
               ) : (
                 <Text style={styles.submitBtnText}>
-                  {isSignUp ? "CREATE ACCOUNT" : "SIGN IN"}
+                  {isSignUp ? "VERIFY & CREATE ACCOUNT" : "SIGN IN"}
                 </Text>
               )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.googleBtn}
-              onPress={() => loginWithGoogle(`google_${Date.now()}`)}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.googleBtnText}>CONTINUE WITH GOOGLE</Text>
             </TouchableOpacity>
           </View>
 
@@ -296,8 +360,6 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
     gap: 18,
   },
-
-  // Wordmark Row
   wordmarkRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -310,29 +372,6 @@ const styles = StyleSheet.create({
     color: "#121316",
     letterSpacing: 1,
   },
-  livePill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    backgroundColor: "#121316",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#4ade80",
-  },
-  liveText: {
-    color: "#ffffff",
-    fontSize: 9,
-    fontWeight: "900",
-    letterSpacing: 1.5,
-  },
-
-  // Hero
   heroSection: {
     paddingTop: 8,
     gap: 8,
@@ -351,8 +390,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     maxWidth: 280,
   },
-
-  // Tab Switcher
   tabContainer: {
     flexDirection: "row",
     backgroundColor: "#a8b6a5",
@@ -385,8 +422,6 @@ const styles = StyleSheet.create({
   tabLabelActive: {
     color: "#ffffff",
   },
-
-  // Error
   errorBox: {
     backgroundColor: "#FF5745",
     borderRadius: 12,
@@ -398,8 +433,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
   },
-
-  // Form Card
+  infoBox: {
+    backgroundColor: "#121316",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  infoText: {
+    color: "#4ade80",
+    fontSize: 12,
+    fontWeight: "700",
+  },
   formCard: {
     backgroundColor: "#121316",
     borderRadius: 28,
@@ -427,7 +471,23 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.07)",
-    marginBottom: 0,
+  },
+  emailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  codeBtn: {
+    backgroundColor: "#5451FF",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 13,
+  },
+  codeBtnText: {
+    color: "#ffffff",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 0.5,
   },
   passwordRow: {
     flexDirection: "row",
@@ -448,33 +508,6 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: 0.5,
   },
-  roleRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 4,
-  },
-  roleChip: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: "#1f2024",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.07)",
-  },
-  roleChipActive: {
-    backgroundColor: "#5451FF",
-    borderColor: "#5451FF",
-  },
-  roleChipText: {
-    color: "#71717a",
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 0.5,
-  },
-  roleChipTextActive: {
-    color: "#ffffff",
-  },
   submitBtn: {
     backgroundColor: "#5451FF",
     borderRadius: 14,
@@ -488,20 +521,6 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: 1,
   },
-  googleBtn: {
-    backgroundColor: "#ffffff",
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  googleBtnText: {
-    color: "#121316",
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 0.5,
-  },
-
-  // Toggle
   toggleRow: {
     alignItems: "center",
   },
@@ -511,8 +530,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textDecorationLine: "underline",
   },
-
-  // Demo
   demoSection: {
     gap: 10,
   },

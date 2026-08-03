@@ -67,7 +67,12 @@ export class PSPBuddyApiClient {
   }
 
   // AUTH API
-  async register(data: RegisterInput): Promise<AuthResponse> {
+  async sendVerificationCode(email: string): Promise<{ message: string; verificationCode?: string }> {
+    const res = await this.http.post<{ message: string; verificationCode?: string }>('/auth/send-verification-code', { email });
+    return res.data;
+  }
+
+  async register(data: RegisterInput & { verificationCode: string }): Promise<AuthResponse> {
     const res = await this.http.post<AuthResponse>('/auth/register', data);
     if (this.config.setTokens) {
       await this.config.setTokens(res.data.tokens);

@@ -7,16 +7,13 @@ interface AuthContextType {
   loading: boolean;
   accessToken: string | null;
   login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: (
-    idToken: string,
-    firstName?: string,
-    lastName?: string,
-  ) => Promise<void>;
+  sendVerificationCode: (email: string) => Promise<{ message: string; verificationCode?: string }>;
   register: (
     firstName: string,
     lastName: string,
     email: string,
     password: string,
+    verificationCode: string,
     role?: UserRole,
   ) => Promise<void>;
   onboard: (data: {
@@ -80,33 +77,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const loginWithGoogle = async (
-    idToken: string,
-    firstName?: string,
-    lastName?: string,
-  ) => {
+  const sendVerificationCode = async (email: string) => {
     try {
-      const res = await apiClientInstance.googleAuth({
-        idToken,
-        firstName,
-        lastName,
-      });
-      memoryAccessToken = res.tokens.accessToken;
-      memoryRefreshToken = res.tokens.refreshToken;
-      setTokenState(res.tokens.accessToken);
-      setUser(res.user);
+      return await apiClientInstance.sendVerificationCode(email);
     } catch (err: any) {
       const backendMessage = err.response?.data?.message || err.message;
-      if (
-        err.response ||
-        (backendMessage && !backendMessage.includes("Network Error"))
-      ) {
-        const msg = Array.isArray(backendMessage)
-          ? backendMessage.join(", ")
-          : backendMessage;
-        throw new Error(msg || "Google sign-in failed.");
-      }
-      throw err;
+      const msg = Array.isArray(backendMessage) ? backendMessage.join(", ") : backendMessage;
+      throw new Error(msg || "Failed to send verification code.");
     }
   };
 
@@ -115,6 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     lastName: string,
     email: string,
     password: string,
+    verificationCode: string,
     role?: UserRole,
   ) => {
     try {
@@ -123,6 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         lastName,
         email,
         password,
+        verificationCode,
         role: role || "STUDENT",
       });
       memoryAccessToken = res.tokens.accessToken;
@@ -200,7 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading,
         accessToken,
         login,
-        loginWithGoogle,
+        sendVerificationCode,
         register,
         onboard,
         loginAsDemo,

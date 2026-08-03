@@ -1,20 +1,40 @@
 import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
-import { OAuth2Client } from 'google-auth-library';
 import { db } from '@/database';
-import { RegisterInput, LoginInput, GoogleAuthInput, OnboardingInput } from '@/validation';
+import { RegisterInput, LoginInput, OnboardingInput } from '@/validation';
 import { RoleName, UserProfile } from '@/types';
 
 @Injectable()
 export class AuthService {
-  private googleOAuthClient: OAuth2Client;
+  constructor(private jwtService: JwtService) {}
 
-  constructor(private jwtService: JwtService) {
-    const googleClientId = process.env.GOOGLE_CLIENT_ID;
-    this.googleOAuthClient = new OAuth2Client(googleClientId);
+  async sendVerificationCode(email: string) {
+    const existing = await db.user.findUnique({ where: { email } });
+    if (existing) {
+      throw new BadRequestException('User with this email is already registered. Please sign in.');
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+    await db.verificationCode.upsert({
+      where: { email },
+      update: { code, expiresAt },
+      create: { email, code, expiresAt },
+    });
+
+    console.log(`\n=======================================================`);
+    console.log(`✉️ [CONFIRMATION EMAIL] Sent to: ${email}`);
+    console.log(`🔑 CONFIRMATION CODE: [ ${code} ]`);
+    console.log(`=======================================================\n`);
+
+    return {
+      message: `Confirmation code sent to ${email}`,
+      verificationCode: code,
+      expiresAt,
+    };
   }
-
 
   async register(input: RegisterInput) {
     const existing = await db.user.findUnique({ where: { email: input.email } });
@@ -22,9 +42,19 @@ export class AuthService {
       throw new BadRequestException('User with this email already exists');
     }
 
+    // Require and verify confirmation code against database
+    const record = await db.verificationCode.findUnique({ where: { email: input.email } });
+    if (!record || record.code !== input.verificationCode || record.expiresAt < new Date()) {
+      throw new BadRequestException('Invalid or expired confirmation code. Please request a new confirmation code.');
+    }
+
+    // Clean up used code
+    try {
+      await db.verificationCode.delete({ where: { email: input.email } });
+    } catch {}
+
     const hashedPassword = await argon2.hash(input.password);
     
-    // Role determination is handled purely on the backend
     let assignedRole: RoleName = RoleName.STUDENT;
     if (input.role) {
       assignedRole = input.role as RoleName;
@@ -41,6 +71,7 @@ export class AuthService {
         firstName: input.firstName,
         lastName: input.lastName,
         role: assignedRole,
+        isEmailVerified: true,
         isOnboarded: false,
       },
     });
@@ -50,6 +81,7 @@ export class AuthService {
         data: {
           userId: user.id,
           studentRegistrationNo: input.studentRegistrationNo || `STU-${Date.now()}`,
+          gradeLevel: '1st Sem',
         },
       });
     } else if (assignedRole === RoleName.TEACHER) {
@@ -90,6 +122,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    if (!user.isEmailVerified) {
+      throw new UnauthorizedException('Email address is not verified. Please verify your email first.');
+    }
+
     const tokens = await this.generateTokens(user.id, user.email, user.role);
     await this.createSession(user.id, tokens.refreshToken);
 
@@ -98,121 +134,6 @@ export class AuthService {
       tokens,
     };
   }
-
-  async googleAuth(input: GoogleAuthInput) {
-    let email = '';
-    let firstName = input.firstName || 'User';
-    let lastName = input.lastName || '';
-    let avatarUrl: string | undefined;
-    let googleId: string | undefined;
-
-    const googleClientId = process.env.GOOGLE_CLIENT_ID;
-
-    // 1. Try verifying Google ID token if client ID is configured
-    if (googleClientId && googleClientId !== 'your_google_client_id_here.apps.googleusercontent.com' && input.idToken && !input.idToken.startsWith('google_token_')) {
-      try {
-        const ticket = await this.googleOAuthClient.verifyIdToken({
-          idToken: input.idToken,
-          audience: googleClientId,
-        });
-        const payload = ticket.getPayload();
-        if (payload && payload.email) {
-          email = payload.email;
-          googleId = payload.sub;
-          firstName = payload.given_name || payload.name?.split(' ')[0] || firstName;
-          lastName = payload.family_name || payload.name?.split(' ').slice(1).join(' ') || lastName;
-          avatarUrl = payload.picture;
-        }
-      } catch (err: any) {
-        // Log verification error and fallback
-      }
-    }
-
-    // 2. Fallback JWT payload decoder for local dev or custom tokens
-    if (!email && input.idToken) {
-      try {
-        const parts = input.idToken.split('.');
-        if (parts.length === 3) {
-          const payloadJson = Buffer.from(parts[1], 'base64').toString('utf-8');
-          const decoded = JSON.parse(payloadJson);
-          if (decoded.email) {
-            email = decoded.email;
-            googleId = decoded.sub || decoded.user_id;
-            firstName = decoded.given_name || decoded.name?.split(' ')[0] || firstName;
-            lastName = decoded.family_name || decoded.name?.split(' ').slice(1).join(' ') || lastName;
-            avatarUrl = decoded.picture;
-          }
-        }
-      } catch {}
-    }
-
-    if (!email) {
-      email = input.idToken.includes('@') ? input.idToken : `user_${Date.now()}@google.com`;
-    }
-
-    let user = await db.user.findFirst({
-      where: {
-        OR: [
-          { email },
-          ...(googleId ? [{ googleId }] : []),
-        ],
-      },
-    });
-
-    if (!user) {
-      // Determine initial role
-      const assignedRole = email.toLowerCase().includes('teacher') ? RoleName.TEACHER : RoleName.STUDENT;
-
-      user = await db.user.create({
-        data: {
-          email,
-          googleId,
-          firstName,
-          lastName,
-          avatarUrl,
-          role: assignedRole,
-          isEmailVerified: true,
-          isOnboarded: false,
-        },
-      });
-
-      if (assignedRole === RoleName.STUDENT) {
-        await db.student.create({
-          data: {
-            userId: user.id,
-            studentRegistrationNo: `STU-${Date.now()}`,
-          },
-        });
-      } else {
-        await db.teacher.create({
-          data: {
-            userId: user.id,
-            employeeId: `EMP-${Date.now()}`,
-          },
-        });
-      }
-    } else if (googleId && !user.googleId) {
-      // Link Google account to existing user
-      user = await db.user.update({
-        where: { id: user.id },
-        data: { googleId, avatarUrl: avatarUrl || user.avatarUrl, isEmailVerified: true },
-      });
-    }
-
-    const fullUser = await db.user.findUnique({
-      where: { id: user.id },
-      include: { student: true, teacher: true },
-    });
-
-    const tokens = await this.generateTokens(user.id, user.email, user.role);
-    await this.createSession(user.id, tokens.refreshToken);
-
-    return {
-      user: this.formatUserProfile(fullUser!),
-      tokens,
-    };
-  }
-
 
   async me(userId: string) {
     const user = await db.user.findUnique({
@@ -321,12 +242,16 @@ export class AuthService {
         throw new UnauthorizedException('Session expired or revoked');
       }
 
-      const user = await db.user.findUnique({ where: { id: payload.sub } });
-      if (!user) throw new UnauthorizedException('User not found');
+      const user = await db.user.findUnique({
+        where: { id: payload.sub },
+        include: { student: true, teacher: true },
+      });
+
+      if (!user || !user.isActive) {
+        throw new UnauthorizedException('User inactive or not found');
+      }
 
       const tokens = await this.generateTokens(user.id, user.email, user.role);
-
-      // Rotation: revoke old session and create new
       await db.session.update({
         where: { id: session.id },
         data: { isRevoked: true },
@@ -397,7 +322,7 @@ export class AuthService {
       gradeLevel: user.student?.gradeLevel || null,
       employeeId: user.teacher?.employeeId || null,
       department: user.teacher?.department || null,
-      createdAt: user.createdAt.toISOString(),
+      createdAt: user.createdAt?.toISOString ? user.createdAt.toISOString() : new Date().toISOString(),
     };
   }
 }

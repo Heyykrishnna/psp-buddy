@@ -407,3 +407,14 @@ model AuditLog {
 
   @@map("audit_logs")
 }
+
+model VerificationCode {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("verification_codes")
+}
+
