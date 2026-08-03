@@ -269,8 +269,8 @@ export function DashboardScreen({
             activeOpacity={0.85}
           >
             <Text style={styles.quickCardIcon}>💻</Text>
-            <Text style={styles.quickCardTitle}>Code IDE</Text>
-            <Text style={styles.quickCardSub}>Playground & Judge</Text>
+            <Text style={styles.quickCardTitle}>Code IDE (Web)</Text>
+            <Text style={styles.quickCardSub}>Desktop Web Required</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
