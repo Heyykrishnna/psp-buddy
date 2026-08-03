@@ -248,7 +248,7 @@ export function AssessmentScreen({
         obtainedMarks: Math.round((workbookModalAsm.totalMarks || 50) * 0.85),
         maxMarks: workbookModalAsm.totalMarks || 50,
         aiFeedback:
-          "Workbook photo evaluated successfully via Groq AI. All steps are clearly structured and mathematically sound.",
+          "Workbook photo evaluated successfully via Lumora AI. All steps are clearly structured and mathematically sound.",
         status: "EVALUATED",
       });
     } finally {
@@ -618,11 +618,9 @@ export function AssessmentScreen({
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <View>
-                <Text style={styles.modalSubTitle}>
-                  TEACHER WORKBOOK ASSIGNMENT
-                </Text>
-                <Text style={styles.modalTitle} numberOfLines={1}>
+              <View style={{ flex: 1, paddingRight: 12 }}>
+                <Text style={styles.modalSubTitle}>WORKBOOK ASSIGNMENT</Text>
+                <Text style={styles.modalTitle} numberOfLines={2}>
                   {workbookModalAsm?.title}
                 </Text>
               </View>
@@ -669,12 +667,12 @@ export function AssessmentScreen({
                     <>
                       <Ionicons
                         name="sparkles"
-                        size={16}
+                        size={12}
                         color="#ffffff"
                         style={{ marginRight: 6 }}
                       />
                       <Text style={styles.uploadSubmitText}>
-                        SUBMIT TO GROQ AI FOR GRADING
+                        SUBMIT FOR EVALUATION & GRADING
                       </Text>
                     </>
                   )}
@@ -696,7 +694,7 @@ export function AssessmentScreen({
 
                 <View style={styles.aiFeedbackBox}>
                   <Text style={styles.aiFeedbackTitle}>
-                    GROQ AI TEACHER FEEDBACK:
+                    LUMORA AI TEACHER FEEDBACK:
                   </Text>
                   <Text style={styles.aiFeedbackBody}>
                     {workbookResult.aiFeedback}
@@ -1853,6 +1851,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     marginTop: 2,
+    lineHeight: 22,
   },
   modalCloseBtn: {
     padding: 4,
@@ -1898,8 +1897,8 @@ const styles = StyleSheet.create({
   },
   uploadSubmitText: {
     color: "#ffffff",
-    fontSize: 12,
-    fontWeight: "800",
+    fontSize: 11,
+    fontWeight: "700",
     letterSpacing: 0.5,
   },
   resultBox: {

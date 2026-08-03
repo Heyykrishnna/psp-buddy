@@ -238,7 +238,7 @@ Output raw valid JSON only:
     if (!this.isGroqConfigured()) {
       return {
         isFallback: true,
-        reply: `Hi! I am Lumora AI Tutor powered by Groq. Currently, GROQ_API_KEY is not set in backend/.env. Set GROQ_API_KEY to chat with me live!`,
+        reply: `Hi! I am Lumora AI Tutor. Currently, AI service configuration is pending. Please configure GROQ_API_KEY in backend/.env to enable live chat!`,
       };
     }
 
@@ -246,7 +246,7 @@ Output raw valid JSON only:
       const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
         {
           role: 'system',
-          content: `You are PSP Lumora AI Tutor, a helpful, friendly, and highly knowledgeable computer science and STEM tutor powered by Groq AI. Help students understand complex concepts, solve problems step-by-step, and prepare for assessments. Keep responses encouraging, clear, and easy to read with markdown formatting. Topic context: ${dto.topic || 'General STEM & Computer Science'}.`,
+          content: `You are PSP Lumora AI Tutor, a helpful, friendly, and highly knowledgeable computer science and STEM tutor. Help students understand complex concepts, solve problems step-by-step, and prepare for assessments. Keep responses encouraging, clear, and easy to read with markdown formatting. Topic context: ${dto.topic || 'General STEM & Computer Science'}.`,
         },
       ];
 
@@ -270,13 +270,13 @@ Output raw valid JSON only:
 
       return {
         isFallback: false,
-        reply: response.choices[0]?.message?.content || 'No response received from Groq AI.',
+        reply: response.choices[0]?.message?.content || 'No response received from AI service.',
       };
     } catch (err: any) {
       this.logger.error(`Groq AI Tutor Chat failed: ${err.message}`);
       return {
         isFallback: true,
-        reply: `Apologies, I encountered an issue connecting to Groq AI (${err.message}). Please try again shortly.`,
+        reply: `Apologies, I encountered an issue connecting to Lumora AI (${err.message}). Please try again shortly.`,
       };
     }
   }
