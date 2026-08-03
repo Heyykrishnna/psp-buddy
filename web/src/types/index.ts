@@ -104,6 +104,7 @@ export interface AssessmentDTO {
   durationMinutes: number;
   hasNegativeMarking?: boolean;
   negativeMarkValue?: number;
+  dueDate?: string;
   startTime?: string;
   endTime?: string;
   isPublished: boolean;

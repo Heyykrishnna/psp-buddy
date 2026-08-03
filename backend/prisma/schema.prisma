@@ -173,6 +173,9 @@ model Assessment {
   negativeMarkValue  Float               @default(0)
   startTime          DateTime?
   endTime            DateTime?
+  dueDate            DateTime?
+  isWorkbook         Boolean             @default(false)
+  workbookUrl        String?
   isPublished        Boolean             @default(false)
   createdById        String
   createdAt          DateTime            @default(now())
@@ -180,6 +183,7 @@ model Assessment {
   questions          Question[]
   answers            Answer[]
   attempts           AssessmentAttempt[]
+  workbookUploads    WorkbookUpload[]
 
   @@map("assessments")
 }
@@ -276,12 +280,18 @@ model WorkbookUpload {
   id             String              @id @default(uuid())
   studentId      String
   student        Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  assessmentId   String?
+  assessment     Assessment?         @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
   fileName       String
   fileUrl        String
-  fileSizeBytes  Int
-  mimeType       String
+  fileSizeBytes  Int                 @default(0)
+  mimeType       String              @default("image/png")
+  obtainedMarks  Float               @default(0)
+  maxMarks       Float               @default(100)
+  aiFeedback     String?
   status         WorkbookStatus      @default(PENDING)
   createdAt      DateTime            @default(now())
+  evaluatedAt    DateTime?
   evaluations    WorkbookEvaluation[]
 
   @@map("workbook_uploads")

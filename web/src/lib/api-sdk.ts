@@ -154,6 +154,27 @@ export class PSPBuddyApiClient {
     return res.data;
   }
 
+  // WORKBOOK API
+  async uploadWorkbook(assessmentId: string, data: { studentId?: string; fileUrl: string; fileName?: string }) {
+    const res = await this.http.post(`/assessments/${assessmentId}/workbook/upload`, data);
+    return res.data;
+  }
+
+  async getAssessmentWorkbooks(assessmentId: string) {
+    const res = await this.http.get(`/assessments/${assessmentId}/workbooks`);
+    return res.data;
+  }
+
+  async getStudentWorkbooks(studentId: string) {
+    const res = await this.http.get(`/students/${studentId}/workbooks`);
+    return res.data;
+  }
+
+  async evaluateWorkbook(workbookId: string, data: { obtainedMarks: number; feedback?: string }) {
+    const res = await this.http.patch(`/workbooks/${workbookId}/evaluate`, data);
+    return res.data;
+  }
+
 
   // REALTIME SYNCHRONIZATION
   connectRealtimeSync(wsUrl: string, token: string) {

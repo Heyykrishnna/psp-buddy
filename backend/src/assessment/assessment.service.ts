@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { db } from '@/database';
 import { SyncGateway } from '../gateway/sync.gateway';
+import { AiService } from '../ai/ai.service';
 import { SyncEventType } from '@/types';
 
 export interface CreateAssessmentDto {
@@ -14,6 +15,9 @@ export interface CreateAssessmentDto {
   durationMinutes: number;
   hasNegativeMarking?: boolean;
   negativeMarkValue?: number;
+  dueDate?: string;
+  isWorkbook?: boolean;
+  workbookUrl?: string;
   createdById?: string;
   questions?: Array<{
     questionText: string;
@@ -43,7 +47,10 @@ export interface AutosaveAnswerDto {
 
 @Injectable()
 export class AssessmentService {
-  constructor(private syncGateway: SyncGateway) { }
+  constructor(
+    private syncGateway: SyncGateway,
+    private aiService: AiService,
+  ) { }
 
   // 1. Create Assessment with Questions & Config
   async createAssessment(dto: CreateAssessmentDto) {
@@ -509,5 +516,140 @@ export class AssessmentService {
         explanation: a.question.explanation,
       })),
     };
+  }
+
+  // 10. Student Solved Workbook Submission with AI Auto-Grading & Sync
+  async submitWorkbook(assessmentId: string, studentId: string, fileUrl: string, fileName?: string) {
+    const assessment = await db.assessment.findUnique({ where: { id: assessmentId } });
+    if (!assessment) throw new NotFoundException('Assessment not found');
+
+    let student = await db.student.findUnique({ where: { id: studentId } });
+    if (!student) {
+      student = await db.student.findFirst({ where: { userId: studentId } });
+    }
+    if (!student) {
+      student = await db.student.findFirst();
+    }
+    if (!student) throw new NotFoundException('Student record not found');
+
+    // Perform AI Auto-Evaluation of the workbook submission
+    const aiResult = await this.aiService.evaluateWorkbookImage(
+      fileUrl,
+      assessment.title,
+      assessment.totalMarks,
+    );
+
+    const upload = await db.workbookUpload.create({
+      data: {
+        assessmentId: assessment.id,
+        studentId: student.id,
+        fileName: fileName || `workbook_${Date.now()}.png`,
+        fileUrl,
+        obtainedMarks: aiResult.obtainedMarks,
+        maxMarks: aiResult.maxMarks,
+        aiFeedback: aiResult.aiFeedback,
+        status: 'EVALUATED',
+        evaluatedAt: new Date(),
+      },
+      include: {
+        assessment: {
+          select: { title: true, totalMarks: true, dueDate: true },
+        },
+        student: {
+          include: {
+            user: { select: { firstName: true, lastName: true, email: true } },
+          },
+        },
+      },
+    });
+
+    // Update Student total XP (+ obtainedMarks * 10)
+    const xpBonus = Math.round(aiResult.obtainedMarks * 10);
+    await db.student.update({
+      where: { id: student.id },
+      data: { totalXp: { increment: xpBonus } },
+    });
+
+    // Broadcast real-time SyncGateway event for Teacher & Student portals
+    this.syncGateway.broadcastSyncEvent(SyncEventType.WORKBOOK_SUBMITTED, student.id, {
+      workbookId: upload.id,
+      assessmentId: assessment.id,
+      assessmentTitle: assessment.title,
+      studentId: student.id,
+      studentName: `${student.user.firstName} ${student.user.lastName}`,
+      obtainedMarks: upload.obtainedMarks,
+      maxMarks: upload.maxMarks,
+      aiFeedback: upload.aiFeedback,
+      status: upload.status,
+    });
+
+    return upload;
+  }
+
+  // 11. Get All Solved Workbooks for an Assessment (Teacher View)
+  async getAssessmentWorkbooks(assessmentId: string) {
+    return db.workbookUpload.findMany({
+      where: { assessmentId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        student: {
+          include: {
+            user: {
+              select: { firstName: true, lastName: true, email: true, avatarUrl: true, studentRegistrationNo: true },
+            },
+          },
+        },
+        assessment: {
+          select: { title: true, className: true, totalMarks: true, dueDate: true },
+        },
+      },
+    });
+  }
+
+  // 12. Get Student's Solved Workbooks (Student View)
+  async getStudentWorkbooks(studentId: string) {
+    let student = await db.student.findUnique({ where: { id: studentId } });
+    if (!student) {
+      student = await db.student.findFirst({ where: { userId: studentId } });
+    }
+
+    return db.workbookUpload.findMany({
+      where: student ? { studentId: student.id } : undefined,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        assessment: {
+          select: { id: true, title: true, className: true, totalMarks: true, dueDate: true },
+        },
+      },
+    });
+  }
+
+  // 13. Teacher Override/Manual Grading of Workbook
+  async evaluateWorkbook(workbookId: string, obtainedMarks: number, feedback?: string) {
+    const upload = await db.workbookUpload.findUnique({ where: { id: workbookId } });
+    if (!upload) throw new NotFoundException('Workbook upload not found');
+
+    const updated = await db.workbookUpload.update({
+      where: { id: workbookId },
+      data: {
+        obtainedMarks,
+        aiFeedback: feedback || upload.aiFeedback,
+        status: 'EVALUATED',
+        evaluatedAt: new Date(),
+      },
+      include: {
+        assessment: true,
+        student: { include: { user: true } },
+      },
+    });
+
+    this.syncGateway.broadcastSyncEvent(SyncEventType.WORKBOOK_EVALUATED, updated.studentId, {
+      workbookId: updated.id,
+      obtainedMarks: updated.obtainedMarks,
+      maxMarks: updated.maxMarks,
+      feedback: updated.aiFeedback,
+    });
+
+    return updated;
   }
 }

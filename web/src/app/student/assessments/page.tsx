@@ -185,21 +185,33 @@ export default function StudentAssessmentsPage() {
                 </div>
 
                 <div className="space-y-4 pt-4 border-t border-white/5">
-                  <div className="flex items-center gap-4 text-xs font-medium text-white/50">
+                  <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-white/50">
                     <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-white/40" /> {asm.durationMinutes || 15} mins</span>
                     <span className="flex items-center gap-1.5"><Target className="w-3.5 h-3.5 text-white/40" /> {asm.totalMarks || 10} marks</span>
+                    {asm.dueDate && (
+                      <span className="flex items-center gap-1.5 text-amber-300 font-semibold">📅 Due: {new Date(asm.dueDate).toLocaleDateString()}</span>
+                    )}
                     {asm.hasNegativeMarking && (
                       <span className="flex items-center gap-1.5 text-amber-400"><AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> -{asm.negativeMarkValue} neg</span>
                     )}
                   </div>
 
-                  <Link
-                    href={`/student/assessments/${asm.id}`}
-                    className="w-full bg-[#5451FF] hover:bg-[#433ee4] text-white font-semibold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition text-sm shadow-lg shadow-[#5451FF]/20"
-                  >
-                    START ASSESSMENT
-                    <ArrowUpRight className="w-4 h-4" />
-                  </Link>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Link
+                      href={`/student/assessments/${asm.id}`}
+                      className="bg-[#5451FF] hover:bg-[#433ee4] text-white font-semibold py-3 px-3 rounded-xl flex items-center justify-center gap-1.5 transition text-xs shadow-lg shadow-[#5451FF]/20"
+                    >
+                      START TEST
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </Link>
+
+                    <Link
+                      href={`/student/assessments/${asm.id}`}
+                      className="bg-white/10 hover:bg-white/15 border border-white/10 text-emerald-400 font-semibold py-3 px-3 rounded-xl flex items-center justify-center gap-1.5 transition text-xs"
+                    >
+                      📷 WORKBOOK
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}

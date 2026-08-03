@@ -63,4 +63,35 @@ export class AssessmentController {
   async getAttemptResult(@Param('id') attemptId: string) {
     return this.assessmentService.getAttemptResult(attemptId);
   }
+
+  // 10. POST /assessments/:id/workbook/upload - Student Upload Solved Workbook
+  @Post('assessments/:id/workbook/upload')
+  async uploadWorkbook(
+    @Param('id') assessmentId: string,
+    @Body() body: { studentId?: string; fileUrl: string; fileName?: string },
+  ) {
+    const studentId = body?.studentId || 'demo-student-id';
+    return this.assessmentService.submitWorkbook(assessmentId, studentId, body.fileUrl, body.fileName);
+  }
+
+  // 11. GET /assessments/:id/workbooks - Teacher View Submissions
+  @Get('assessments/:id/workbooks')
+  async getAssessmentWorkbooks(@Param('id') assessmentId: string) {
+    return this.assessmentService.getAssessmentWorkbooks(assessmentId);
+  }
+
+  // 12. GET /students/:studentId/workbooks - Student View Workbooks
+  @Get('students/:studentId/workbooks')
+  async getStudentWorkbooks(@Param('studentId') studentId: string) {
+    return this.assessmentService.getStudentWorkbooks(studentId);
+  }
+
+  // 13. PATCH /workbooks/:id/evaluate - Teacher Grade/Override
+  @Patch('workbooks/:id/evaluate')
+  async evaluateWorkbook(
+    @Param('id') workbookId: string,
+    @Body() body: { obtainedMarks: number; feedback?: string },
+  ) {
+    return this.assessmentService.evaluateWorkbook(workbookId, body.obtainedMarks, body.feedback);
+  }
 }

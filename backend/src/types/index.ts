@@ -92,6 +92,7 @@ export interface AssessmentDTO {
   totalMarks: number;
   passingMarks: number;
   durationMinutes: number;
+  dueDate?: string;
   startTime?: string;
   endTime?: string;
   isPublished: boolean;
@@ -179,6 +180,8 @@ export enum SyncEventType {
   NOTIFICATION_RECEIVED = 'NOTIFICATION_RECEIVED',
   SUBMISSION_EVALUATED = 'SUBMISSION_EVALUATED',
   WORKBOOK_STATUS_CHANGED = 'WORKBOOK_STATUS_CHANGED',
+  WORKBOOK_SUBMITTED = 'WORKBOOK_SUBMITTED',
+  WORKBOOK_EVALUATED = 'WORKBOOK_EVALUATED',
   LEADERBOARD_UPDATED = 'LEADERBOARD_UPDATED',
 }
 

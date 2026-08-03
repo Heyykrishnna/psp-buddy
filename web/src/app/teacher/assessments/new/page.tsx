@@ -41,6 +41,9 @@ export default function NewAssessmentPage() {
   const [passingMarks, setPassingMarks] = useState(40);
   const [hasNegativeMarking, setHasNegativeMarking] = useState(true);
   const [negativeMarkValue, setNegativeMarkValue] = useState(0.25);
+  const [dueDate, setDueDate] = useState("2026-08-05");
+  const [isWorkbook, setIsWorkbook] = useState(true);
+  const [workbookUrl, setWorkbookUrl] = useState("https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c");
 
   // Questions State
   const [questions, setQuestions] = useState<QuestionInput[]>([
@@ -204,6 +207,9 @@ export default function NewAssessmentPage() {
           durationMinutes,
           hasNegativeMarking,
           negativeMarkValue,
+          dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+          isWorkbook,
+          workbookUrl,
           createdById: user?.id || "teacher-1",
           questions: questions.map((q, idx) => ({
             questionText: q.questionText,
@@ -352,13 +358,28 @@ export default function NewAssessmentPage() {
 
               <div>
                 <label className="block text-xs font-medium text-zinc-600 mb-1.5">
-                  Passing Marks
+                  Submission Deadline Date (Managed by Teacher)
                 </label>
                 <input
-                  type="number"
-                  value={passingMarks}
-                  onChange={(e) => setPassingMarks(Number(e.target.value))}
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
                   className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#111111]"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 bg-[#F4F4F6] rounded-xl border border-zinc-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-sm font-semibold text-[#111111] block">Enable Solved Workbook Submission</span>
+                  <span className="text-xs text-zinc-500 block">Allows students to upload photos of solved workbooks for automated AI evaluation & grading.</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={isWorkbook}
+                  onChange={(e) => setIsWorkbook(e.target.checked)}
+                  className="w-5 h-5 accent-[#5451FF] cursor-pointer"
                 />
               </div>
             </div>
