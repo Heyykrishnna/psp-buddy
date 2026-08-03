@@ -11,19 +11,30 @@ export class ProblemService {
   constructor(private readonly aiService: AiService) {}
 
   async createProblem(dto: CreateProblemDto) {
-    const existing = await db.problem.findUnique({ where: { slug: dto.slug } });
+    const slug =
+      dto.slug && dto.slug.trim().length > 0
+        ? dto.slug.trim().toLowerCase()
+        : dto.title
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '');
+
+    const existing = await db.problem.findUnique({ where: { slug } });
     if (existing) {
-      throw new BadRequestException(`Problem with slug '${dto.slug}' already exists.`);
+      throw new BadRequestException(`Problem with slug '${slug}' already exists.`);
     }
 
     return db.problem.create({
       data: {
-        slug: dto.slug,
+        slug,
         title: dto.title,
         description: dto.description,
         difficulty: dto.difficulty || DifficultyLevel.EASY,
         functionName: dto.functionName,
         starterCodePython: dto.starterCodePython,
+        examples: dto.examples || null,
+        constraints: dto.constraints || null,
+        topics: dto.topics || [],
         timeLimitMs: dto.timeLimitMs || 2000,
         memoryLimitMb: dto.memoryLimitMb || 128,
         points: dto.points || 10,
@@ -87,6 +98,9 @@ export class ProblemService {
         ...(dto.difficulty ? { difficulty: dto.difficulty } : {}),
         ...(dto.functionName ? { functionName: dto.functionName } : {}),
         ...(dto.starterCodePython ? { starterCodePython: dto.starterCodePython } : {}),
+        ...(dto.examples !== undefined ? { examples: dto.examples } : {}),
+        ...(dto.constraints !== undefined ? { constraints: dto.constraints } : {}),
+        ...(dto.topics !== undefined ? { topics: dto.topics } : {}),
         ...(dto.timeLimitMs !== undefined ? { timeLimitMs: dto.timeLimitMs } : {}),
         ...(dto.memoryLimitMb !== undefined ? { memoryLimitMb: dto.memoryLimitMb } : {}),
         ...(dto.points !== undefined ? { points: dto.points } : {}),

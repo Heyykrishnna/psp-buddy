@@ -100,6 +100,9 @@ export interface ProblemDTO {
   difficulty: DifficultyLevel | string;
   functionName: string;
   starterCodePython: string;
+  examples?: string | null;
+  constraints?: string | null;
+  topics?: string[];
   timeLimitMs: number;
   memoryLimitMb: number;
   points: number;
