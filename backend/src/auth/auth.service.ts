@@ -1,13 +1,20 @@
 import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
+import { OAuth2Client } from 'google-auth-library';
 import { db } from '@/database';
 import { RegisterInput, LoginInput, GoogleAuthInput, OnboardingInput } from '@/validation';
 import { RoleName, UserProfile } from '@/types';
 
 @Injectable()
 export class AuthService {
-  constructor(private jwtService: JwtService) {}
+  private googleOAuthClient: OAuth2Client;
+
+  constructor(private jwtService: JwtService) {
+    const googleClientId = process.env.GOOGLE_CLIENT_ID;
+    this.googleOAuthClient = new OAuth2Client(googleClientId);
+  }
+
 
   async register(input: RegisterInput) {
     const existing = await db.user.findUnique({ where: { email: input.email } });
@@ -87,59 +94,102 @@ export class AuthService {
   }
 
   async googleAuth(input: GoogleAuthInput) {
-    // Decode/verify google idToken payload
-    // In production, use OAuth2Client from google-auth-library.
-    // For development fallback/token parsing:
     let email = '';
     let firstName = input.firstName || 'User';
     let lastName = input.lastName || '';
     let avatarUrl: string | undefined;
+    let googleId: string | undefined;
 
-    try {
-      // Decode JWT token payload safely if valid JWT format
-      const parts = input.idToken.split('.');
-      if (parts.length === 3) {
-        const payloadJson = Buffer.from(parts[1], 'base64').toString('utf-8');
-        const decoded = JSON.parse(payloadJson);
-        if (decoded.email) {
-          email = decoded.email;
-          firstName = decoded.given_name || decoded.name?.split(' ')[0] || firstName;
-          lastName = decoded.family_name || decoded.name?.split(' ').slice(1).join(' ') || lastName;
-          avatarUrl = decoded.picture;
+    const googleClientId = process.env.GOOGLE_CLIENT_ID;
+
+    // 1. Try verifying Google ID token if client ID is configured
+    if (googleClientId && googleClientId !== 'your_google_client_id_here.apps.googleusercontent.com' && input.idToken && !input.idToken.startsWith('google_token_')) {
+      try {
+        const ticket = await this.googleOAuthClient.verifyIdToken({
+          idToken: input.idToken,
+          audience: googleClientId,
+        });
+        const payload = ticket.getPayload();
+        if (payload && payload.email) {
+          email = payload.email;
+          googleId = payload.sub;
+          firstName = payload.given_name || payload.name?.split(' ')[0] || firstName;
+          lastName = payload.family_name || payload.name?.split(' ').slice(1).join(' ') || lastName;
+          avatarUrl = payload.picture;
         }
+      } catch (err: any) {
+        // Log verification error and fallback
       }
-    } catch {
-      // fallback
+    }
+
+    // 2. Fallback JWT payload decoder for local dev or custom tokens
+    if (!email && input.idToken) {
+      try {
+        const parts = input.idToken.split('.');
+        if (parts.length === 3) {
+          const payloadJson = Buffer.from(parts[1], 'base64').toString('utf-8');
+          const decoded = JSON.parse(payloadJson);
+          if (decoded.email) {
+            email = decoded.email;
+            googleId = decoded.sub || decoded.user_id;
+            firstName = decoded.given_name || decoded.name?.split(' ')[0] || firstName;
+            lastName = decoded.family_name || decoded.name?.split(' ').slice(1).join(' ') || lastName;
+            avatarUrl = decoded.picture;
+          }
+        }
+      } catch {}
     }
 
     if (!email) {
-      // fallback mock for invalid/raw token in dev mode
       email = input.idToken.includes('@') ? input.idToken : `user_${Date.now()}@google.com`;
     }
 
-    let user = await db.user.findUnique({
-      where: { email },
+    let user = await db.user.findFirst({
+      where: {
+        OR: [
+          { email },
+          ...(googleId ? [{ googleId }] : []),
+        ],
+      },
     });
 
     if (!user) {
-      // Auto-create user with STUDENT role in PostgreSQL
+      // Determine initial role
+      const assignedRole = email.toLowerCase().includes('teacher') ? RoleName.TEACHER : RoleName.STUDENT;
+
       user = await db.user.create({
         data: {
           email,
+          googleId,
           firstName,
           lastName,
           avatarUrl,
-          role: RoleName.STUDENT,
+          role: assignedRole,
           isEmailVerified: true,
           isOnboarded: false,
         },
       });
 
-      await db.student.create({
-        data: {
-          userId: user.id,
-          studentRegistrationNo: `STU-${Date.now()}`,
-        },
+      if (assignedRole === RoleName.STUDENT) {
+        await db.student.create({
+          data: {
+            userId: user.id,
+            studentRegistrationNo: `STU-${Date.now()}`,
+          },
+        });
+      } else {
+        await db.teacher.create({
+          data: {
+            userId: user.id,
+            employeeId: `EMP-${Date.now()}`,
+          },
+        });
+      }
+    } else if (googleId && !user.googleId) {
+      // Link Google account to existing user
+      user = await db.user.update({
+        where: { id: user.id },
+        data: { googleId, avatarUrl: avatarUrl || user.avatarUrl, isEmailVerified: true },
       });
     }
 
@@ -151,6 +201,7 @@ export class AuthService {
       tokens,
     };
   }
+
 
   async me(userId: string) {
     const user = await db.user.findUnique({

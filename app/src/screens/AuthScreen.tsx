@@ -45,25 +45,34 @@ export function AuthScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!email.trim() || !password.trim()) {
-      setError("Enter your email and password to continue.");
+    if (!email.trim() || !email.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (!password || password.length < 6) {
+      setError("Password must be at least 6 characters long.");
       return;
     }
     setError("");
     setLoading(true);
     try {
       if (isSignUp) {
-        if (!firstName.trim()) {
-          setError("First name is required.");
+        if (!firstName.trim() || !lastName.trim()) {
+          setError("First and Last name are required.");
           setLoading(false);
           return;
         }
-        await register(firstName, lastName, email, password);
+        await register(
+          firstName.trim(),
+          lastName.trim(),
+          email.trim(),
+          password,
+        );
       } else {
-        await login(email, password);
+        await login(email.trim(), password);
       }
     } catch (err: any) {
-      setError(err.message || "Authentication failed.");
+      setError(err.message || "Authentication failed. Invalid credentials.");
     } finally {
       setLoading(false);
     }

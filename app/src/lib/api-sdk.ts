@@ -85,10 +85,19 @@ export class PSPBuddyApiClient {
     return res.data;
   }
 
+  async googleAuth(data: { idToken: string; firstName?: string; lastName?: string }): Promise<AuthResponse> {
+    const res = await this.http.post<AuthResponse>('/auth/google', data);
+    if (this.config.setTokens) {
+      await this.config.setTokens(res.data.tokens);
+    }
+    return res.data;
+  }
+
   async getProfile(): Promise<UserProfile> {
     const res = await this.http.get<UserProfile>('/user/profile');
     return res.data;
   }
+
 
   // ASSESSMENTS API
   async getAssessments(query?: { className?: string; isPublished?: boolean }): Promise<AssessmentDTO[]> {

@@ -76,6 +76,7 @@ model User {
   firstName       String
   lastName        String
   avatarUrl       String?
+  googleId        String?        @unique
   role            RoleName       @default(STUDENT)
   isActive        Boolean        @default(true)
   isEmailVerified Boolean        @default(false)

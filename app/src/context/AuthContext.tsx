@@ -66,18 +66,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setTokenState(res.tokens.accessToken);
       setUser(res.user);
     } catch (err: any) {
-      // Fallback dev mock for mobile if offline
-      const mockUser: UserProfile = {
-        id: `mobile_usr_${Date.now()}`,
-        email,
-        firstName: email.split("@")[0] || "MobileUser",
-        lastName: "Sync",
-        role: "STUDENT",
-        isOnboarded: false,
-      };
-      memoryAccessToken = `mock_mobile_token_${Date.now()}`;
-      setTokenState(memoryAccessToken);
-      setUser(mockUser);
+      const backendMessage = err.response?.data?.message || err.message;
+      if (
+        err.response ||
+        (backendMessage && !backendMessage.includes("Network Error"))
+      ) {
+        const msg = Array.isArray(backendMessage)
+          ? backendMessage.join(", ")
+          : backendMessage;
+        throw new Error(msg || "Invalid email or password.");
+      }
+      throw err;
     }
   };
 
@@ -87,18 +86,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     lastName?: string,
   ) => {
     try {
-      const mockUser: UserProfile = {
-        id: `google_mobile_${Date.now()}`,
-        email: `${(firstName || "google").toLowerCase()}@lumora.edu`,
-        firstName: firstName || "Google",
-        lastName: lastName || "User",
-        role: "STUDENT",
-        isOnboarded: false,
-      };
-      memoryAccessToken = `mock_google_token_${Date.now()}`;
-      setTokenState(memoryAccessToken);
-      setUser(mockUser);
+      const res = await apiClientInstance.googleAuth({
+        idToken,
+        firstName,
+        lastName,
+      });
+      memoryAccessToken = res.tokens.accessToken;
+      memoryRefreshToken = res.tokens.refreshToken;
+      setTokenState(res.tokens.accessToken);
+      setUser(res.user);
     } catch (err: any) {
+      const backendMessage = err.response?.data?.message || err.message;
+      if (
+        err.response ||
+        (backendMessage && !backendMessage.includes("Network Error"))
+      ) {
+        const msg = Array.isArray(backendMessage)
+          ? backendMessage.join(", ")
+          : backendMessage;
+        throw new Error(msg || "Google sign-in failed.");
+      }
       throw err;
     }
   };
@@ -123,17 +130,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setTokenState(res.tokens.accessToken);
       setUser(res.user);
     } catch (err: any) {
-      const mockUser: UserProfile = {
-        id: `reg_mobile_${Date.now()}`,
-        email,
-        firstName,
-        lastName,
-        role: role || "STUDENT",
-        isOnboarded: false,
-      };
-      memoryAccessToken = `mock_reg_token_${Date.now()}`;
-      setTokenState(memoryAccessToken);
-      setUser(mockUser);
+      const backendMessage = err.response?.data?.message || err.message;
+      if (
+        err.response ||
+        (backendMessage && !backendMessage.includes("Network Error"))
+      ) {
+        const msg = Array.isArray(backendMessage)
+          ? backendMessage.join(", ")
+          : backendMessage;
+        throw new Error(msg || "Registration failed.");
+      }
+      throw err;
     }
   };
 
