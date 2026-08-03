@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
 import { AssessmentDTO } from "@/types";
 import { SlidingTabs } from "@/components/SlidingTabs";
+import Loader from "@/components/Loader";
 import {
   ReaderIcon,
   ClockIcon,
@@ -224,9 +225,9 @@ export default function StudentAssessmentsPage() {
 
         {/* Assessments List */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="w-8 h-8 border-2 border-[#111111] border-t-transparent rounded-full animate-spin" />
-            <span className="text-xs font-mono text-zinc-400">
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Loader />
+            <span className="text-xs font-mono text-zinc-400 mt-4">
               Loading assessments...
             </span>
           </div>

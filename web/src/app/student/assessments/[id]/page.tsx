@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
+import Loader from "@/components/Loader";
 import { AssessmentDTO, QuestionDTO, OptionDTO } from "@/types";
 import { evaluateCodeSolution } from "@/lib/codeEvaluator";
 import {
@@ -415,9 +416,9 @@ export default function StudentAssessmentRunnerPage({
   if (loading) {
     return (
       <main className="h-screen w-screen bg-[#F8F9FA] flex flex-col items-center justify-center p-6 font-sans">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs font-mono text-zinc-500">
+        <div className="flex flex-col items-center gap-4">
+          <Loader />
+          <span className="text-xs font-mono text-zinc-500 mt-4">
             Loading Assessment IDE Workspace...
           </span>
         </div>

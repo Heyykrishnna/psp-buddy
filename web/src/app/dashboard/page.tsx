@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import Loader from "@/components/Loader";
 import { apiFetch } from "@/lib/api";
 import { LeaderboardWidget } from "../../components/LeaderboardWidget";
 import {
@@ -101,9 +102,9 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-[#F9F9FB] flex flex-col items-center justify-center font-sans">
-        <div className="w-8 h-8 border-2 border-[#111111] border-t-transparent rounded-full animate-spin mb-3" />
-        <p className="text-xs font-mono text-zinc-500 uppercase tracking-wider">
-          Loading...
+        <Loader />
+        <p className="text-xs font-mono text-zinc-500 uppercase tracking-wider mt-4">
+          Loading PSP Lumora...
         </p>
       </main>
     );

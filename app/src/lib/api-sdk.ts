@@ -117,6 +117,11 @@ export class PSPBuddyApiClient {
     return res.data;
   }
 
+  async getStudentAttempts(studentId: string) {
+    const res = await this.http.get(`/students/${studentId}/attempts`);
+    return res.data;
+  }
+
   async getAssessmentById(id: string): Promise<AssessmentDTO> {
     const res = await this.http.get<AssessmentDTO>(`/assessments/${id}`);
     return res.data;

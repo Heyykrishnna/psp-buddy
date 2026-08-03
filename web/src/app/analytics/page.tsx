@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import Loader from "@/components/Loader";
 import { apiFetch } from "@/lib/api";
 import { SlidingTabs } from "@/components/SlidingTabs";
 import {
@@ -89,9 +90,9 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-[#F9F9FB] flex flex-col items-center justify-center font-sans">
-        <div className="w-8 h-8 border-2 border-[#111111] border-t-transparent rounded-full animate-spin mb-3" />
-        <p className="text-xs font-mono text-zinc-500 uppercase tracking-wider">
-          Fetching Analytics & Topic Breakdown from Backend...
+        <Loader />
+        <p className="text-xs font-mono text-zinc-500 uppercase tracking-wider mt-4">
+          Fetching Analytics & Topic Breakdown...
         </p>
       </main>
     );

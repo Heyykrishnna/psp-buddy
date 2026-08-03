@@ -1,29 +1,32 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import Loader from "@/components/Loader";
 
-export default function Home() {
+export default function RootPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        router.replace('/auth');
+        router.replace("/login");
       } else if (!user.isOnboarded) {
-        router.replace('/onboarding');
+        router.replace("/onboarding");
       } else {
-        router.replace('/dashboard');
+        router.replace("/dashboard");
       }
     }
   }, [user, loading, router]);
 
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center text-zinc-400 font-sans">
-      <div className="w-8 h-8 border-2 border-zinc-700 border-t-indigo-500 rounded-full animate-spin mb-4" />
-      <p className="text-sm tracking-wide">Loading PSP LUMORA...</p>
+      <Loader />
+      <p className="text-xs font-mono tracking-wider text-zinc-400 mt-6">
+        LOADING PSP LUMORA...
+      </p>
     </div>
   );
 }

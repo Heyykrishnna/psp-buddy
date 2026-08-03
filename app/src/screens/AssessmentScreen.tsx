@@ -14,7 +14,7 @@ import {
   Image,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import { AssessmentDTO, QuestionDTO } from "../types";
+import { AssessmentDTO, QuestionDTO, SyncEventType } from "../types";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { SlidingSegmentedControl } from "../components/SlidingSegmentedControl";
 
@@ -55,13 +55,76 @@ export function AssessmentScreen({
   const [maxScore, setMaxScore] = useState<number>(0);
   const [accuracy, setAccuracy] = useState<number>(0);
 
-  // Fetch Assessments list
+  const [completedAsmIds, setCompletedAsmIds] = useState<Set<string>>(
+    new Set(),
+  );
+
+  // Animation values for interactive motion UI
+  const modeFadeAnim = useRef(new Animated.Value(1)).current;
+  const modeScaleAnim = useRef(new Animated.Value(1)).current;
+  const optionScaleAnim = useRef(new Animated.Value(1)).current;
+  const scoreHeroScale = useRef(new Animated.Value(0.3)).current;
+  const xpPopAnim = useRef(new Animated.Value(0)).current;
+
+  // Trigger screen transition animation on mode change
+  useEffect(() => {
+    modeFadeAnim.setValue(0);
+    modeScaleAnim.setValue(0.96);
+    Animated.parallel([
+      Animated.timing(modeFadeAnim, {
+        toValue: 1,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.spring(modeScaleAnim, {
+        toValue: 1,
+        friction: 6,
+        tension: 90,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    if (mode === "RESULT") {
+      scoreHeroScale.setValue(0.3);
+      xpPopAnim.setValue(0);
+      Animated.sequence([
+        Animated.spring(scoreHeroScale, {
+          toValue: 1,
+          friction: 4,
+          tension: 70,
+          useNativeDriver: true,
+        }),
+        Animated.timing(xpPopAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [mode]);
+
+  // Fetch Assessments list and completed student attempts
   useEffect(() => {
     async function loadData() {
       setLoading(true);
       try {
-        const list = await apiClient.getAssessments();
+        const studentId = user?.id || "student";
+        const [list, attempts] = await Promise.all([
+          apiClient.getAssessments(),
+          studentId
+            ? apiClient.getStudentAttempts(studentId).catch(() => [])
+            : Promise.resolve([]),
+        ]);
         setAssessments(list || []);
+        if (attempts && Array.isArray(attempts)) {
+          const completedSet = new Set<string>();
+          attempts.forEach((att: any) => {
+            if (att.status === "SUBMITTED" || att.status === "EVALUATED") {
+              completedSet.add(att.assessmentId);
+            }
+          });
+          setCompletedAsmIds(completedSet);
+        }
       } catch {
         setAssessments([]);
       } finally {
@@ -69,7 +132,22 @@ export function AssessmentScreen({
       }
     }
     loadData();
-  }, []);
+  }, [user]);
+
+  // Sync real-time submission event
+  useEffect(() => {
+    if (!apiClient) return;
+    const unsub = apiClient.subscribeSync(
+      SyncEventType.ASSESSMENT_SUBMITTED,
+      (payload) => {
+        const asmId = (payload.data as any)?.assessmentId;
+        if (asmId) {
+          setCompletedAsmIds((prev) => new Set([...prev, asmId]));
+        }
+      },
+    );
+    return () => unsub();
+  }, [apiClient]);
 
   // Handle Auto-open if selectedAssessmentId passed
   useEffect(() => {
@@ -101,6 +179,37 @@ export function AssessmentScreen({
     useState<AssessmentDTO | null>(null);
 
   const startAssessment = async (asm: AssessmentDTO) => {
+    if (completedAsmIds.has(asm.id)) {
+      setSelectedAsm(asm);
+      setLoading(true);
+      try {
+        const studentId = user?.id || "student";
+        const attempts = await apiClient
+          .getStudentAttempts(studentId)
+          .catch(() => []);
+        const found = Array.isArray(attempts)
+          ? attempts.find(
+              (att: any) =>
+                att.assessmentId === asm.id &&
+                (att.status === "SUBMITTED" || att.status === "EVALUATED"),
+            )
+          : null;
+
+        if (found) {
+          setResultScore(found.totalScore || 0);
+          setMaxScore(found.maxScore || asm.totalMarks || 100);
+          setAccuracy(
+            found.maxScore > 0
+              ? Math.round(((found.totalScore || 0) / found.maxScore) * 100)
+              : 0,
+          );
+        }
+      } catch {}
+      setMode("RESULT");
+      setLoading(false);
+      return;
+    }
+
     if (asm.containsCoding || asm.isWebOnly) {
       setCodingWarningAsm(asm);
       return;
@@ -125,10 +234,12 @@ export function AssessmentScreen({
       } else {
         setQuestions([]);
       }
+
       const attempt: any = await apiClient.startAttempt(
         asm.id,
         user?.id || "student",
       );
+
       if (
         attempt &&
         (attempt.status === "SUBMITTED" || attempt.status === "EVALUATED")
@@ -140,24 +251,31 @@ export function AssessmentScreen({
             ? Math.round(((attempt.totalScore || 0) / attempt.maxScore) * 100)
             : 0,
         );
+        setCompletedAsmIds((prev) => new Set([...prev, asm.id]));
         setMode("RESULT");
         setLoading(false);
         return;
       }
+
       setAttemptId(attempt.id);
+      setTimeLeftSeconds((asm.durationMinutes || 15) * 60);
+      setCurrentIdx(0);
+      setSelectedAnswers({});
+      setMode("RUNNER");
     } catch (err: any) {
       if (err?.message && err.message.includes("already completed")) {
+        setCompletedAsmIds((prev) => new Set([...prev, asm.id]));
         setMode("RESULT");
         setLoading(false);
         return;
       }
       setQuestions([]);
       setAttemptId(`attempt-${Date.now()}`);
-    } finally {
       setTimeLeftSeconds((asm.durationMinutes || 15) * 60);
       setCurrentIdx(0);
       setSelectedAnswers({});
       setMode("RUNNER");
+    } finally {
       setLoading(false);
     }
   };
@@ -328,6 +446,20 @@ export function AssessmentScreen({
   };
 
   const handleSelectOption = (questionId: string, optionId: string) => {
+    Animated.sequence([
+      Animated.timing(optionScaleAnim, {
+        toValue: 0.96,
+        duration: 60,
+        useNativeDriver: true,
+      }),
+      Animated.spring(optionScaleAnim, {
+        toValue: 1,
+        friction: 4,
+        tension: 120,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
     const updated = { ...selectedAnswers, [questionId]: optionId };
     setSelectedAnswers(updated);
 
@@ -621,7 +753,21 @@ export function AssessmentScreen({
                     <View
                       style={{ flexDirection: "row", gap: 10, marginTop: 4 }}
                     >
-                      {!isWorkbookOnly && (
+                      {completedAsmIds.has(asm.id) ? (
+                        <TouchableOpacity
+                          style={[styles.completedBtn, { flex: 1 }]}
+                          onPress={() => startAssessment(asm)}
+                          activeOpacity={0.85}
+                        >
+                          <Ionicons
+                            name="checkmark-circle"
+                            size={15}
+                            color="#a1a1aa"
+                            style={{ marginRight: 4 }}
+                          />
+                          <Text style={styles.completedBtnText}>COMPLETED</Text>
+                        </TouchableOpacity>
+                      ) : !isWorkbookOnly ? (
                         <TouchableOpacity
                           style={[styles.startBtn, { flex: 1 }]}
                           onPress={() => startAssessment(asm)}
@@ -635,7 +781,7 @@ export function AssessmentScreen({
                             style={{ marginLeft: 4 }}
                           />
                         </TouchableOpacity>
-                      )}
+                      ) : null}
 
                       {!isOnlineOnly && (
                         <TouchableOpacity
@@ -1154,7 +1300,31 @@ export function AssessmentScreen({
       </Modal>
 
       {mode === "RUNNER" && (
-        <View style={styles.runnerContainer}>
+        <Animated.View
+          style={[
+            styles.runnerContainer,
+            { opacity: modeFadeAnim, transform: [{ scale: modeScaleAnim }] },
+          ]}
+        >
+          {/* Animated Runner Progress Bar */}
+          <View
+            style={{
+              width: "100%",
+              height: 4,
+              backgroundColor: "rgba(255,255,255,0.08)",
+              overflow: "hidden",
+            }}
+          >
+            <View
+              style={{
+                height: "100%",
+                width: `${questions.length > 0 ? ((currentIdx + 1) / questions.length) * 100 : 0}%`,
+                backgroundColor: "#5451FF",
+                borderRadius: 2,
+              }}
+            />
+          </View>
+
           {/* Runner Status Bar */}
           <View style={styles.runnerHeader}>
             <View style={styles.progressPill}>
@@ -1453,197 +1623,245 @@ export function AssessmentScreen({
               </TouchableOpacity>
             )}
           </View>
-        </View>
+        </Animated.View>
       )}
 
       {mode === "RESULT" && (
-        <ScrollView
-          contentContainerStyle={styles.resultScroll}
-          showsVerticalScrollIndicator={false}
+        <Animated.View
+          style={{
+            flex: 1,
+            opacity: modeFadeAnim,
+            transform: [{ scale: modeScaleAnim }],
+          }}
         >
-          {/* Main Score & Grade Hero Card */}
-          <View style={styles.resultCard}>
-            <View style={styles.scoreHeroRow}>
-              <Text style={styles.resultScoreBig}>
-                {resultScore}
-                <Text style={styles.resultScoreMax}> / {maxScore}</Text>
+          <ScrollView
+            contentContainerStyle={styles.resultScroll}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Playful Celebration Header Pill */}
+            <Animated.View
+              style={{
+                backgroundColor: "rgba(84,81,255,0.18)",
+                borderWidth: 1,
+                borderColor: "rgba(84,81,255,0.4)",
+                borderRadius: 20,
+                paddingVertical: 6,
+                paddingHorizontal: 14,
+                alignSelf: "center",
+                marginBottom: 12,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+                opacity: xpPopAnim,
+              }}
+            >
+              <Text style={{ fontSize: 13 }}>🎉</Text>
+              <Text
+                style={{
+                  color: "#818cf8",
+                  fontSize: 11,
+                  fontWeight: "700",
+                  letterSpacing: 0.8,
+                }}
+              >
+                ASSESSMENT EVALUATION COMPLETED (+{Math.round(resultScore * 10)}{" "}
+                XP)
               </Text>
-              <Text style={styles.scoreHeroLabel}>TOTAL MARKS EARNED</Text>
-            </View>
+            </Animated.View>
 
-            {/* Accuracy Progress Bar */}
-            <View style={{ width: "100%", gap: 6, marginTop: 4 }}>
-              <View style={styles.accuracyHeaderRow}>
-                <Text style={styles.accuracyTitle}>ACCURACY PERFORMANCE</Text>
-                <Text style={styles.accuracyValueText}>{accuracy}%</Text>
-              </View>
-              <View style={styles.accuracyBarContainer}>
-                <View
-                  style={[
-                    styles.accuracyBarFill,
-                    {
-                      width: `${accuracy}%`,
-                      backgroundColor:
-                        accuracy >= 70
-                          ? "#4ade80"
-                          : accuracy >= 50
-                            ? "#f59e0b"
-                            : "#ef4444",
-                    },
-                  ]}
-                />
-              </View>
-            </View>
-
-            {/* Detailed Metric Cards Grid */}
-            <View style={styles.resultStatsGrid}>
-              <View style={styles.resStatBox}>
-                <Ionicons
-                  name="help-circle-outline"
-                  size={18}
-                  color="#3B82F6"
-                />
-                <Text style={styles.resStatVal}>{questions.length}</Text>
-                <Text style={styles.resStatLabel}>Total Questions</Text>
-              </View>
-              <View style={styles.resStatBox}>
-                <Ionicons
-                  name="checkmark-circle-outline"
-                  size={18}
-                  color="#4ade80"
-                />
-                <Text style={styles.resStatVal}>
-                  {Object.keys(selectedAnswers).length}
+            {/* Main Score & Grade Hero Card */}
+            <Animated.View
+              style={[
+                styles.resultCard,
+                { transform: [{ scale: scoreHeroScale }] },
+              ]}
+            >
+              <View style={styles.scoreHeroRow}>
+                <Text style={styles.resultScoreBig}>
+                  {resultScore}
+                  <Text style={styles.resultScoreMax}> / {maxScore}</Text>
                 </Text>
-                <Text style={styles.resStatLabel}>Attempted</Text>
+                <Text style={styles.scoreHeroLabel}>TOTAL MARKS EARNED</Text>
               </View>
-              <View style={styles.resStatBox}>
-                <Ionicons name="flash-outline" size={18} color="#F4C463" />
-                <Text style={styles.resStatVal}>+{resultScore * 10} XP</Text>
-                <Text style={styles.resStatLabel}>XP Earned</Text>
+
+              {/* Accuracy Progress Bar */}
+              <View style={{ width: "100%", gap: 6, marginTop: 4 }}>
+                <View style={styles.accuracyHeaderRow}>
+                  <Text style={styles.accuracyTitle}>ACCURACY PERFORMANCE</Text>
+                  <Text style={styles.accuracyValueText}>{accuracy}%</Text>
+                </View>
+                <View style={styles.accuracyBarContainer}>
+                  <View
+                    style={[
+                      styles.accuracyBarFill,
+                      {
+                        width: `${accuracy}%`,
+                        backgroundColor:
+                          accuracy >= 70
+                            ? "#4ade80"
+                            : accuracy >= 50
+                              ? "#f59e0b"
+                              : "#ef4444",
+                      },
+                    ]}
+                  />
+                </View>
               </View>
-            </View>
-          </View>
 
-          {/* Question-by-Question Detailed Review Breakdown */}
-          <View style={styles.questionReviewContainer}>
-            <Text style={styles.reviewSectionTitle}>
-              QUESTION BREAKDOWN & SOLUTIONS
-            </Text>
+              {/* Detailed Metric Cards Grid */}
+              <View style={styles.resultStatsGrid}>
+                <View style={styles.resStatBox}>
+                  <Ionicons
+                    name="help-circle-outline"
+                    size={18}
+                    color="#3B82F6"
+                  />
+                  <Text style={styles.resStatVal}>{questions.length}</Text>
+                  <Text style={styles.resStatLabel}>Total Questions</Text>
+                </View>
+                <View style={styles.resStatBox}>
+                  <Ionicons
+                    name="checkmark-circle-outline"
+                    size={18}
+                    color="#4ade80"
+                  />
+                  <Text style={styles.resStatVal}>
+                    {Object.keys(selectedAnswers).length}
+                  </Text>
+                  <Text style={styles.resStatLabel}>Attempted</Text>
+                </View>
+                <View style={styles.resStatBox}>
+                  <Ionicons name="flash-outline" size={18} color="#F4C463" />
+                  <Text style={styles.resStatVal}>+{resultScore * 10} XP</Text>
+                  <Text style={styles.resStatLabel}>XP Earned</Text>
+                </View>
+              </View>
+            </Animated.View>
 
-            {questions.map((q, idx) => {
-              const userAnsId = selectedAnswers[q.id];
-              const userOption = q.options?.find((o) => o.id === userAnsId);
-              const correctOption = q.options?.find(
-                (o) =>
-                  o.isCorrect ||
-                  (q.correctOptionId && o.id === q.correctOptionId),
-              );
-              const isCorrect = userOption
-                ? userOption.isCorrect || userOption.id === q.correctOptionId
-                : false;
-              const userAnsText = userOption?.optionText || userOption?.text;
-              const correctAnsText =
-                correctOption?.optionText || correctOption?.text;
+            {/* Question-by-Question Detailed Review Breakdown */}
+            <View style={styles.questionReviewContainer}>
+              <Text style={styles.reviewSectionTitle}>
+                QUESTION BREAKDOWN & SOLUTIONS
+              </Text>
 
-              return (
-                <View key={q.id} style={styles.reviewCard}>
-                  <View style={styles.reviewHeaderRow}>
-                    <Text style={styles.reviewQNum}>QUESTION {idx + 1}</Text>
-                    <View
-                      style={[
-                        styles.reviewStatusChip,
-                        isCorrect ? styles.chipCorrect : styles.chipIncorrect,
-                      ]}
-                    >
-                      <Ionicons
-                        name={isCorrect ? "checkmark-circle" : "close-circle"}
-                        size={13}
-                        color={isCorrect ? "#4ade80" : "#ef4444"}
-                      />
-                      <Text
+              {questions.map((q, idx) => {
+                const userAnsId = selectedAnswers[q.id];
+                const userOption = q.options?.find((o) => o.id === userAnsId);
+                const correctOption = q.options?.find(
+                  (o) =>
+                    o.isCorrect ||
+                    (q.correctOptionId && o.id === q.correctOptionId),
+                );
+                const isCorrect = userOption
+                  ? userOption.isCorrect || userOption.id === q.correctOptionId
+                  : false;
+                const userAnsText = userOption?.optionText || userOption?.text;
+                const correctAnsText =
+                  correctOption?.optionText || correctOption?.text;
+
+                return (
+                  <View key={q.id} style={styles.reviewCard}>
+                    <View style={styles.reviewHeaderRow}>
+                      <Text style={styles.reviewQNum}>QUESTION {idx + 1}</Text>
+                      <View
                         style={[
-                          styles.reviewStatusText,
-                          { color: isCorrect ? "#4ade80" : "#ef4444" },
+                          styles.reviewStatusChip,
+                          isCorrect ? styles.chipCorrect : styles.chipIncorrect,
                         ]}
                       >
-                        {isCorrect
-                          ? "CORRECT"
-                          : userAnsId
-                            ? "INCORRECT"
-                            : "SKIPPED"}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <Text style={styles.reviewQText}>{q.questionText}</Text>
-
-                  {/* Answers Comparison */}
-                  <View style={styles.answersBox}>
-                    {userAnsText && (
-                      <View style={styles.ansLine}>
-                        <Text style={styles.ansLabel}>Your Choice:</Text>
+                        <Ionicons
+                          name={isCorrect ? "checkmark-circle" : "close-circle"}
+                          size={13}
+                          color={isCorrect ? "#4ade80" : "#ef4444"}
+                        />
                         <Text
                           style={[
-                            styles.ansVal,
+                            styles.reviewStatusText,
                             { color: isCorrect ? "#4ade80" : "#ef4444" },
                           ]}
                         >
-                          {userAnsText}
+                          {isCorrect
+                            ? "CORRECT"
+                            : userAnsId
+                              ? "INCORRECT"
+                              : "SKIPPED"}
                         </Text>
                       </View>
-                    )}
-                    {!isCorrect && correctAnsText && (
-                      <View style={styles.ansLine}>
-                        <Text style={styles.ansLabel}>Correct Answer:</Text>
-                        <Text style={[styles.ansVal, { color: "#4ade80" }]}>
-                          {correctAnsText}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
+                    </View>
 
-                  {/* AI Explanation / Key Takeaway */}
-                  <View style={styles.explanationBox}>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 6,
-                      }}
-                    >
-                      <Ionicons name="bulb-outline" size={14} color="#5451FF" />
-                      <Text style={styles.explanationTitle}>
-                        KEY EXPLANATION
+                    <Text style={styles.reviewQText}>{q.questionText}</Text>
+
+                    {/* Answers Comparison */}
+                    <View style={styles.answersBox}>
+                      {userAnsText && (
+                        <View style={styles.ansLine}>
+                          <Text style={styles.ansLabel}>Your Choice:</Text>
+                          <Text
+                            style={[
+                              styles.ansVal,
+                              { color: isCorrect ? "#4ade80" : "#ef4444" },
+                            ]}
+                          >
+                            {userAnsText}
+                          </Text>
+                        </View>
+                      )}
+                      {!isCorrect && correctAnsText && (
+                        <View style={styles.ansLine}>
+                          <Text style={styles.ansLabel}>Correct Answer:</Text>
+                          <Text style={[styles.ansVal, { color: "#4ade80" }]}>
+                            {correctAnsText}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {/* AI Explanation / Key Takeaway */}
+                    <View style={styles.explanationBox}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 6,
+                        }}
+                      >
+                        <Ionicons
+                          name="bulb-outline"
+                          size={14}
+                          color="#5451FF"
+                        />
+                        <Text style={styles.explanationTitle}>
+                          KEY EXPLANATION
+                        </Text>
+                      </View>
+                      <Text style={styles.explanationText}>
+                        {q.explanation ||
+                          `The correct answer is "${correctAnsText || "Option A"}". Review data structure algorithms and time complexity for this topic.`}
                       </Text>
                     </View>
-                    <Text style={styles.explanationText}>
-                      {q.explanation ||
-                        `The correct answer is "${correctAnsText || "Option A"}". Review data structure algorithms and time complexity for this topic.`}
-                    </Text>
                   </View>
-                </View>
-              );
-            })}
-          </View>
+                );
+              })}
+            </View>
 
-          {/* Action Buttons Row */}
-          <View style={styles.actionButtonsRow}>
-            <TouchableOpacity
-              style={styles.finishBtn}
-              onPress={onBackToDashboard}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.finishBtnText}>RETURN TO DASHBOARD</Text>
-              <Feather
-                name="arrow-right"
-                size={16}
-                color="#ffffff"
-                style={{ marginLeft: 6 }}
-              />
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+            {/* Action Buttons Row */}
+            <View style={styles.actionButtonsRow}>
+              <TouchableOpacity
+                style={styles.finishBtn}
+                onPress={onBackToDashboard}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.finishBtnText}>RETURN TO DASHBOARD</Text>
+                <Feather
+                  name="arrow-right"
+                  size={16}
+                  color="#ffffff"
+                  style={{ marginLeft: 6 }}
+                />
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </Animated.View>
       )}
     </SafeAreaView>
   );
@@ -1856,6 +2074,26 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontFamily:
       Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
+  },
+  completedBtn: {
+    backgroundColor: "#1c1c1e",
+    borderColor: "#27272a",
+    borderWidth: 1,
+    height: 48,
+    borderRadius: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 4,
+  },
+  completedBtnText: {
+    color: "#a1a1aa",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_700Bold",
   },
   runnerContainer: {
     flex: 1,
