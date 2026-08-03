@@ -83,6 +83,12 @@ export default function StudentPlaygroundPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<any[] | null>(null);
 
+  // Submission result & history
+  const [submissionResult, setSubmissionResult] = useState<any | null>(null);
+  const [submissionHistory, setSubmissionHistory] = useState<any[]>([]);
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState<any | null>(null);
+  const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
+
   // Step 9 & 10 Filter State
   const [problemSearch, setProblemSearch] = useState<string>("");
   const [difficultyFilter, setDifficultyFilter] = useState<string>("ALL");
@@ -172,7 +178,7 @@ export default function StudentPlaygroundPage() {
 
   // Console Tabs State
   const [activeConsoleTab, setActiveConsoleTab] = useState<
-    "input" | "output" | "error" | "tests"
+    "input" | "output" | "error" | "tests" | "result" | "history"
   >("output");
   const [customInput, setCustomInput] = useState<string>(
     PLAYGROUND_EXAMPLES[0].sampleInput,
@@ -326,10 +332,26 @@ export default function StudentPlaygroundPage() {
     }
   };
 
+  // Fetch submission history from DB
+  const fetchSubmissionHistory = async (problemId: string) => {
+    setLoadingHistory(true);
+    try {
+      const res = await apiFetch<any[]>(`/problems/${problemId}/submissions`);
+      if (res && Array.isArray(res)) {
+        setSubmissionHistory(res);
+      }
+    } catch {
+      // Keep existing history
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
   // Submit Code logic
   const handleSubmitCode = async () => {
     setSubmitting(true);
-    handleRunCode();
+    setSubmissionResult(null);
+    setActiveConsoleTab("result");
     try {
       if (currentExample.id) {
         const res = await apiFetch<any>(
@@ -342,17 +364,20 @@ export default function StudentPlaygroundPage() {
             }),
           },
         );
-        if (res?.xpEarned && checkAuth) {
-          try {
-            await checkAuth();
-          } catch {}
+        if (res) {
+          setSubmissionResult(res);
+          setTestResults(res.judgeResult?.results || []);
+          if (res.xpEarned && checkAuth) {
+            try { await checkAuth(); } catch {}
+          }
+          // Refresh history
+          await fetchSubmissionHistory(currentExample.id);
         }
       }
     } catch (err) {
       console.error("Submission error:", err);
     } finally {
       setSubmitting(false);
-      setActiveConsoleTab("tests");
     }
   };
 
@@ -1160,57 +1185,49 @@ export default function StudentPlaygroundPage() {
             />
           </div>
 
-          {/* Bottom Console Panel (INPUT / OUTPUT / ERROR / TEST RESULTS) */}
-          <div className="h-52 border-t border-zinc-200 flex flex-col bg-white shrink-0">
-            <div className="h-9 border-b border-zinc-200 px-4 flex items-center gap-5 bg-zinc-50/60 text-[11px] font-mono font-bold text-zinc-500 shrink-0">
-              <button
-                onClick={() => setActiveConsoleTab("input")}
-                className={`py-1.5 border-b-2 transition-all cursor-pointer ${
-                  activeConsoleTab === "input"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent hover:text-zinc-800"
-                }`}
-              >
-                INPUT
-              </button>
-              <button
-                onClick={() => setActiveConsoleTab("output")}
-                className={`py-1.5 border-b-2 transition-all cursor-pointer ${
-                  activeConsoleTab === "output"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent hover:text-zinc-800"
-                }`}
-              >
-                OUTPUT
-              </button>
-              <button
-                onClick={() => setActiveConsoleTab("error")}
-                className={`py-1.5 border-b-2 transition-all cursor-pointer ${
-                  activeConsoleTab === "error"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent hover:text-zinc-800"
-                }`}
-              >
-                ERROR
-              </button>
-              <button
-                onClick={() => setActiveConsoleTab("tests")}
-                className={`py-1.5 border-b-2 transition-all cursor-pointer ${
-                  activeConsoleTab === "tests"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent hover:text-zinc-800"
-                }`}
-              >
-                TEST RESULTS
-              </button>
+          {/* Bottom Console Panel */}
+          <div className="h-64 border-t border-zinc-200 flex flex-col bg-white shrink-0">
+            {/* Console Tabs */}
+            <div className="h-9 border-b border-zinc-200 px-4 flex items-center gap-5 bg-zinc-50/60 text-[11px] font-mono font-bold text-zinc-500 shrink-0 overflow-x-auto">
+              {(["input", "output", "error", "tests", "result", "history"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => {
+                    setActiveConsoleTab(tab);
+                    if (tab === "history" && currentExample.id) {
+                      fetchSubmissionHistory(currentExample.id);
+                    }
+                  }}
+                  className={`py-1.5 border-b-2 transition-all cursor-pointer shrink-0 ${
+                    activeConsoleTab === tab
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent hover:text-zinc-800"
+                  }`}
+                >
+                  {tab === "input" && "INPUT"}
+                  {tab === "output" && "OUTPUT"}
+                  {tab === "error" && "ERROR"}
+                  {tab === "tests" && "TEST RESULTS"}
+                  {tab === "result" && (
+                    <span className="flex items-center gap-1">
+                      RESULT
+                      {submissionResult && (
+                        <span className={`w-1.5 h-1.5 rounded-full inline-block ${
+                          submissionResult?.submission?.status === "ACCEPTED" ? "bg-emerald-500" : "bg-red-500"
+                        }`} />
+                      )}
+                    </span>
+                  )}
+                  {tab === "history" && "SUBMISSIONS"}
+                </button>
+              ))}
             </div>
 
-            <div className="flex-1 p-4 font-mono text-xs overflow-y-auto bg-zinc-50/40">
+            <div className="flex-1 font-mono text-xs overflow-y-auto bg-zinc-50/40">
+              {/* INPUT */}
               {activeConsoleTab === "input" && (
-                <div className="space-y-2 h-full flex flex-col">
-                  <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
-                    Custom Input:
-                  </label>
+                <div className="p-4 space-y-2 h-full flex flex-col">
+                  <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Custom Input:</label>
                   <textarea
                     value={customInput}
                     onChange={(e) => setCustomInput(e.target.value)}
@@ -1220,72 +1237,223 @@ export default function StudentPlaygroundPage() {
                 </div>
               )}
 
+              {/* OUTPUT */}
               {activeConsoleTab === "output" && (
-                <div className="space-y-2">
+                <div className="p-4 space-y-2">
                   {output ? (
-                    <pre className="text-zinc-900 leading-relaxed whitespace-pre-wrap">
-                      {output}
-                    </pre>
+                    <pre className="text-zinc-900 leading-relaxed whitespace-pre-wrap">{output}</pre>
                   ) : (
-                    <div className="text-zinc-400 text-[11px] italic">
-                      Click &quot;Run&quot; or &quot;Submit&quot; to execute
-                      your code.
-                    </div>
+                    <div className="text-zinc-400 text-[11px] italic">Click &quot;Run&quot; to execute your code.</div>
                   )}
                 </div>
               )}
 
+              {/* ERROR */}
               {activeConsoleTab === "error" && (
-                <div>
+                <div className="p-4">
                   {errorMessage ? (
-                    <pre className="text-red-600 font-bold whitespace-pre-wrap">
-                      {errorMessage}
-                    </pre>
+                    <pre className="text-red-600 font-bold whitespace-pre-wrap">{errorMessage}</pre>
                   ) : (
-                    <div className="text-emerald-600 text-[11px] font-bold">
-                      No runtime errors detected.
-                    </div>
+                    <div className="text-emerald-600 text-[11px] font-bold">No runtime errors detected.</div>
                   )}
                 </div>
               )}
 
+              {/* TEST RESULTS */}
               {activeConsoleTab === "tests" && (
-                <div className="space-y-2">
+                <div className="p-4 space-y-2">
                   {testResults && testResults.length > 0 ? (
-                    <div className="space-y-2">
-                      {testResults.map((tr: any, idx: number) => (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between p-2.5 rounded-lg border bg-white border-zinc-200 text-[11px]"
-                        >
-                          <div className="flex items-center gap-2">
-                            {tr.passed ? (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                            ) : (
-                              <XCircle className="w-4 h-4 text-red-500 shrink-0" />
-                            )}
-                            <span className="font-bold text-zinc-800">
-                              Test Case #{idx + 1}
-                            </span>
-                            <span className="text-zinc-500">
-                              (Input: {tr.input})
-                            </span>
-                          </div>
-
-                          <span
-                            className={`font-bold ${
-                              tr.passed ? "text-emerald-600" : "text-red-500"
-                            }`}
-                          >
-                            {tr.passed ? "PASSED" : "FAILED"}
-                          </span>
+                    testResults.map((tr: any, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between p-2.5 rounded-lg border bg-white border-zinc-200 text-[11px]">
+                        <div className="flex items-center gap-2">
+                          {tr.passed ? (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          ) : (
+                            <XCircle className="w-4 h-4 text-red-500 shrink-0" />
+                          )}
+                          <span className="font-bold text-zinc-800">Test Case #{idx + 1}</span>
+                          <span className="text-zinc-500">(Input: {tr.input})</span>
                         </div>
-                      ))}
+                        <span className={`font-bold ${tr.passed ? "text-emerald-600" : "text-red-500"}`}>
+                          {tr.passed ? "PASSED" : "FAILED"}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-zinc-400 text-[11px] italic">No test case evaluations yet. Run or Submit your code.</div>
+                  )}
+                </div>
+              )}
+
+              {/* SUBMISSION RESULT */}
+              {activeConsoleTab === "result" && (
+                <div className="p-4">
+                  {submitting && (
+                    <div className="flex items-center gap-2 text-zinc-500 text-xs">
+                      <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                      Submitting and evaluating...
+                    </div>
+                  )}
+                  {!submitting && submissionResult && (() => {
+                    const sub = submissionResult.submission;
+                    const jr = submissionResult.judgeResult;
+                    const isAccepted = sub?.status === "ACCEPTED";
+                    const passed = sub?.passedTests ?? jr?.totalPassed ?? 0;
+                    const total = sub?.totalTests ?? jr?.totalTests ?? 0;
+                    const runtime = sub?.runtimeMs ?? jr?.runtimeMs ?? 0;
+                    const memory = sub?.memoryKb ?? jr?.memoryKb ?? 0;
+                    const results: any[] = jr?.results || [];
+                    return (
+                      <div className="space-y-4">
+                        {/* Verdict Banner */}
+                        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${
+                          isAccepted
+                            ? "bg-emerald-50 border-emerald-200"
+                            : sub?.status === "COMPILATION_ERROR"
+                            ? "bg-amber-50 border-amber-200"
+                            : "bg-red-50 border-red-200"
+                        }`}>
+                          {isAccepted ? (
+                            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                          ) : (
+                            <XCircle className="w-5 h-5 text-red-500 shrink-0" />
+                          )}
+                          <div>
+                            <div className={`text-sm font-bold font-sans ${
+                              isAccepted ? "text-emerald-700" : sub?.status === "COMPILATION_ERROR" ? "text-amber-700" : "text-red-600"
+                            }`}>
+                              {isAccepted ? "Accepted" : sub?.status === "COMPILATION_ERROR" ? "Compilation Error" : sub?.status === "RUNTIME_ERROR" ? "Runtime Error" : sub?.status === "TIME_LIMIT_EXCEEDED" ? "Time Limit Exceeded" : "Wrong Answer"}
+                            </div>
+                            <div className="text-[11px] text-zinc-500 font-sans">{passed} / {total} test cases passed</div>
+                          </div>
+                          <div className="ml-auto flex items-center gap-4 font-sans">
+                            <div className="text-center">
+                              <div className="text-[10px] text-zinc-400 uppercase tracking-wider">Runtime</div>
+                              <div className="text-xs font-bold text-zinc-800">{runtime} ms</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-[10px] text-zinc-400 uppercase tracking-wider">Memory</div>
+                              <div className="text-xs font-bold text-zinc-800">{(memory / 1024).toFixed(1)} MB</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Test Case Grid */}
+                        {results.length > 0 && (
+                          <div>
+                            <div className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider mb-2 font-sans">Test Cases</div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {results.map((r: any, i: number) => (
+                                <div
+                                  key={i}
+                                  title={`Test ${i + 1}: ${r.passed ? 'Passed' : 'Failed'}${r.runtimeMs ? ` · ${r.runtimeMs}ms` : ''}`}
+                                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold font-sans border cursor-default transition-colors ${
+                                    r.passed
+                                      ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                                      : "bg-red-50 border-red-200 text-red-600"
+                                  }`}
+                                >
+                                  {r.passed ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+                                </div>
+                              ))}
+                            </div>
+                            <div className="mt-1.5 text-[10px] text-zinc-400 font-sans">
+                              {results.map((r: any, i: number) => (
+                                <span key={i} className={`mr-1 ${r.passed ? "text-emerald-600" : "text-red-500"}`}>{i + 1}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  {!submitting && !submissionResult && (
+                    <div className="text-zinc-400 text-[11px] italic">Submit your code to see the verdict here.</div>
+                  )}
+                </div>
+              )}
+
+              {/* SUBMISSION HISTORY */}
+              {activeConsoleTab === "history" && (
+                <div className="font-sans">
+                  {loadingHistory ? (
+                    <div className="p-4 flex items-center gap-2 text-zinc-500 text-xs">
+                      <div className="w-3.5 h-3.5 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
+                      Loading submissions...
+                    </div>
+                  ) : selectedHistoryItem ? (
+                    <div className="p-4 space-y-3">
+                      <button
+                        onClick={() => setSelectedHistoryItem(null)}
+                        className="flex items-center gap-1.5 text-[11px] text-zinc-500 hover:text-zinc-800 cursor-pointer"
+                      >
+                        <ChevronLeft className="w-3 h-3" /> Back to History
+                      </button>
+                      {/* Verdict */}
+                      <div className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border text-xs ${
+                        selectedHistoryItem.status === "ACCEPTED"
+                          ? "bg-emerald-50 border-emerald-200"
+                          : "bg-red-50 border-red-200"
+                      }`}>
+                        {selectedHistoryItem.status === "ACCEPTED" ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-red-500" />
+                        )}
+                        <span className={`font-bold ${
+                          selectedHistoryItem.status === "ACCEPTED" ? "text-emerald-700" : "text-red-600"
+                        }`}>{selectedHistoryItem.status?.replace(/_/g, " ")}</span>
+                        <span className="ml-auto text-zinc-500">{selectedHistoryItem.passedTests}/{selectedHistoryItem.totalTests} passed</span>
+                        <span className="text-zinc-400">|</span>
+                        <span className="text-zinc-600">{selectedHistoryItem.runtimeMs} ms</span>
+                        <span className="text-zinc-400">|</span>
+                        <span className="text-zinc-600">{((selectedHistoryItem.memoryKb || 0) / 1024).toFixed(1)} MB</span>
+                      </div>
+                      {/* Submitted Code */}
+                      <div>
+                        <div className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider mb-1.5">Submitted Code</div>
+                        <pre className="bg-[#1e1e1e] text-[#d4d4d4] rounded-lg p-3 text-[11px] leading-relaxed overflow-x-auto whitespace-pre-wrap">{selectedHistoryItem.sourceCode}</pre>
+                      </div>
+                      <div className="text-[10px] text-zinc-400">
+                        Submitted {new Date(selectedHistoryItem.createdAt).toLocaleString()} · {selectedHistoryItem.language?.toUpperCase()}
+                      </div>
+                    </div>
+                  ) : submissionHistory.length > 0 ? (
+                    <div>
+                      {/* Header Row */}
+                      <div className="grid grid-cols-4 gap-2 px-4 py-2 border-b border-zinc-100 text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
+                        <div>Status</div>
+                        <div>Language</div>
+                        <div>Runtime</div>
+                        <div>Date</div>
+                      </div>
+                      {/* Rows */}
+                      {submissionHistory.map((sub: any, idx: number) => {
+                        const isAccepted = sub.status === "ACCEPTED";
+                        const msAgo = Date.now() - new Date(sub.createdAt).getTime();
+                        const minsAgo = Math.floor(msAgo / 60000);
+                        const timeLabel = minsAgo < 1 ? "Just now" : minsAgo < 60 ? `${minsAgo} min ago` : new Date(sub.createdAt).toLocaleDateString();
+                        return (
+                          <button
+                            key={idx}
+                            onClick={() => setSelectedHistoryItem(sub)}
+                            className="w-full grid grid-cols-4 gap-2 px-4 py-2.5 border-b border-zinc-50 hover:bg-zinc-50 text-left transition-colors cursor-pointer"
+                          >
+                            <div className={`flex items-center gap-1.5 text-xs font-semibold ${
+                              isAccepted ? "text-emerald-600" : sub.status === "COMPILATION_ERROR" ? "text-amber-600" : sub.status === "TIME_LIMIT_EXCEEDED" ? "text-orange-600" : "text-red-500"
+                            }`}>
+                              {isAccepted ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                              {isAccepted ? "Accepted" : sub.status === "COMPILATION_ERROR" ? "Compile Err" : sub.status === "TIME_LIMIT_EXCEEDED" ? "TLE" : sub.status === "RUNTIME_ERROR" ? "Runtime Err" : "Wrong Answer"}
+                            </div>
+                            <div className="text-xs text-zinc-600 capitalize">{sub.language}</div>
+                            <div className="text-xs text-zinc-600">{sub.status === "TIME_LIMIT_EXCEEDED" ? ">2 sec" : `${sub.runtimeMs} ms`}</div>
+                            <div className="text-xs text-zinc-400">{timeLabel}</div>
+                          </button>
+                        );
+                      })}
                     </div>
                   ) : (
-                    <div className="text-zinc-400 text-[11px] italic">
-                      No test case evaluations yet. Run or Submit your code.
-                    </div>
+                    <div className="p-4 text-zinc-400 text-[11px] italic">No submissions yet for this problem.</div>
                   )}
                 </div>
               )}
