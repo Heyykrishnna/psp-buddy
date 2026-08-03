@@ -116,7 +116,11 @@ export default function NewAssessmentPage() {
   // Current Question Builder state
   const [qText, setQText] = useState("");
   const [qType, setQType] = useState<
-    "SINGLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER" | "FILL_IN_BLANKS" | "CODING"
+    | "SINGLE_CHOICE"
+    | "TRUE_FALSE"
+    | "SHORT_ANSWER"
+    | "FILL_IN_BLANKS"
+    | "CODING"
   >("SINGLE_CHOICE");
   const [qDiff, setQDiff] = useState<"EASY" | "MEDIUM" | "HARD">("MEDIUM");
   const [qTopic, setQTopic] = useState("Data Structures");
@@ -125,11 +129,28 @@ export default function NewAssessmentPage() {
   const [qTrueFalse, setQTrueFalse] = useState(true);
   const [qKeywords, setQKeywords] = useState("");
   const [qBlankAnswers, setQBlankAnswers] = useState("");
-  const [qStarterCode, setQStarterCode] = useState("def solve(input_val):\n    # Write your solution here\n    return input_val");
-  const [qAllowedLanguages, setQAllowedLanguages] = useState<string[]>(["Python", "JavaScript", "C++", "Java"]);
+  const [qStarterCode, setQStarterCode] = useState(
+    "def solve(input_val):\n    # Write your solution here\n    return input_val",
+  );
+  const [qAllowedLanguages, setQAllowedLanguages] = useState<string[]>([
+    "Python",
+    "JavaScript",
+    "C++",
+    "Java",
+  ]);
   const [qTestCases, setQTestCases] = useState<TestCaseInput[]>([
-    { input: "5", expectedOutput: "5", isPublic: true, explanation: "Standard input test case" },
-    { input: "10", expectedOutput: "10", isPublic: false, explanation: "Hidden evaluation test case" },
+    {
+      input: "5",
+      expectedOutput: "5",
+      isPublic: true,
+      explanation: "Standard input test case",
+    },
+    {
+      input: "10",
+      expectedOutput: "10",
+      isPublic: false,
+      explanation: "Hidden evaluation test case",
+    },
   ]);
   const [aiGeneratingTestCases, setAiGeneratingTestCases] = useState(false);
   const [qRequiresWorkbook, setQRequiresWorkbook] = useState(false);
@@ -145,7 +166,9 @@ export default function NewAssessmentPage() {
   // AI Auto-Generate Test Cases
   const handleGenerateAiTestCases = async () => {
     if (!qText.trim()) {
-      setError("Please write the question statement first before generating test cases with AI.");
+      setError(
+        "Please write the question statement first before generating test cases with AI.",
+      );
       return;
     }
     setAiGeneratingTestCases(true);
@@ -166,23 +189,63 @@ export default function NewAssessmentPage() {
             expectedOutput: tc.expectedOutput || tc.output || "",
             isPublic: tc.isPublic ?? true,
             explanation: tc.explanation || "AI-generated test case",
-          }))
+          })),
         );
       } else {
         // AI Fallback smart test case generator
         setQTestCases([
-          { input: "2, 7, 11, 15", expectedOutput: "9", isPublic: true, explanation: "Standard array target test case" },
-          { input: "3, 2, 4", expectedOutput: "6", isPublic: true, explanation: "Unsorted input elements" },
-          { input: "3, 3", expectedOutput: "6", isPublic: false, explanation: "Duplicate numbers edge case" },
-          { input: "0, -1, 5", expectedOutput: "4", isPublic: false, explanation: "Negative numbers edge case" },
+          {
+            input: "2, 7, 11, 15",
+            expectedOutput: "9",
+            isPublic: true,
+            explanation: "Standard array target test case",
+          },
+          {
+            input: "3, 2, 4",
+            expectedOutput: "6",
+            isPublic: true,
+            explanation: "Unsorted input elements",
+          },
+          {
+            input: "3, 3",
+            expectedOutput: "6",
+            isPublic: false,
+            explanation: "Duplicate numbers edge case",
+          },
+          {
+            input: "0, -1, 5",
+            expectedOutput: "4",
+            isPublic: false,
+            explanation: "Negative numbers edge case",
+          },
         ]);
       }
     } catch {
       setQTestCases([
-        { input: "2, 7, 11, 15", expectedOutput: "9", isPublic: true, explanation: "Standard array target test case" },
-        { input: "3, 2, 4", expectedOutput: "6", isPublic: true, explanation: "Unsorted input elements" },
-        { input: "3, 3", expectedOutput: "6", isPublic: false, explanation: "Duplicate numbers edge case" },
-        { input: "0, -1, 5", expectedOutput: "4", isPublic: false, explanation: "Negative numbers edge case" },
+        {
+          input: "2, 7, 11, 15",
+          expectedOutput: "9",
+          isPublic: true,
+          explanation: "Standard array target test case",
+        },
+        {
+          input: "3, 2, 4",
+          expectedOutput: "6",
+          isPublic: true,
+          explanation: "Unsorted input elements",
+        },
+        {
+          input: "3, 3",
+          expectedOutput: "6",
+          isPublic: false,
+          explanation: "Duplicate numbers edge case",
+        },
+        {
+          input: "0, -1, 5",
+          expectedOutput: "4",
+          isPublic: false,
+          explanation: "Negative numbers edge case",
+        },
       ]);
     } finally {
       setAiGeneratingTestCases(false);
@@ -780,7 +843,7 @@ export default function NewAssessmentPage() {
                     <option value="TRUE_FALSE">True / False</option>
                     <option value="SHORT_ANSWER">Short Answer</option>
                     <option value="FILL_IN_BLANKS">Fill in the Blanks</option>
-                    <option value="CODING">💻 Coding Playground (Web Only)</option>
+                    <option value="CODING">Coding Playground (Web Only)</option>
                   </select>
                 </div>
 
@@ -1001,7 +1064,11 @@ export default function NewAssessmentPage() {
                     className="w-full px-3 py-2.5 bg-[#F4F4F6] border border-transparent rounded-md text-xs font-medium text-[#111111]"
                   />
                   <span className="text-[11px] font-mono text-zinc-400 mt-1 block">
-                    Hint: Use <code className="bg-zinc-200 px-1 py-0.5 rounded text-zinc-800">___</code> inside the question prompt above for each blank placeholder.
+                    Hint: Use{" "}
+                    <code className="bg-zinc-200 px-1 py-0.5 rounded text-zinc-800">
+                      ___
+                    </code>{" "}
+                    inside the question prompt above for each blank placeholder.
                   </span>
                 </div>
               )}
@@ -1012,11 +1079,12 @@ export default function NewAssessmentPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="px-2 py-0.5 bg-purple-600 text-white text-[10px] font-mono font-bold rounded">
-                          🖥️ WEB-ONLY CODING PLAYGROUND
+                          WEB-ONLY CODING PLAYGROUND
                         </span>
                       </div>
                       <span className="text-xs text-zinc-400 mt-1 block">
-                        Students must complete this assignment on the website code editor.
+                        Students must complete this assignment on the website
+                        code editor.
                       </span>
                     </div>
                     <button
@@ -1074,7 +1142,9 @@ export default function NewAssessmentPage() {
                           className="p-3 bg-zinc-950 border border-zinc-800 rounded-lg space-y-2"
                         >
                           <div className="flex items-center justify-between text-[11px] font-mono">
-                            <span className="text-zinc-400">Test Case #{tcIdx + 1}</span>
+                            <span className="text-zinc-400">
+                              Test Case #{tcIdx + 1}
+                            </span>
                             <div className="flex items-center gap-3">
                               <label className="flex items-center gap-1.5 cursor-pointer text-zinc-300">
                                 <input
@@ -1092,7 +1162,9 @@ export default function NewAssessmentPage() {
                               <button
                                 type="button"
                                 onClick={() =>
-                                  setQTestCases(qTestCases.filter((_, i) => i !== tcIdx))
+                                  setQTestCases(
+                                    qTestCases.filter((_, i) => i !== tcIdx),
+                                  )
                                 }
                                 className="text-red-400 hover:underline cursor-pointer"
                               >
@@ -1103,7 +1175,9 @@ export default function NewAssessmentPage() {
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <div>
-                              <span className="text-[10px] font-mono text-zinc-500 block mb-0.5">Input</span>
+                              <span className="text-[10px] font-mono text-zinc-500 block mb-0.5">
+                                Input
+                              </span>
                               <input
                                 type="text"
                                 value={tc.input}
@@ -1117,13 +1191,16 @@ export default function NewAssessmentPage() {
                               />
                             </div>
                             <div>
-                              <span className="text-[10px] font-mono text-zinc-500 block mb-0.5">Expected Output</span>
+                              <span className="text-[10px] font-mono text-zinc-500 block mb-0.5">
+                                Expected Output
+                              </span>
                               <input
                                 type="text"
                                 value={tc.expectedOutput}
                                 onChange={(e) => {
                                   const updated = [...qTestCases];
-                                  updated[tcIdx].expectedOutput = e.target.value;
+                                  updated[tcIdx].expectedOutput =
+                                    e.target.value;
                                   setQTestCases(updated);
                                 }}
                                 placeholder="e.g. [0, 1]"

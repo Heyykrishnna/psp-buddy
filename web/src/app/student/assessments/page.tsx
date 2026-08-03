@@ -19,6 +19,26 @@ import {
 
 const MOCK_ASSESSMENTS: AssessmentDTO[] = [
   {
+    id: "demo-asm-coding",
+    title: "Python & Algorithms Coding Playground Assessment",
+    description:
+      "Interactive Coding Playground assessment covering Two Sum, Array Reversal, and Algorithm optimization. Solve in the web IDE and pass test cases.",
+    className: "1st Sem",
+    topic: "Data Structures & Algorithms",
+    assessmentType: "PRACTICE",
+    totalMarks: 50,
+    passingMarks: 30,
+    durationMinutes: 45,
+    hasNegativeMarking: false,
+    containsCoding: true,
+    isWebOnly: true,
+    isPublished: true,
+    createdById: "teacher-1",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    _count: { questions: 2, attempts: 18 },
+  },
+  {
     id: "demo-asm-1",
     title: "Algorithm Complexity & Data Structures Quiz",
     description:
