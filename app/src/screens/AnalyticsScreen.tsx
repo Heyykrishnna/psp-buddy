@@ -116,34 +116,34 @@ export function AnalyticsScreen({ onBackToDashboard }: AnalyticsScreenProps) {
           {/* Section Header */}
           <Text style={styles.sectionHeaderTitle}>STUDENT PERFORMANCE OVERVIEW</Text>
 
-          {/* Overview Cards Grid (4 Dark Cards) */}
+          {/* Overview Cards Grid (4 Solid Color Cards) */}
           <View style={styles.statsGrid}>
-            <View style={[styles.statCard, { borderColor: '#3b82f6' }]}>
-              <Text style={[styles.statVal, { color: '#60a5fa' }]}>
+            <View style={[styles.statCard, { backgroundColor: '#2563EB', borderColor: '#3B82F6' }]}>
+              <Text style={[styles.statVal, { color: '#FFFFFF' }]}>
                 {overview?.averageScorePercentage || 0}%
               </Text>
-              <Text style={styles.statLbl}>AVERAGE SCORE</Text>
+              <Text style={[styles.statLbl, { color: 'rgba(255, 255, 255, 0.9)' }]}>AVERAGE SCORE</Text>
             </View>
 
-            <View style={[styles.statCard, { borderColor: '#10b981' }]}>
-              <Text style={[styles.statVal, { color: '#4ade80' }]}>
+            <View style={[styles.statCard, { backgroundColor: '#059669', borderColor: '#10B981' }]}>
+              <Text style={[styles.statVal, { color: '#FFFFFF' }]}>
                 {overview?.masteredTopicsCount || 0}
               </Text>
-              <Text style={styles.statLbl}>TOPICS MASTERED</Text>
+              <Text style={[styles.statLbl, { color: 'rgba(255, 255, 255, 0.9)' }]}>TOPICS MASTERED</Text>
             </View>
 
-            <View style={[styles.statCard, { borderColor: '#ef4444' }]}>
-              <Text style={[styles.statVal, { color: '#f87171' }]}>
+            <View style={[styles.statCard, { backgroundColor: '#DC2626', borderColor: '#EF4444' }]}>
+              <Text style={[styles.statVal, { color: '#FFFFFF' }]}>
                 {overview?.weakTopicsCount || 0}
               </Text>
-              <Text style={styles.statLbl}>NEEDS FOCUS</Text>
+              <Text style={[styles.statLbl, { color: 'rgba(255, 255, 255, 0.9)' }]}>NEEDS FOCUS</Text>
             </View>
 
-            <View style={[styles.statCard, { borderColor: '#f59e0b' }]}>
-              <Text style={[styles.statVal, { color: '#fbbf24' }]}>
+            <View style={[styles.statCard, { backgroundColor: '#D97706', borderColor: '#F59E0B' }]}>
+              <Text style={[styles.statVal, { color: '#FFFFFF' }]}>
                 {overview?.totalAssessmentsAttempted || 0}
               </Text>
-              <Text style={styles.statLbl}>ASSESSMENTS</Text>
+              <Text style={[styles.statLbl, { color: 'rgba(255, 255, 255, 0.9)' }]}>ASSESSMENTS</Text>
             </View>
           </View>
 
@@ -264,12 +264,12 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: (width - 32 - 10) / 2, // 2 column grid
-    backgroundColor: '#121316',
     borderWidth: 1,
-    borderRadius: 18,
-    padding: 16,
+    borderRadius: 22,
+    padding: 18,
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
+    gap: 6,
   },
   statVal: {
     fontSize: 24,

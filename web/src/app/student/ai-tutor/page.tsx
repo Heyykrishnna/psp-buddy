@@ -12,7 +12,7 @@ interface ChatSession {
   topic: string | null;
   createdAt: string;
   updatedAt: string;
-  messages: { role: string; content: string }[];
+  messages?: { role: string; content: string }[];
 }
 
 interface ChatMessage {
@@ -333,7 +333,8 @@ export default function AiTutorPage() {
         method: "POST",
         body: JSON.stringify({ topic }),
       });
-      setSessions((prev) => [session, ...prev]);
+      const safeSession = { ...session, messages: session.messages || [] };
+      setSessions((prev) => [safeSession, ...prev]);
       setActiveSessionId(session.id);
       setMessages([]);
       inputRef.current?.focus();
@@ -362,7 +363,8 @@ export default function AiTutorPage() {
           method: "POST",
           body: JSON.stringify({ topic }),
         });
-        setSessions((prev) => [session, ...prev]);
+        const safeSession = { ...session, messages: session.messages || [] };
+        setSessions((prev) => [safeSession, ...prev]);
         setActiveSessionId(session.id);
         sessionId = session.id;
       } catch {
@@ -516,7 +518,7 @@ export default function AiTutorPage() {
                       <p className="text-[12px] font-medium text-zinc-800 truncate leading-snug">
                         {session.title}
                       </p>
-                      {session.messages[0] && (
+                      {session.messages?.[0] && (
                         <p className="text-[10px] text-zinc-400 truncate mt-0.5 leading-snug">
                           {session.messages[0].content}
                         </p>
