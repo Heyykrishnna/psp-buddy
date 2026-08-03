@@ -14,7 +14,6 @@ import {
   Dimensions,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import { UserRole } from "../types";
 
 const { width } = Dimensions.get("window");
 
@@ -36,20 +35,38 @@ export function AuthScreen() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Animated underline for tab indicator
+  // Animated values for smooth transitions
   const tabAnim = useRef(new Animated.Value(0)).current;
+  const formFadeAnim = useRef(new Animated.Value(1)).current;
 
   const switchTab = (signUp: boolean) => {
-    setIsSignUp(signUp);
+    if (signUp === isSignUp) return;
+
     setError("");
     setInfoMessage("");
-    setCodeSent(false);
-    Animated.spring(tabAnim, {
-      toValue: signUp ? 1 : 0,
+
+    // Smooth fade out -> switch -> fade in transition
+    Animated.timing(formFadeAnim, {
+      toValue: 0,
+      duration: 120,
       useNativeDriver: true,
-      stiffness: 260,
-      damping: 20,
-    }).start();
+    }).start(() => {
+      setIsSignUp(signUp);
+      setCodeSent(false);
+
+      Animated.spring(tabAnim, {
+        toValue: signUp ? 1 : 0,
+        useNativeDriver: true,
+        stiffness: 280,
+        damping: 22,
+      }).start();
+
+      Animated.timing(formFadeAnim, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }).start();
+    });
   };
 
   const handleSendCode = async () => {
@@ -133,12 +150,12 @@ export function AuthScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Wordmark */}
+          {/* Wordmark Header */}
           <View style={styles.wordmarkRow}>
             <Text style={styles.wordmark}>PSP LUMORA</Text>
           </View>
 
-          {/* Large Heading */}
+          {/* Large Hero Heading */}
           <View style={styles.heroSection}>
             <Text style={styles.heroHeading}>
               {isSignUp ? "CREATE\nACCOUNT" : "SIGN IN"}
@@ -150,7 +167,7 @@ export function AuthScreen() {
             </Text>
           </View>
 
-          {/* Tab Switcher */}
+          {/* Animated Tab Switcher */}
           <View style={styles.tabContainer}>
             <Animated.View
               style={[
@@ -182,7 +199,7 @@ export function AuthScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Messages */}
+          {/* Feedback Messages */}
           {!!error && (
             <View style={styles.errorBox}>
               <Text style={styles.errorText}>⚠️ {error}</Text>
@@ -195,42 +212,62 @@ export function AuthScreen() {
             </View>
           )}
 
-          {/* Form Card */}
-          <View style={styles.formCard}>
+          {/* Form Card with Fade Animation */}
+          <Animated.View style={[styles.formCard, { opacity: formFadeAnim }]}>
             {isSignUp && (
-              <>
-                <View style={styles.fieldRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>FIRST NAME</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={firstName}
-                      onChangeText={setFirstName}
-                      placeholder="Jane"
-                      placeholderTextColor="#71717a"
-                      autoCapitalize="words"
-                    />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>LAST NAME</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={lastName}
-                      onChangeText={setLastName}
-                      placeholder="Doe"
-                      placeholderTextColor="#71717a"
-                      autoCapitalize="words"
-                    />
-                  </View>
+              <View style={styles.fieldRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>FIRST NAME</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={firstName}
+                    onChangeText={setFirstName}
+                    placeholder="Jane"
+                    placeholderTextColor="#71717a"
+                    autoCapitalize="words"
+                  />
                 </View>
-              </>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>LAST NAME</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={lastName}
+                    onChangeText={setLastName}
+                    placeholder="Doe"
+                    placeholderTextColor="#71717a"
+                    autoCapitalize="words"
+                  />
+                </View>
+              </View>
             )}
 
-            <View>
-              <Text style={styles.fieldLabel}>EMAIL</Text>
-              <View style={styles.emailRow}>
+            <View style={styles.fieldContainer}>
+              <Text style={styles.fieldLabel}>EMAIL ADDRESS</Text>
+              {isSignUp ? (
+                <View style={styles.inputRow}>
+                  <TextInput
+                    style={[styles.input, { flex: 1 }]}
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="jane@lumora.edu"
+                    placeholderTextColor="#71717a"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                  <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={handleSendCode}
+                    disabled={loading}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.actionBtnText}>
+                      {codeSent ? "RESEND" : "GET CODE"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
                 <TextInput
-                  style={[styles.input, { flex: 1 }]}
+                  style={styles.input}
                   value={email}
                   onChangeText={setEmail}
                   placeholder="jane@lumora.edu"
@@ -238,22 +275,11 @@ export function AuthScreen() {
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
-                {isSignUp && (
-                  <TouchableOpacity
-                    style={styles.codeBtn}
-                    onPress={handleSendCode}
-                    disabled={loading}
-                  >
-                    <Text style={styles.codeBtnText}>
-                      {codeSent ? "RESEND" : "GET CODE"}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+              )}
             </View>
 
             {isSignUp && codeSent && (
-              <View>
+              <View style={styles.fieldContainer}>
                 <Text style={styles.fieldLabel}>CONFIRMATION CODE</Text>
                 <TextInput
                   style={styles.input}
@@ -266,11 +292,11 @@ export function AuthScreen() {
               </View>
             )}
 
-            <View>
+            <View style={styles.fieldContainer}>
               <Text style={styles.fieldLabel}>PASSWORD</Text>
-              <View style={styles.passwordRow}>
+              <View style={styles.inputRow}>
                 <TextInput
-                  style={[styles.input, { flex: 1, marginBottom: 0 }]}
+                  style={[styles.input, { flex: 1 }]}
                   value={password}
                   onChangeText={setPassword}
                   placeholder="••••••••"
@@ -278,10 +304,11 @@ export function AuthScreen() {
                   secureTextEntry={!showPassword}
                 />
                 <TouchableOpacity
-                  style={styles.showBtn}
+                  style={styles.togglePasswordBtn}
                   onPress={() => setShowPassword(!showPassword)}
+                  activeOpacity={0.8}
                 >
-                  <Text style={styles.showBtnText}>
+                  <Text style={styles.togglePasswordText}>
                     {showPassword ? "HIDE" : "SHOW"}
                   </Text>
                 </TouchableOpacity>
@@ -302,12 +329,13 @@ export function AuthScreen() {
                 </Text>
               )}
             </TouchableOpacity>
-          </View>
+          </Animated.View>
 
-          {/* Toggle */}
+          {/* Switch Tab Hint */}
           <TouchableOpacity
             onPress={() => switchTab(!isSignUp)}
             style={styles.toggleRow}
+            activeOpacity={0.7}
           >
             <Text style={styles.toggleText}>
               {isSignUp
@@ -316,7 +344,7 @@ export function AuthScreen() {
             </Text>
           </TouchableOpacity>
 
-          {/* Quick Demo Access */}
+          {/* Quick Demo Access Bar */}
           <View style={styles.demoSection}>
             <Text style={styles.demoLabel}>QUICK ACCESS</Text>
             <View style={styles.demoRow}>
@@ -444,15 +472,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
   },
+
+  // Form Card Layout & Field Precision
   formCard: {
     backgroundColor: "#121316",
     borderRadius: 28,
     padding: 22,
     gap: 16,
   },
+  fieldContainer: {
+    width: "100%",
+  },
   fieldRow: {
     flexDirection: "row",
     gap: 12,
+    width: "100%",
   },
   fieldLabel: {
     fontSize: 10,
@@ -461,59 +495,63 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: 6,
   },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    width: "100%",
+  },
   input: {
     backgroundColor: "#1f2024",
     color: "#ffffff",
     borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 13,
+    height: 48,
     fontSize: 14,
     fontWeight: "500",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.07)",
+    width: "100%",
   },
-  emailRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  codeBtn: {
+  actionBtn: {
     backgroundColor: "#5451FF",
     borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 13,
+    paddingHorizontal: 14,
+    height: 48,
+    minWidth: 92,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  codeBtnText: {
+  actionBtnText: {
     color: "#ffffff",
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "900",
     letterSpacing: 0.5,
   },
-  passwordRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  showBtn: {
+  togglePasswordBtn: {
     backgroundColor: "#1f2024",
     borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 13,
+    paddingHorizontal: 14,
+    height: 48,
+    minWidth: 62,
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.07)",
   },
-  showBtnText: {
+  togglePasswordText: {
     color: "#71717a",
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: "900",
     letterSpacing: 0.5,
   },
   submitBtn: {
     backgroundColor: "#5451FF",
     borderRadius: 14,
-    paddingVertical: 15,
+    height: 50,
     alignItems: "center",
-    marginTop: 4,
+    justifyContent: "center",
+    marginTop: 6,
   },
   submitBtnText: {
     color: "#ffffff",
@@ -523,6 +561,7 @@ const styles = StyleSheet.create({
   },
   toggleRow: {
     alignItems: "center",
+    paddingVertical: 4,
   },
   toggleText: {
     color: "#4A5248",
