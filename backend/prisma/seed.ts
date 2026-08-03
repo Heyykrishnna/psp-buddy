@@ -263,7 +263,91 @@ async function main() {
     },
   });
 
-  console.log(' Successfully seeded database with real assessments and questions!');
+  // Seed Standalone Problems
+  const dbProblem = (prisma as any).problem;
+  if (dbProblem) {
+    await dbProblem.upsert({
+      where: { slug: 'two-sum' },
+      update: {},
+      create: {
+        slug: 'two-sum',
+        title: 'Two Sum',
+        description: 'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.',
+        difficulty: DifficultyLevel.EASY,
+        functionName: 'two_sum',
+        starterCodePython: 'def two_sum(nums, target):\n    # Write your solution here\n    pass',
+        timeLimitMs: 2000,
+        memoryLimitMb: 128,
+        points: 10,
+      },
+    });
+
+    await dbProblem.upsert({
+      where: { slug: 'reverse-string' },
+      update: {},
+      create: {
+        slug: 'reverse-string',
+        title: 'Reverse String',
+        description: 'Write a function that reverses a string. The input string is given as an array of characters.',
+        difficulty: DifficultyLevel.EASY,
+        functionName: 'reverse_string',
+        starterCodePython: 'def reverse_string(s):\n    # Write your solution here\n    return s[::-1]',
+        timeLimitMs: 2000,
+        memoryLimitMb: 128,
+        points: 10,
+      },
+    });
+
+    await dbProblem.upsert({
+      where: { slug: 'valid-palindrome' },
+      update: {},
+      create: {
+        slug: 'valid-palindrome',
+        title: 'Valid Palindrome',
+        description: 'A phrase is a palindrome if, after converting all uppercase letters into lowercase letters and removing all non-alphanumeric characters, it reads the same forward and backward.',
+        difficulty: DifficultyLevel.EASY,
+        functionName: 'is_palindrome',
+        starterCodePython: 'def is_palindrome(s: str) -> bool:\n    # Write your solution here\n    clean = [c.lower() for c in s if c.isalnum()]\n    return clean == clean[::-1]',
+        timeLimitMs: 2000,
+        memoryLimitMb: 128,
+        points: 15,
+      },
+    });
+
+    await dbProblem.upsert({
+      where: { slug: 'fibonacci-number' },
+      update: {},
+      create: {
+        slug: 'fibonacci-number',
+        title: 'Fibonacci Number',
+        description: 'The Fibonacci numbers, commonly denoted F(n) form a sequence, called the Fibonacci sequence, such that each number is the sum of the two preceding ones, starting from 0 and 1.',
+        difficulty: DifficultyLevel.EASY,
+        functionName: 'fib',
+        starterCodePython: 'def fib(n: int) -> int:\n    # Write your solution here\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b',
+        timeLimitMs: 2000,
+        memoryLimitMb: 128,
+        points: 10,
+      },
+    });
+
+    await dbProblem.upsert({
+      where: { slug: 'binary-search' },
+      update: {},
+      create: {
+        slug: 'binary-search',
+        title: 'Binary Search',
+        description: 'Given an array of integers nums which is sorted in ascending order, and an integer target, write a function to search target in nums. If target exists, then return its index. Otherwise, return -1.',
+        difficulty: DifficultyLevel.MEDIUM,
+        functionName: 'binary_search',
+        starterCodePython: 'def binary_search(nums, target):\n    # Write your solution here\n    left, right = 0, len(nums) - 1\n    while left <= right:\n        mid = (left + right) // 2\n        if nums[mid] == target:\n            return mid\n        elif nums[mid] < target:\n            left = mid + 1\n        else:\n            right = mid - 1\n    return -1',
+        timeLimitMs: 2000,
+        memoryLimitMb: 128,
+        points: 20,
+      },
+    });
+  }
+
+  console.log(' Successfully seeded database with real assessments, problems, and questions!');
 }
 
 main()

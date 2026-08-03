@@ -189,10 +189,31 @@ model Assessment {
   @@map("assessments")
 }
 
+model Problem {
+  id                String          @id @default(uuid())
+  slug              String          @unique
+  title             String
+  description       String
+  difficulty        DifficultyLevel @default(EASY)
+  functionName      String          @map("function_name")
+  starterCodePython String          @map("starter_code_python")
+  timeLimitMs       Int             @default(2000) @map("time_limit_ms")
+  memoryLimitMb     Int             @default(128) @map("memory_limit_mb")
+  points            Int             @default(10)
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  questions         Question[]
+
+  @@map("problems")
+}
+
 model Question {
   id                  String           @id @default(uuid())
   assessmentId        String
   assessment          Assessment       @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  problemId           String?
+  problem             Problem?         @relation(fields: [problemId], references: [id], onDelete: SetNull)
   questionText        String
   questionType        QuestionType     @default(SINGLE_CHOICE)
   difficulty          DifficultyLevel  @default(MEDIUM)

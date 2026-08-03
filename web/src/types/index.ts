@@ -94,6 +94,21 @@ export interface StudentProfile {
   maxStreak: number;
 }
 
+export interface ProblemDTO {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  difficulty: DifficultyLevel | string;
+  functionName: string;
+  starterCodePython: string;
+  timeLimitMs: number;
+  memoryLimitMb: number;
+  points: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TestCaseDTO {
   id?: string;
   input: string;

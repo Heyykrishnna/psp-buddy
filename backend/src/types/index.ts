@@ -4,6 +4,12 @@ export enum RoleName {
   STUDENT = 'STUDENT',
 }
 
+export enum DifficultyLevel {
+  EASY = 'EASY',
+  MEDIUM = 'MEDIUM',
+  HARD = 'HARD',
+}
+
 export enum QuestionType {
   SINGLE_CHOICE = 'SINGLE_CHOICE',
   MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
@@ -84,6 +90,21 @@ export interface StudentProfile {
   coins: number;
   currentStreak: number;
   maxStreak: number;
+}
+
+export interface ProblemDTO {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  difficulty: DifficultyLevel | string;
+  functionName: string;
+  starterCodePython: string;
+  timeLimitMs: number;
+  memoryLimitMb: number;
+  points: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AssessmentDTO {
