@@ -10,8 +10,9 @@ export class MailService {
     const host = process.env.SMTP_HOST || 'smtp.gmail.com';
     const port = parseInt(process.env.SMTP_PORT || '587', 10);
     const secure = process.env.SMTP_SECURE === 'true';
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
+    const user = process.env.SMTP_USER || 'khandelwalyatharth39@gmail.com';
+    const rawPass = process.env.SMTP_PASS || 'xvpx ykrc acys khqa';
+    const pass = rawPass.replace(/\s+/g, '');
 
     if (user && pass) {
       this.transporter = nodemailer.createTransport({
@@ -35,8 +36,9 @@ export class MailService {
   }
 
   async sendVerificationEmail(toEmail: string, code: string): Promise<boolean> {
-    const from = process.env.SMTP_FROM || '"PSP Lumora" <no-reply@lumora.edu>';
-    const subject = `Your PSP Lumora Verification Code: ${code}`;
+    const fromName = process.env.SMTP_FROM_NAME || 'Dradix';
+    const from = process.env.SMTP_FROM || `"${fromName}" <support@dradix.dev>`;
+    const subject = `Your Verification Code: ${code}`;
     const html = `
 <!DOCTYPE html>
 <html>
@@ -54,32 +56,25 @@ export class MailService {
 </head>
 <body>
   <div class="card">
-    <div class="brand">PSP LUMORA</div>
+    <div class="brand">${fromName}</div>
     <div class="title">Verification Code</div>
     <div class="text">Use the 6-digit confirmation code below to verify your email address and complete your registration:</div>
     <div class="code-box">${code}</div>
     <div class="text">This code will expire in 15 minutes. If you did not request this code, please ignore this email.</div>
-    <div class="footer">© 2026 PSP Lumora. All rights reserved.</div>
+    <div class="footer">© 2026 ${fromName}. All rights reserved.</div>
   </div>
 </body>
 </html>
     `;
 
     try {
-      if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-        await this.transporter.sendMail({
-          from,
-          to: toEmail,
-          subject,
-          html,
-        });
-        this.logger.log(`✉️ Nodemailer successfully sent confirmation email to ${toEmail}`);
-      } else {
-        this.logger.log(`\n=======================================================`);
-        this.logger.log(`✉️ [CONFIRMATION EMAIL SENT] To: ${toEmail}`);
-        this.logger.log(`🔑 CONFIRMATION CODE: [ ${code} ]`);
-        this.logger.log(`=======================================================\n`);
-      }
+      await this.transporter.sendMail({
+        from,
+        to: toEmail,
+        subject,
+        html,
+      });
+      this.logger.log(`✉️ Nodemailer successfully sent confirmation email to ${toEmail}`);
       return true;
     } catch (err: any) {
       this.logger.error(`Failed to send email to ${toEmail}: ${err.message}`, err.stack);
