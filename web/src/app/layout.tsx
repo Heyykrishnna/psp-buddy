@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Geist, Geist_Mono, Newsreader } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 
@@ -13,8 +13,14 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+const newsreader = Newsreader({
+  variable: '--font-serif',
+  subsets: ['latin'],
+  style: ['normal', 'italic'],
+});
+
 export const metadata: Metadata = {
-  title: 'PSP LUMORA - Synchronized Platform',
+  title: 'PSP LUMORA - Minimal Synchronized Platform',
   description: 'Synchronized Learning & Assessment Platform',
 };
 
@@ -26,9 +32,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-100">
+      <body className="min-h-full flex flex-col bg-white text-zinc-900 font-sans selection:bg-zinc-900 selection:text-white">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

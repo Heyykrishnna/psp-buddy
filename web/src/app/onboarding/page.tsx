@@ -39,34 +39,33 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#B8C6B6] text-[#121316] font-sans p-4 sm:p-8 flex flex-col justify-center items-center">
-      <div className="w-full max-w-xl bg-[#5451FF] text-white rounded-[36px] p-6 sm:p-10 shadow-2xl border border-white/10 relative overflow-hidden">
+    <div className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans p-6 sm:p-12 flex flex-col items-center justify-center">
+      <div className="w-full max-w-lg bg-white border border-zinc-200 rounded-xl p-8 sm:p-10 shadow-sm">
         
         {/* Header */}
-        <div className="text-center mb-8 pb-6 border-b border-white/15">
-          <span className="inline-block px-4 py-1 bg-white/20 text-white rounded-full text-xs font-mono font-bold uppercase tracking-widest mb-3">
-            STEP 2 OF 2: PROFILE ONBOARDING
+        <div className="mb-8 text-center border-b border-zinc-100 pb-6">
+          <span className="text-xs font-mono font-medium text-zinc-400 uppercase tracking-widest block mb-2">
+            STEP 2 OF 2: PROFILE SETUP
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight">COMPLETE YOUR PROFILE</h1>
-          <p className="text-sm text-white/80 mt-1 font-medium">
-            Welcome to PSP LUMORA, <span className="font-bold text-amber-300">{user?.firstName} {user?.lastName}</span>!
+          <h1 className="font-serif text-3xl font-normal text-[#111111]">Complete Profile</h1>
+          <p className="text-xs text-zinc-500 mt-1 font-sans">
+            Welcome, <span className="font-semibold text-[#111111]">{user?.firstName} {user?.lastName}</span>. Set up your profile.
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-2xl bg-[#FF5745] text-white text-xs font-bold text-center shadow-lg">
-            ⚠️ {error}
+          <div className="mb-6 p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-md text-center">
+            {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* User Info Pill */}
-          <div className="p-4 bg-[#3E3BE0] border border-white/20 rounded-2xl flex items-center justify-between">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="p-4 bg-[#F4F4F6] rounded-lg flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-white/70">ASSIGNED ROLE</p>
-              <p className="text-base font-black text-amber-300 uppercase">{user?.role || 'STUDENT'}</p>
+              <p className="text-[10px] font-mono text-zinc-400 uppercase">Assigned Role</p>
+              <p className="text-sm font-semibold text-[#111111]">{String(user?.role || 'STUDENT')}</p>
             </div>
-            <div className="text-xs font-mono text-white/90 text-right bg-white/10 px-3 py-1.5 rounded-full border border-white/10">
+            <div className="text-xs text-zinc-500 font-mono">
               {user?.email}
             </div>
           </div>
@@ -74,75 +73,75 @@ export default function OnboardingPage() {
           {!isTeacher && !isAdmin ? (
             <>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-white/90 mb-1.5">
-                  STUDENT REGISTRATION NUMBER
+                <label className="block text-xs font-medium text-zinc-600 mb-1.5">
+                  Student Registration Number
                 </label>
                 <input
                   type="text"
                   value={studentRegistrationNo}
                   onChange={(e) => setStudentRegistrationNo(e.target.value)}
                   placeholder="e.g. STU-2026-8941"
-                  className="w-full px-4 py-3.5 bg-[#3E3BE0] border border-white/20 rounded-2xl text-white placeholder-white/50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white"
+                  className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#111111] transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-white/90 mb-1.5">
-                  GRADE / LEVEL
+                <label className="block text-xs font-medium text-zinc-600 mb-1.5">
+                  Grade / Level
                 </label>
                 <select
                   value={gradeLevel}
                   onChange={(e) => setGradeLevel(e.target.value)}
-                  className="w-full px-4 py-3.5 bg-[#3E3BE0] border border-white/20 rounded-2xl text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white"
+                  className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#111111] transition-all"
                 >
-                  <option value="Grade 9" className="bg-[#121316]">Grade 9</option>
-                  <option value="Grade 10" className="bg-[#121316]">Grade 10</option>
-                  <option value="Grade 11" className="bg-[#121316]">Grade 11</option>
-                  <option value="Grade 12" className="bg-[#121316]">Grade 12</option>
-                  <option value="Undergraduate" className="bg-[#121316]">Undergraduate</option>
+                  <option value="Grade 9">Grade 9</option>
+                  <option value="Grade 10">Grade 10</option>
+                  <option value="Grade 11">Grade 11</option>
+                  <option value="Grade 12">Grade 12</option>
+                  <option value="Undergraduate">Undergraduate</option>
                 </select>
               </div>
             </>
           ) : (
             <>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-white/90 mb-1.5">
-                  EMPLOYEE / STAFF ID
+                <label className="block text-xs font-medium text-zinc-600 mb-1.5">
+                  Employee / Staff ID
                 </label>
                 <input
                   type="text"
                   value={employeeId}
                   onChange={(e) => setEmployeeId(e.target.value)}
                   placeholder="e.g. EMP-1042"
-                  className="w-full px-4 py-3.5 bg-[#3E3BE0] border border-white/20 rounded-2xl text-white placeholder-white/50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white"
+                  className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#111111] transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-white/90 mb-1.5">
-                  DEPARTMENT
+                <label className="block text-xs font-medium text-zinc-600 mb-1.5">
+                  Department
                 </label>
                 <input
                   type="text"
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  placeholder="e.g. Computer Science & Engineering"
-                  className="w-full px-4 py-3.5 bg-[#3E3BE0] border border-white/20 rounded-2xl text-white placeholder-white/50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white"
+                  placeholder="e.g. Computer Science"
+                  className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#111111] transition-all"
                 />
               </div>
             </>
           )}
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-white/90 mb-1.5">
-              AVATAR IMAGE URL (OPTIONAL)
+            <label className="block text-xs font-medium text-zinc-600 mb-1.5">
+              Avatar Image URL (Optional)
             </label>
             <input
               type="url"
               value={avatarUrl}
               onChange={(e) => setAvatarUrl(e.target.value)}
               placeholder="https://example.com/avatar.jpg"
-              className="w-full px-4 py-3.5 bg-[#3E3BE0] border border-white/20 rounded-2xl text-white placeholder-white/50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white"
+              className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#111111] transition-all"
             />
           </div>
 
@@ -150,12 +149,9 @@ export default function OnboardingPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 px-6 bg-[#121316] hover:bg-black text-white font-black text-sm uppercase tracking-wider rounded-full transition-all flex items-center justify-between shadow-2xl disabled:opacity-50 group cursor-pointer"
+              className="w-full py-3.5 px-6 bg-[#111111] hover:bg-black text-white text-sm font-medium rounded-md transition-all disabled:opacity-50 cursor-pointer shadow-sm"
             >
-              <span>{loading ? 'SAVING PROFILE...' : 'ENTER SYNCHRONIZED DASHBOARD'}</span>
-              <span className="w-8 h-8 rounded-full bg-[#FF5745] text-white flex items-center justify-center group-hover:translate-x-1 transition-transform text-xs">
-                ↗
-              </span>
+              {loading ? 'Saving...' : 'Enter Synchronized Dashboard'}
             </button>
           </div>
         </form>

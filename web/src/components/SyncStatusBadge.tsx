@@ -17,35 +17,14 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ isConnected, l
   }, [lastSyncedAt]);
 
   return (
-    <div
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '6px 12px',
-        borderRadius: '9999px',
-        fontSize: '12px',
-        fontWeight: 600,
-        backgroundColor: isConnected ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-        color: isConnected ? '#16a34a' : '#dc2626',
-        border: `1px solid ${isConnected ? '#bbf7d0' : '#fecaca'}`,
-      }}
-    >
+    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-zinc-200 bg-[#F4F4F6] text-xs font-medium text-zinc-800">
       <span
-        style={{
-          width: '8px',
-          height: '8px',
-          borderRadius: '50%',
-          backgroundColor: isConnected ? '#22c55e' : '#ef4444',
-          boxShadow: isConnected ? '0 0 8px #22c55e' : 'none',
-        }}
+        className={`w-2 h-2 rounded-full ${
+          isConnected ? 'bg-emerald-500' : 'bg-red-500'
+        }`}
       />
-      {isConnected ? 'Synced with App & Web' : 'Sync Disconnected'}
-      {timeLabel && (
-        <span style={{ opacity: 0.75, fontSize: '11px' }}>
-          • {timeLabel}
-        </span>
-      )}
+      <span>{isConnected ? 'Synced with App & Web' : 'Sync Offline'}</span>
+      {timeLabel && <span className="text-zinc-400 font-mono text-[11px]">• {timeLabel}</span>}
     </div>
   );
 };
