@@ -15,10 +15,11 @@ import { AuthScreen } from './src/screens/AuthScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { AssessmentScreen } from './src/screens/AssessmentScreen';
+import { LeaderboardScreen } from './src/screens/LeaderboardScreen';
 
 function MainNavigator() {
   const { user, loading } = useAuth();
-  const [currentScreen, setCurrentScreen] = useState<'DASHBOARD' | 'ASSESSMENTS'>('DASHBOARD');
+  const [currentScreen, setCurrentScreen] = useState<'DASHBOARD' | 'ASSESSMENTS' | 'LEADERBOARD'>('DASHBOARD');
   const [selectedAsmId, setSelectedAsmId] = useState<string | null>(null);
 
   if (loading) {
@@ -47,11 +48,22 @@ function MainNavigator() {
     );
   }
 
+  if (currentScreen === 'LEADERBOARD') {
+    return (
+      <LeaderboardScreen
+        onBackToDashboard={() => setCurrentScreen('DASHBOARD')}
+      />
+    );
+  }
+
   return (
     <DashboardScreen
       onOpenAssessments={(asmId) => {
         setSelectedAsmId(asmId || null);
         setCurrentScreen('ASSESSMENTS');
+      }}
+      onOpenLeaderboard={() => {
+        setCurrentScreen('LEADERBOARD');
       }}
     />
   );

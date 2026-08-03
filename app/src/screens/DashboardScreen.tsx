@@ -200,9 +200,10 @@ const chartStyles = StyleSheet.create({
 
 export interface DashboardScreenProps {
   onOpenAssessments?: (asmId?: string) => void;
+  onOpenLeaderboard?: () => void;
 }
 
-export function DashboardScreen({ onOpenAssessments }: DashboardScreenProps) {
+export function DashboardScreen({ onOpenAssessments, onOpenLeaderboard }: DashboardScreenProps) {
   const { user, logout, apiClient } = useAuth();
   const [xp, setXp] = useState(1250);
   const [streak] = useState(5);
@@ -442,12 +443,18 @@ export function DashboardScreen({ onOpenAssessments }: DashboardScreenProps) {
         </View>
 
         {/* LEADERBOARD (Dark Card) */}
-        <View style={styles.leaderCard}>
+        <TouchableOpacity
+          style={styles.leaderCard}
+          onPress={() => onOpenLeaderboard?.()}
+          activeOpacity={0.85}
+        >
           <View style={styles.cardTopRow}>
             <Text style={[styles.cardSectionLabel, { color: "#a1a1aa" }]}>
               LEADERBOARD
             </Text>
-            <Text style={styles.leaderSubLabel}>ALL TIME</Text>
+            <Text style={[styles.leaderSubLabel, { color: "#5451FF" }]}>
+              VIEW FULL RANKINGS →
+            </Text>
           </View>
 
           <View style={styles.leaderList}>
@@ -483,7 +490,7 @@ export function DashboardScreen({ onOpenAssessments }: DashboardScreenProps) {
               </View>
             ))}
           </View>
-        </View>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

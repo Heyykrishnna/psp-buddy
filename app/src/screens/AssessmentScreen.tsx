@@ -404,22 +404,52 @@ export function AssessmentScreen({
                   </Text>
 
                   <View style={styles.asmMetaRow}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
                       <Ionicons name="time-outline" size={13} color="#71717a" />
                       <Text style={styles.asmMetaItem}>
                         {asm.durationMinutes || 15} mins
                       </Text>
                     </View>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                      <Ionicons name="trophy-outline" size={13} color="#71717a" />
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <Ionicons
+                        name="trophy-outline"
+                        size={13}
+                        color="#71717a"
+                      />
                       <Text style={styles.asmMetaItem}>
                         {asm.totalMarks || 10} Marks
                       </Text>
                     </View>
                     {asm.hasNegativeMarking && (
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                        <Ionicons name="warning-outline" size={13} color="#f59e0b" />
-                        <Text style={[styles.asmMetaItem, { color: "#f59e0b" }]}>Negative Marks</Text>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
+                        <Ionicons
+                          name="warning-outline"
+                          size={13}
+                          color="#f59e0b"
+                        />
+                        <Text
+                          style={[styles.asmMetaItem, { color: "#f59e0b" }]}
+                        >
+                          Negative Marks
+                        </Text>
                       </View>
                     )}
                   </View>
@@ -430,7 +460,12 @@ export function AssessmentScreen({
                     activeOpacity={0.85}
                   >
                     <Text style={styles.startBtnText}>START ASSESSMENT</Text>
-                    <Feather name="arrow-up-right" size={16} color="#ffffff" style={{ marginLeft: 6 }} />
+                    <Feather
+                      name="arrow-up-right"
+                      size={16}
+                      color="#ffffff"
+                      style={{ marginLeft: 6 }}
+                    />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -454,7 +489,12 @@ export function AssessmentScreen({
                 timeLeftSeconds < 180 && styles.timerWarning,
               ]}
             >
-              <Ionicons name="timer-outline" size={14} color="#ffffff" style={{ marginRight: 4 }} />
+              <Ionicons
+                name="timer-outline"
+                size={14}
+                color="#ffffff"
+                style={{ marginRight: 4 }}
+              />
               <Text style={styles.timerText}>
                 {formatTime(timeLeftSeconds)}
               </Text>
@@ -534,7 +574,12 @@ export function AssessmentScreen({
               disabled={currentIdx === 0}
               onPress={() => setCurrentIdx((p) => p - 1)}
             >
-              <Feather name="arrow-left" size={14} color="#ffffff" style={{ marginRight: 4 }} />
+              <Feather
+                name="arrow-left"
+                size={14}
+                color="#ffffff"
+                style={{ marginRight: 4 }}
+              />
               <Text style={styles.navStepText}>PREVIOUS</Text>
             </TouchableOpacity>
 
@@ -544,7 +589,12 @@ export function AssessmentScreen({
                 onPress={() => setCurrentIdx((p) => p + 1)}
               >
                 <Text style={styles.navStepTextPrimary}>NEXT</Text>
-                <Feather name="arrow-right" size={14} color="#ffffff" style={{ marginLeft: 4 }} />
+                <Feather
+                  name="arrow-right"
+                  size={14}
+                  color="#ffffff"
+                  style={{ marginLeft: 4 }}
+                />
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
@@ -555,9 +605,19 @@ export function AssessmentScreen({
                 {submitting ? (
                   <ActivityIndicator color="#ffffff" />
                 ) : (
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
                     <Text style={styles.submitTestText}>SUBMIT TEST</Text>
-                    <Ionicons name="checkmark-circle" size={16} color="#121316" />
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={16}
+                      color="#121316"
+                    />
                   </View>
                 )}
               </TouchableOpacity>
