@@ -323,6 +323,22 @@ export class AssessmentService {
 
     if (!attempt) throw new NotFoundException('Attempt not found');
 
+    // If attempt was ALREADY evaluated/submitted, return existing result directly (prevents re-submission & double XP)
+    if (attempt.status === 'EVALUATED' || attempt.status === 'SUBMITTED') {
+      let topicAnalysisReport = [];
+      try {
+        topicAnalysisReport = attempt.topicAnalysis ? JSON.parse(attempt.topicAnalysis) : [];
+      } catch {}
+      return {
+        success: true,
+        attemptId: attempt.id,
+        totalScore: attempt.totalScore || 0,
+        maxScore: attempt.maxScore || attempt.assessment.totalMarks,
+        earnedXp: 0,
+        topicAnalysis: topicAnalysisReport,
+      };
+    }
+
     const questions = attempt.assessment.questions;
     const studentAnswers = attempt.answers;
     const hasNegative = attempt.assessment.hasNegativeMarking;
@@ -500,6 +516,14 @@ export class AssessmentService {
         },
       });
     }
+
+    // Broadcast real-time sync event to web & mobile clients
+    this.syncGateway.broadcastSyncEvent(SyncEventType.ASSESSMENT_SUBMITTED, attempt.studentId, {
+      attemptId: evaluatedAttempt.id,
+      assessmentId: attempt.assessmentId,
+      score: finalScore,
+      maxScore,
+    });
 
     return {
       success: true,

@@ -125,12 +125,27 @@ export function AssessmentScreen({
       } else {
         setQuestions([]);
       }
-      const attempt = await apiClient.startAttempt(
+      const attempt: any = await apiClient.startAttempt(
         asm.id,
         user?.id || "student",
       );
+      if (attempt && (attempt.status === "SUBMITTED" || attempt.status === "EVALUATED")) {
+        setResultScore(attempt.totalScore || 0);
+        setMaxScore(attempt.maxScore || asm.totalMarks || 100);
+        setAccuracy(
+          attempt.maxScore > 0 ? Math.round(((attempt.totalScore || 0) / attempt.maxScore) * 100) : 0
+        );
+        setMode("RESULT");
+        setLoading(false);
+        return;
+      }
       setAttemptId(attempt.id);
-    } catch {
+    } catch (err: any) {
+      if (err?.message && err.message.includes("already completed")) {
+        setMode("RESULT");
+        setLoading(false);
+        return;
+      }
       setQuestions([]);
       setAttemptId(`attempt-${Date.now()}`);
     } finally {
@@ -322,36 +337,26 @@ export function AssessmentScreen({
   };
 
   const handleSubmitTest = async () => {
+    if (submitting) return;
     setSubmitting(true);
-    let calculatedScore = 0;
-    let totalPossible = 0;
-
-    questions.forEach((q) => {
-      totalPossible += q.points || 1;
-      const userSelectedOptId = selectedAnswers[q.id];
-      const correctOpt = q.options?.find((o) => o.isCorrect);
-      if (
-        userSelectedOptId &&
-        correctOpt &&
-        userSelectedOptId === correctOpt.id
-      ) {
-        calculatedScore += q.points || 1;
-      }
-    });
 
     if (attemptId) {
       try {
-        await apiClient.submitAttempt(attemptId);
-      } catch {}
+        const res = await apiClient.submitAttempt(attemptId);
+        if (res && res.totalScore !== undefined) {
+          setResultScore(res.totalScore || 0);
+          setMaxScore(res.maxScore || selectedAsm?.totalMarks || 100);
+          setAccuracy(
+            res.maxScore > 0
+              ? Math.round(((res.totalScore || 0) / res.maxScore) * 100)
+              : 0
+          );
+        }
+      } catch (err) {
+        console.log("Submission error:", err);
+      }
     }
 
-    setResultScore(calculatedScore);
-    setMaxScore(totalPossible);
-    setAccuracy(
-      totalPossible > 0
-        ? Math.round((calculatedScore / totalPossible) * 100)
-        : 0,
-    );
     setSubmitting(false);
     setMode("RESULT");
   };

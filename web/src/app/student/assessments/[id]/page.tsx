@@ -350,6 +350,7 @@ export default function StudentAssessmentRunnerPage({
 
   // Final Submit Attempt
   const handleFinalSubmit = async () => {
+    if (submitting) return;
     setSubmitting(true);
     try {
       if (attemptId && !attemptId.startsWith("attempt-")) {
