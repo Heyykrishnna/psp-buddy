@@ -16,8 +16,23 @@ enum RoleName {
 enum QuestionType {
   SINGLE_CHOICE
   MULTIPLE_CHOICE
-  TEXT
+  TRUE_FALSE
+  SHORT_ANSWER
+  FILL_IN_BLANKS
+  MATCH_FOLLOWING
   CODING
+}
+
+enum DifficultyLevel {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  EVALUATED
 }
 
 enum AssessmentType {
@@ -113,6 +128,7 @@ model Student {
   maxStreak             Int                 @default(0)
   createdAt             DateTime            @default(now())
   answers               Answer[]
+  attempts              AssessmentAttempt[]
   workbookUploads       WorkbookUpload[]
   codingSubmissions     CodingSubmission[]
   xpTransactions        XpTransaction[]
@@ -123,51 +139,98 @@ model Student {
 }
 
 model Assessment {
-  id              String         @id @default(uuid())
-  title           String
-  description     String?
-  assessmentType  AssessmentType @default(QUIZ)
-  totalMarks      Int
-  passingMarks    Int
-  durationMinutes Int
-  startTime       DateTime?
-  endTime         DateTime?
-  isPublished     Boolean        @default(false)
-  createdById     String
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  questions       Question[]
-  answers         Answer[]
+  id                 String              @id @default(uuid())
+  title              String
+  description        String?
+  className          String?
+  topic              String?
+  assessmentType     AssessmentType      @default(QUIZ)
+  totalMarks         Int
+  passingMarks       Int
+  durationMinutes    Int
+  hasNegativeMarking Boolean             @default(false)
+  negativeMarkValue  Float               @default(0)
+  startTime          DateTime?
+  endTime            DateTime?
+  isPublished        Boolean             @default(false)
+  createdById        String
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  questions          Question[]
+  answers            Answer[]
+  attempts           AssessmentAttempt[]
 
   @@map("assessments")
 }
 
 model Question {
-  id           String       @id @default(uuid())
-  assessmentId String
-  assessment   Assessment   @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
-  questionText String
-  questionType QuestionType @default(SINGLE_CHOICE)
-  points       Int          @default(1)
-  orderIndex   Int
-  explanation  String?
-  createdAt    DateTime     @default(now())
-  options      Option[]
-  answers      Answer[]
+  id                  String           @id @default(uuid())
+  assessmentId        String
+  assessment          Assessment       @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  questionText        String
+  questionType        QuestionType     @default(SINGLE_CHOICE)
+  difficulty          DifficultyLevel  @default(MEDIUM)
+  topic               String?
+  points              Float            @default(1)
+  negativeMarks       Float            @default(0)
+  orderIndex          Int
+  explanation         String?
+  trueFalseAnswer     Boolean?
+  shortAnswerKeywords String[]
+  createdAt           DateTime         @default(now())
+  options             Option[]
+  answers             Answer[]
+  attemptAnswers      AttemptAnswer[]
 
   @@map("questions")
 }
 
 model Option {
-  id         String   @id @default(uuid())
-  questionId String
-  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  optionText String
-  isCorrect  Boolean  @default(false)
-  orderIndex Int
-  answers    Answer[]
+  id             String          @id @default(uuid())
+  questionId     String
+  question       Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  optionText     String
+  isCorrect      Boolean         @default(false)
+  orderIndex     Int
+  answers        Answer[]
+  attemptAnswers AttemptAnswer[]
 
   @@map("options")
+}
+
+model AssessmentAttempt {
+  id            String          @id @default(uuid())
+  assessmentId  String
+  assessment    Assessment      @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  studentId     String
+  student       Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  status        AttemptStatus   @default(IN_PROGRESS)
+  startedAt     DateTime        @default(now())
+  submittedAt   DateTime?
+  totalScore    Float?
+  maxScore      Float?
+  topicAnalysis String?
+  answers       AttemptAnswer[]
+
+  @@map("assessment_attempts")
+}
+
+model AttemptAnswer {
+  id               String            @id @default(uuid())
+  attemptId        String
+  attempt          AssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId       String
+  question         Question          @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOptionId String?
+  selectedOption   Option?           @relation(fields: [selectedOptionId], references: [id])
+  textAnswer       String?
+  booleanAnswer    Boolean?
+  isCorrect        Boolean?
+  marksObtained    Float             @default(0)
+  savedAt          DateTime          @updatedAt
+
+  @@unique([attemptId, questionId])
+  @@map("attempt_answers")
 }
 
 model Answer {

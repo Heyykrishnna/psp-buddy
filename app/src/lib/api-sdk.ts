@@ -89,13 +89,42 @@ export class PSPBuddyApiClient {
   }
 
   // ASSESSMENTS API
-  async getAssessments(): Promise<AssessmentDTO[]> {
-    const res = await this.http.get<AssessmentDTO[]>('/assessments');
+  async getAssessments(query?: { className?: string; isPublished?: boolean }): Promise<AssessmentDTO[]> {
+    const params = new URLSearchParams();
+    if (query?.className) params.append('className', query.className);
+    if (query?.isPublished !== undefined) params.append('isPublished', String(query.isPublished));
+
+    const res = await this.http.get<AssessmentDTO[]>(`/assessments?${params.toString()}`);
     return res.data;
   }
 
-  async submitAnswer(data: SubmitAnswerInput): Promise<{ success: boolean; marks: number }> {
-    const res = await this.http.post('/assessments/answer', data);
+  async getAssessmentById(id: string): Promise<AssessmentDTO> {
+    const res = await this.http.get<AssessmentDTO>(`/assessments/${id}`);
+    return res.data;
+  }
+
+  async startAttempt(assessmentId: string, studentId: string): Promise<{ id: string; answers?: any[] }> {
+    const res = await this.http.post<{ id: string; answers?: any[] }>(`/assessments/${assessmentId}/attempts`, {
+      studentId,
+    });
+    return res.data;
+  }
+
+  async autosaveAnswer(attemptId: string, data: { questionId: string; selectedOptionId?: string; textAnswer?: string; booleanAnswer?: boolean }) {
+    const res = await this.http.patch<{ success: boolean; savedAt: string; answerId: string }>(
+      `/attempts/${attemptId}/answers`,
+      data
+    );
+    return res.data;
+  }
+
+  async submitAttempt(attemptId: string) {
+    const res = await this.http.post(`/attempts/${attemptId}/submit`);
+    return res.data;
+  }
+
+  async getAttemptResult(attemptId: string) {
+    const res = await this.http.get(`/attempts/${attemptId}/result`);
     return res.data;
   }
 

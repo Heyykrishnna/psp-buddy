@@ -9,6 +9,10 @@ export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
 export enum QuestionType {
   SINGLE_CHOICE = 'SINGLE_CHOICE',
   MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
+  TRUE_FALSE = 'TRUE_FALSE',
+  SHORT_ANSWER = 'SHORT_ANSWER',
+  FILL_IN_BLANKS = 'FILL_IN_BLANKS',
+  MATCH_FOLLOWING = 'MATCH_FOLLOWING',
   TEXT = 'TEXT',
   CODING = 'CODING',
 }
@@ -46,6 +50,8 @@ export enum NotificationType {
   BADGE = 'BADGE',
   STREAK = 'STREAK',
 }
+
+export type DifficultyLevel = 'EASY' | 'MEDIUM' | 'HARD';
 
 export interface UserProfile {
   id: string;
@@ -90,33 +96,82 @@ export interface AssessmentDTO {
   id: string;
   title: string;
   description?: string;
+  className?: string;
+  topic?: string;
   assessmentType: AssessmentType;
   totalMarks: number;
   passingMarks: number;
   durationMinutes: number;
+  hasNegativeMarking?: boolean;
+  negativeMarkValue?: number;
   startTime?: string;
   endTime?: string;
   isPublished: boolean;
   questionCount?: number;
+  questions?: QuestionDTO[];
+  _count?: {
+    questions?: number;
+    attempts?: number;
+  };
 }
 
 export interface QuestionDTO {
   id: string;
-  assessmentId: string;
+  assessmentId?: string;
   questionText: string;
-  questionType: QuestionType;
+  questionType: QuestionType | string;
+  difficulty?: DifficultyLevel;
+  topic?: string;
   points: number;
+  negativeMarks?: number;
   orderIndex: number;
   explanation?: string;
+  trueFalseAnswer?: boolean;
+  shortAnswerKeywords?: string[];
   options?: OptionDTO[];
 }
 
 export interface OptionDTO {
   id: string;
-  questionId: string;
+  questionId?: string;
   optionText: string;
   isCorrect?: boolean;
   orderIndex: number;
+}
+
+export interface AttemptAnswerDTO {
+  questionId: string;
+  questionText?: string;
+  questionType?: string;
+  topic?: string;
+  points?: number;
+  selectedOptionId?: string;
+  textAnswer?: string;
+  booleanAnswer?: boolean;
+  isCorrect?: boolean;
+  marksObtained?: number;
+  explanation?: string;
+}
+
+export interface TopicAnalysisDTO {
+  topic: string;
+  totalPossible: number;
+  obtained: number;
+  percentage: number;
+  status: string;
+}
+
+export interface AssessmentAttemptDTO {
+  id: string;
+  assessmentId: string;
+  studentId: string;
+  status: 'IN_PROGRESS' | 'SUBMITTED' | 'EVALUATED';
+  startedAt: string;
+  submittedAt?: string;
+  totalScore?: number;
+  maxScore?: number;
+  topicAnalysis?: string;
+  answers?: AttemptAnswerDTO[];
 }
 
 export interface WorkbookUploadDTO {
