@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -6,13 +6,43 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-} from 'react-native';
-import { useAuth } from '../context/AuthContext';
+} from "react-native";
+import { useAuth } from "../context/AuthContext";
+import { AssessmentDTO } from "../types";
 
 export function DashboardScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, apiClient } = useAuth();
   const [xp, setXp] = useState(1250);
   const [streak] = useState(5);
+  const [assessments, setAssessments] = useState<AssessmentDTO[]>([
+    {
+      id: "demo-asm-1",
+      title: "Algorithm Complexity & Data Structures Quiz",
+      description:
+        "Mid-term evaluation covering Big-O analysis, sorting algorithms, and boolean logic.",
+      className: "Class 10-A",
+      topic: "Computer Science",
+      assessmentType: "QUIZ" as any,
+      totalMarks: 25,
+      passingMarks: 15,
+      durationMinutes: 30,
+      hasNegativeMarking: true,
+      negativeMarkValue: 0.25,
+      isPublished: true,
+    },
+  ]);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const list = await apiClient.getAssessments();
+        if (list && list.length > 0) {
+          setAssessments(list);
+        }
+      } catch {}
+    }
+    loadData();
+  }, [apiClient]);
 
   const simulateQuiz = () => {
     setXp((prev) => prev + 50);
@@ -29,11 +59,16 @@ export function DashboardScreen() {
             </View>
             <View>
               <Text style={styles.brandTitle}>PSP LUMORA MOBILE</Text>
-              <Text style={styles.brandUser}>{user?.firstName} {user?.lastName}</Text>
+              <Text style={styles.brandUser}>
+                {user?.firstName} {user?.lastName}
+              </Text>
             </View>
           </View>
 
-          <TouchableOpacity style={styles.signOutButton} onPress={() => logout()}>
+          <TouchableOpacity
+            style={styles.signOutButton}
+            onPress={() => logout()}
+          >
             <Text style={styles.signOutText}>SIGN OUT</Text>
           </TouchableOpacity>
         </View>
@@ -45,18 +80,54 @@ export function DashboardScreen() {
               <Text style={styles.roleTagText}>ROLE: {String(user?.role)}</Text>
             </View>
             <View style={styles.syncedTag}>
-              <Text style={styles.syncedTagText}>SYNCED</Text>
+              <Text style={styles.syncedTagText}>SYNCED WITH BACKEND</Text>
             </View>
           </View>
 
           <Text style={styles.roleTitle}>
-            {user?.role === 'STUDENT'
-              ? 'Student Learning Portal'
-              : user?.role === 'TEACHER'
-              ? 'Teacher Assessment Desk'
-              : 'Admin System Console'}
+            {user?.role === "STUDENT"
+              ? "Student Learning Portal"
+              : user?.role === "TEACHER"
+                ? "Teacher Assessment Desk"
+                : "Admin System Console"}
           </Text>
           <Text style={styles.userEmail}>{user?.email}</Text>
+        </View>
+
+        {/* ASSESSMENT ENGINE CARDS (MOBILE) */}
+        <View style={styles.assessmentSection}>
+          <Text style={styles.sectionHeader}>📋 ACTIVE ASSESSMENTS</Text>
+
+          {assessments.map((asm) => (
+            <View key={asm.id} style={styles.asmCard}>
+              <View style={styles.asmHeaderRow}>
+                <View style={styles.classChip}>
+                  <Text style={styles.classChipText}>
+                    {asm.className || "Class 10-A"}
+                  </Text>
+                </View>
+                <Text style={styles.asmDuration}>
+                  {asm.durationMinutes} mins
+                </Text>
+              </View>
+
+              <Text style={styles.asmTitle}>{asm.title}</Text>
+              <Text style={styles.asmDesc}>{asm.description}</Text>
+
+              <View style={styles.asmFooter}>
+                <Text style={styles.asmMarks}>
+                  {asm.totalMarks} Marks • Negative:{" "}
+                  {asm.hasNegativeMarking ? `-${asm.negativeMarkValue}` : "Off"}
+                </Text>
+                <TouchableOpacity
+                  style={styles.startBtn}
+                  onPress={simulateQuiz}
+                >
+                  <Text style={styles.startBtnText}>START ATTEMPT →</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
         </View>
 
         {/* Stats Card (Charcoal Black Card) */}
@@ -76,7 +147,9 @@ export function DashboardScreen() {
           </View>
 
           <TouchableOpacity style={styles.quizButton} onPress={simulateQuiz}>
-            <Text style={styles.quizButtonText}>+ SOLVE PRACTICE QUIZ (+50 XP)</Text>
+            <Text style={styles.quizButtonText}>
+              + SOLVE PRACTICE QUIZ (+50 XP)
+            </Text>
             <View style={styles.arrowCircleWhite}>
               <Text style={styles.arrowTextBlack}>↗</Text>
             </View>
@@ -88,14 +161,22 @@ export function DashboardScreen() {
           <Text style={styles.leaderboardTitle}>🏆 LIVE LEADERBOARD</Text>
 
           {[
-            { rank: 1, name: 'Alex Johnson', xp: 2450 },
-            { rank: 2, name: `${user?.firstName || 'You'} (${String(user?.role)})`, xp, isUser: true },
-            { rank: 3, name: 'Sophia Lee', xp: 980 },
-            { rank: 4, name: 'Marcus Vance', xp: 850 },
+            { rank: 1, name: "Alex Johnson", xp: 2450 },
+            {
+              rank: 2,
+              name: `${user?.firstName || "You"} (${String(user?.role)})`,
+              xp,
+              isUser: true,
+            },
+            { rank: 3, name: "Sophia Lee", xp: 980 },
+            { rank: 4, name: "Marcus Vance", xp: 850 },
           ].map((item) => (
             <View
               key={item.rank}
-              style={[styles.leaderRow, item.isUser && styles.highlightLeaderRow]}
+              style={[
+                styles.leaderRow,
+                item.isUser && styles.highlightLeaderRow,
+              ]}
             >
               <Text style={styles.rankText}>#{item.rank}</Text>
               <Text style={styles.nameText}>{item.name}</Text>
@@ -111,201 +192,273 @@ export function DashboardScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#B8C6B6',
+    backgroundColor: "#B8C6B6",
   },
   scrollContent: {
     padding: 18,
     gap: 16,
   },
   topNav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 4,
   },
   brandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
   brandBadge: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#121316',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#121316",
+    alignItems: "center",
+    justifyContent: "center",
   },
   brandBadgeText: {
-    color: '#ffffff',
-    fontWeight: '900',
+    color: "#ffffff",
+    fontWeight: "900",
     fontSize: 14,
   },
   brandTitle: {
     fontSize: 16,
-    fontWeight: '900',
-    color: '#121316',
+    fontWeight: "900",
+    color: "#121316",
   },
   brandUser: {
     fontSize: 11,
-    fontWeight: '700',
-    color: '#5451FF',
+    fontWeight: "700",
+    color: "#5451FF",
   },
   signOutButton: {
-    backgroundColor: '#121316',
+    backgroundColor: "#121316",
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
   },
   signOutText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 10,
-    fontWeight: '900',
+    fontWeight: "900",
   },
   roleCard: {
-    backgroundColor: '#5451FF',
+    backgroundColor: "#5451FF",
     borderRadius: 28,
     padding: 20,
     gap: 8,
   },
   roleHeaderRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
   },
   roleTag: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: "rgba(255,255,255,0.2)",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
   roleTagText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   syncedTag: {
-    backgroundColor: 'rgba(74, 222, 128, 0.2)',
+    backgroundColor: "rgba(74, 222, 128, 0.2)",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
   syncedTagText: {
-    color: '#4ade80',
+    color: "#4ade80",
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   roleTitle: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 18,
-    fontWeight: '900',
+    fontWeight: "900",
     marginTop: 2,
   },
   userEmail: {
-    color: 'rgba(255,255,255,0.8)',
+    color: "rgba(255,255,255,0.8)",
     fontSize: 11,
   },
+  assessmentSection: {
+    backgroundColor: "#ffffff",
+    borderRadius: 28,
+    padding: 20,
+    gap: 12,
+  },
+  sectionHeader: {
+    color: "#121316",
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  asmCard: {
+    backgroundColor: "#F4F4F6",
+    padding: 14,
+    borderRadius: 16,
+    gap: 6,
+  },
+  asmHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  classChip: {
+    backgroundColor: "#121316",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  classChipText: {
+    color: "#ffffff",
+    fontSize: 10,
+    fontWeight: "800",
+  },
+  asmDuration: {
+    color: "#71717a",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  asmTitle: {
+    color: "#121316",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  asmDesc: {
+    color: "#71717a",
+    fontSize: 11,
+  },
+  asmFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 6,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#e4e4e7",
+  },
+  asmMarks: {
+    color: "#71717a",
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  startBtn: {
+    backgroundColor: "#121316",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  startBtnText: {
+    color: "#ffffff",
+    fontSize: 10,
+    fontWeight: "900",
+  },
   statsCard: {
-    backgroundColor: '#121316',
+    backgroundColor: "#121316",
     borderRadius: 28,
     padding: 20,
     gap: 14,
   },
   statsHeader: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 13,
-    fontWeight: '900',
+    fontWeight: "900",
   },
   statsGrid: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 10,
   },
   statBox: {
     flex: 1,
-    backgroundColor: '#1f2024',
+    backgroundColor: "#1f2024",
     padding: 14,
     borderRadius: 18,
   },
   statBoxLabel: {
-    color: '#71717a',
+    color: "#71717a",
     fontSize: 9,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   xpValue: {
-    color: '#F4C463',
+    color: "#F4C463",
     fontSize: 22,
-    fontWeight: '900',
+    fontWeight: "900",
     marginTop: 4,
   },
   streakValue: {
-    color: '#FF5745',
+    color: "#FF5745",
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: "900",
     marginTop: 4,
   },
   quizButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#FF5745',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FF5745",
     paddingVertical: 14,
     paddingHorizontal: 18,
     borderRadius: 24,
   },
   quizButtonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 11,
-    fontWeight: '900',
+    fontWeight: "900",
   },
   arrowCircleWhite: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#ffffff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#ffffff",
+    alignItems: "center",
+    justifyContent: "center",
   },
   arrowTextBlack: {
-    color: '#121316',
-    fontWeight: 'bold',
+    color: "#121316",
+    fontWeight: "bold",
   },
   leaderboardCard: {
-    backgroundColor: '#121316',
+    backgroundColor: "#121316",
     borderRadius: 28,
     padding: 20,
     gap: 10,
   },
   leaderboardTitle: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 13,
-    fontWeight: '900',
+    fontWeight: "900",
     marginBottom: 4,
   },
   leaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#1f2024',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#1f2024",
     padding: 12,
     borderRadius: 14,
   },
   highlightLeaderRow: {
-    backgroundColor: '#5451FF',
+    backgroundColor: "#5451FF",
   },
   rankText: {
-    color: '#F4C463',
-    fontWeight: '900',
+    color: "#F4C463",
+    fontWeight: "900",
     fontSize: 12,
     width: 30,
   },
   nameText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
     flex: 1,
   },
   xpText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 12,
-    fontWeight: '900',
+    fontWeight: "900",
   },
 });

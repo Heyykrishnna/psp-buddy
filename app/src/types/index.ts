@@ -90,14 +90,23 @@ export interface AssessmentDTO {
   id: string;
   title: string;
   description?: string;
+  className?: string;
+  topic?: string;
   assessmentType: AssessmentType;
   totalMarks: number;
   passingMarks: number;
   durationMinutes: number;
+  hasNegativeMarking?: boolean;
+  negativeMarkValue?: number;
   startTime?: string;
   endTime?: string;
   isPublished: boolean;
   questionCount?: number;
+  questions?: QuestionDTO[];
+  _count?: {
+    questions?: number;
+    attempts?: number;
+  };
 }
 
 export interface QuestionDTO {
