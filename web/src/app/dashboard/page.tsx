@@ -26,6 +26,13 @@ export default function DashboardPage() {
   const { user, logout } = useAuth();
   const router = useRouter();
 
+  // Redirect teachers/admins to their dedicated portal
+  useEffect(() => {
+    if (user && (user.role === "TEACHER" || user.role === "ADMIN")) {
+      router.replace("/teacher/dashboard");
+    }
+  }, [user, router]);
+
   const [xp, setXp] = useState(1250);
   const [streak] = useState(5);
 

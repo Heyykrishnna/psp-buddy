@@ -198,6 +198,166 @@ export default function StudentAssessmentRunnerPage({
     );
   }
 
+  // ── TEACHER / ADMIN GUARD: read-only preview, no quiz submission ──
+  if (user?.role === "TEACHER" || user?.role === "ADMIN") {
+    const questions: QuestionDTO[] = assessment.questions || [];
+    return (
+      <div className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans px-6 pt-6 pb-24 sm:px-10 sm:pt-10 selection:bg-[#111111] selection:text-white">
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Header */}
+          <header className="flex items-center justify-between border-b border-zinc-200 pb-4">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push("/teacher/dashboard")}
+                className="p-1.5 hover:bg-zinc-100 rounded-md transition-all cursor-pointer"
+              >
+                <span className="text-xs text-zinc-600">← Back</span>
+              </button>
+              <div>
+                <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest block">
+                  {assessment.className} · Teacher Preview
+                </span>
+                <h1 className="font-serif text-xl font-normal text-[#111111]">
+                  {assessment.title}
+                </h1>
+              </div>
+            </div>
+            <span className="px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-mono font-semibold rounded-lg">
+              Teacher View — Read Only
+            </span>
+          </header>
+
+          {/* Assessment Info */}
+          <div className="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-2 py-0.5 bg-[#111111] text-white text-[10px] font-mono font-bold rounded">
+                {assessment.className}
+              </span>
+              <span className="px-2 py-0.5 bg-zinc-100 text-zinc-600 text-[10px] font-mono rounded">
+                {assessment.assessmentType}
+              </span>
+              {assessment.topic && (
+                <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-mono rounded">
+                  {assessment.topic}
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-zinc-500 leading-relaxed">
+              {assessment.description}
+            </p>
+            <div className="grid grid-cols-4 gap-4 p-4 bg-[#F4F4F6] rounded-lg text-xs font-mono">
+              <div>
+                <span className="text-zinc-400 block">TOTAL MARKS</span>
+                <span className="font-bold text-[#111111] text-base">
+                  {assessment.totalMarks}
+                </span>
+              </div>
+              <div>
+                <span className="text-zinc-400 block">PASSING MARKS</span>
+                <span className="font-bold text-[#111111] text-base">
+                  {assessment.passingMarks}
+                </span>
+              </div>
+              <div>
+                <span className="text-zinc-400 block">DURATION</span>
+                <span className="font-bold text-[#111111] text-base">
+                  {assessment.durationMinutes} min
+                </span>
+              </div>
+              <div>
+                <span className="text-zinc-400 block">QUESTIONS</span>
+                <span className="font-bold text-[#111111] text-base">
+                  {questions.length}
+                </span>
+              </div>
+            </div>
+
+            {/* View Results CTA */}
+            <button
+              onClick={() =>
+                router.push(`/teacher/assessments/${assessmentId}/results`)
+              }
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all shadow-sm cursor-pointer"
+            >
+              View Student Results →
+            </button>
+          </div>
+
+          {/* Questions Preview (read-only) */}
+          {questions.length > 0 && (
+            <div className="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm space-y-4">
+              <h3 className="font-serif text-lg font-normal text-[#111111] border-b border-zinc-100 pb-3">
+                Questions Preview ({questions.length})
+              </h3>
+              <div className="space-y-4">
+                {questions.map((q, idx) => (
+                  <div
+                    key={q.id}
+                    className="p-4 bg-[#F4F4F6] rounded-lg border border-zinc-200 space-y-2"
+                  >
+                    <div className="flex items-center justify-between text-xs font-mono">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 bg-[#111111] text-white rounded font-bold">
+                          Q{idx + 1}
+                        </span>
+                        <span className="bg-zinc-200 text-zinc-700 px-2 py-0.5 rounded">
+                          {q.questionType}
+                        </span>
+                        {q.difficulty && (
+                          <span className="bg-zinc-200 text-zinc-700 px-2 py-0.5 rounded">
+                            {q.difficulty}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-zinc-600 font-semibold">
+                        {q.points} Marks
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium text-[#111111]">
+                      {q.questionText}
+                    </p>
+                    {q.questionType === "SINGLE_CHOICE" && q.options && (
+                      <div className="pl-4 space-y-1">
+                        {q.options.map((opt, oIdx) => (
+                          <div
+                            key={oIdx}
+                            className={`text-xs flex items-center gap-2 ${opt.isCorrect ? "text-emerald-700 font-semibold" : "text-zinc-500"}`}
+                          >
+                            <span>{opt.isCorrect ? "✓" : "○"}</span>
+                            <span>{opt.optionText}</span>
+                            {opt.isCorrect && (
+                              <span className="text-[10px] font-mono bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">
+                                (Correct)
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {q.questionType === "TRUE_FALSE" && (
+                      <p className="text-xs text-emerald-700 font-semibold pl-4">
+                        Correct Answer: {q.trueFalseAnswer ? "True" : "False"}
+                      </p>
+                    )}
+                    {q.questionType === "SHORT_ANSWER" &&
+                      q.shortAnswerKeywords && (
+                        <p className="text-xs text-zinc-500 font-mono pl-4">
+                          Keywords:{" "}
+                          {Array.isArray(q.shortAnswerKeywords)
+                            ? q.shortAnswerKeywords.join(", ")
+                            : q.shortAnswerKeywords}
+                        </p>
+                      )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   const questions: QuestionDTO[] = assessment.questions || [];
   const currentQ = questions[currentQuestionIdx];
   const currentAns = currentQ ? answers[currentQ.id] || {} : {};

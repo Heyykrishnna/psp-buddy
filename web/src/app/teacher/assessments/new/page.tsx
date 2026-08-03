@@ -33,6 +33,9 @@ export default function NewAssessmentPage() {
 
   // Config State
   const [className, setClassName] = useState("1st Sem");
+  const [assessmentType, setAssessmentType] = useState<
+    "QUIZ" | "EXAM" | "PRACTICE"
+  >("QUIZ");
   const [topic, setTopic] = useState("Computer Science & Logic");
   const [title, setTitle] = useState(
     "Algorithm Complexity & Data Structures Quiz",
@@ -213,7 +216,7 @@ export default function NewAssessmentPage() {
           description,
           className,
           topic,
-          assessmentType: "QUIZ",
+          assessmentType,
           submissionMode,
           totalMarks: totalMarks || 100,
           passingMarks,
@@ -255,7 +258,7 @@ export default function NewAssessmentPage() {
         });
       }
 
-      router.push("/dashboard");
+      router.push("/teacher/dashboard");
     } catch (err: any) {
       setError(err.message || "Failed to save assessment");
     } finally {
@@ -283,10 +286,10 @@ export default function NewAssessmentPage() {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => router.push("/dashboard")}
+              onClick={() => router.push("/teacher/dashboard")}
               className="px-3.5 py-1.5 text-xs text-zinc-600 border border-zinc-200 rounded-md hover:bg-zinc-100"
             >
-              Cancel
+              ← Dashboard
             </button>
           </div>
         </div>
@@ -303,7 +306,7 @@ export default function NewAssessmentPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-zinc-600 mb-1.5">
-                  Select Class Target
+                  Select Class / Semester
                 </label>
                 <select
                   value={className}
@@ -312,6 +315,23 @@ export default function NewAssessmentPage() {
                 >
                   <option value="1st Sem">1st Sem (Computer Science)</option>
                   <option value="2nd Sem">2nd Sem (Advanced Algorithms)</option>
+                  <option value="3rd Sem">3rd Sem (Data Structures)</option>
+                  <option value="4th Sem">4th Sem (Operating Systems)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-zinc-600 mb-1.5">
+                  Assessment Type
+                </label>
+                <select
+                  value={assessmentType}
+                  onChange={(e) => setAssessmentType(e.target.value as any)}
+                  className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#111111]"
+                >
+                  <option value="QUIZ">Quiz</option>
+                  <option value="EXAM">Exam</option>
+                  <option value="PRACTICE">Practice</option>
                 </select>
               </div>
 

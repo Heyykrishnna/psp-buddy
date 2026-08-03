@@ -130,6 +130,13 @@ export default function StudentAssessmentsPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeFilter, setActiveFilter] = useState<string>("ALL");
 
+  // Redirect teachers to their own portal
+  useEffect(() => {
+    if (user && (user.role === "TEACHER" || user.role === "ADMIN")) {
+      router.replace("/teacher/dashboard");
+    }
+  }, [user, router]);
+
   useEffect(() => {
     async function loadAssessments() {
       try {

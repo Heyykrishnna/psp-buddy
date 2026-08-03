@@ -47,6 +47,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const PUBLIC_ROUTES = ["/", "/auth", "/auth/callback"];
 
+function getHomeRoute(role: string): string {
+  if (role === "TEACHER" || role === "ADMIN") return "/teacher/dashboard";
+  return "/dashboard";
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(() => {
     if (typeof window !== "undefined") {
@@ -134,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } else {
         if (pathname === "/auth" || pathname === "/onboarding") {
-          router.replace("/dashboard");
+          router.replace(getHomeRoute(user.role));
         }
       }
     }
@@ -156,7 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!res.user.isOnboarded) {
         router.push("/onboarding");
       } else {
-        router.push("/dashboard");
+        router.push(getHomeRoute(res.user.role));
       }
     } catch (err: any) {
       if (
@@ -278,7 +283,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setRefreshToken(`demo_refresh_${role}_${Date.now()}`);
       updateUserCache(demoUser);
     }
-    router.push("/dashboard");
+    router.push(getHomeRoute(demoUser.role));
   };
 
   const onboard = async (data: {
@@ -322,8 +327,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen bg-[#B8C6B6] flex flex-col items-center justify-center font-sans">
         <div className="bg-[#121316] text-white px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-3 border border-white/10">
           <div className="w-5 h-5 border-3 border-[#B8C6B6] border-t-transparent rounded-full animate-spin" />
-          <span className="font-poppins text-xs tracking-wider uppercase font-normal">
-            SYNCHRONIZING PSP LUMORA AUTH...
+          <span className="font-poppins text-xs tracking-wider font-normal">
+            Loading...
           </span>
         </div>
       </div>
