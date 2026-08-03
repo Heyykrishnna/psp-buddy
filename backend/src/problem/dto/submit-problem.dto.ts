@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, Min, Max } from 'class-validator';
 
 export class SubmitProblemDto {
   @IsString()
@@ -12,4 +12,11 @@ export class SubmitProblemDto {
   @IsString()
   @IsOptional()
   userId?: string;
+
+  // Memory limit override (capped server-side to EXECUTION_LIMITS.MAX_MEMORY_MB)
+  @IsNumber()
+  @IsOptional()
+  @Min(16)
+  @Max(256)
+  memoryLimitMb?: number;
 }
