@@ -289,15 +289,6 @@ export default function AuthPage() {
           }}
         />
 
-        <div className="relative z-10 flex items-center justify-between">
-          <span className="text-xs font-mono text-zinc-400 uppercase tracking-widest">
-            AUTHENTICATION • EMAIL CONFIRMATION
-          </span>
-          <span className="px-2.5 py-1 rounded bg-zinc-800 text-[10px] font-mono text-zinc-300">
-            v0.1.0
-          </span>
-        </div>
-
         <div className="relative z-10 max-w-md my-auto space-y-6">
           <h2 className="font-serif text-4xl lg:text-5xl font-normal leading-tight text-zinc-100">
             Secured Email & Password Access.
@@ -309,10 +300,7 @@ export default function AuthPage() {
           </p>
         </div>
 
-        <div className="relative z-10 pt-8 border-t border-zinc-800 flex items-center justify-between text-xs text-zinc-500 font-mono">
-          <span>PSP LUMORA ENGINE</span>
-          <span>NESTJS + ARGON2 + EMAIL VERIFICATION</span>
-        </div>
+        <div className="relative z-10 pt-8 border-t border-zinc-800 flex items-center justify-between text-xs text-zinc-500 font-mono"></div>
       </div>
     </div>
   );
