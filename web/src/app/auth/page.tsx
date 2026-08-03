@@ -38,9 +38,13 @@ export default function AuthPage() {
       setCodeSent(true);
       if (res.verificationCode) {
         setVerificationCode(res.verificationCode);
-        setInfoMessage(`Confirmation code sent! (Code: ${res.verificationCode})`);
+        setInfoMessage(
+          `Confirmation code sent! (Code: ${res.verificationCode})`,
+        );
       } else {
-        setInfoMessage("Confirmation code sent to your email! Please check your inbox.");
+        setInfoMessage(
+          "Confirmation code sent to your email! Please check your inbox.",
+        );
       }
     } catch (err: any) {
       setError(err.message || "Failed to send confirmation code.");
@@ -86,13 +90,15 @@ export default function AuthPage() {
           email.trim(),
           password,
           verificationCode.trim(),
-          role
+          role,
         );
       } else {
         await login(email.trim(), password);
       }
     } catch (err: any) {
-      setError(err.message || "Authentication failed. Please check your credentials.");
+      setError(
+        err.message || "Authentication failed. Please check your credentials.",
+      );
     } finally {
       setLoading(false);
     }
@@ -137,14 +143,24 @@ export default function AuthPage() {
           {error && (
             <div className="mb-6 p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-md flex items-center justify-between">
               <span>⚠️ {error}</span>
-              <button onClick={() => setError("")} className="text-red-400 hover:text-red-700 ml-2">✕</button>
+              <button
+                onClick={() => setError("")}
+                className="text-red-400 hover:text-red-700 ml-2"
+              >
+                ✕
+              </button>
             </div>
           )}
 
           {infoMessage && (
             <div className="mb-6 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-md flex items-center justify-between">
               <span>📧 {infoMessage}</span>
-              <button onClick={() => setInfoMessage("")} className="text-emerald-500 hover:text-emerald-800 ml-2">✕</button>
+              <button
+                onClick={() => setInfoMessage("")}
+                className="text-emerald-500 hover:text-emerald-800 ml-2"
+              >
+                ✕
+              </button>
             </div>
           )}
 
@@ -287,36 +303,6 @@ export default function AuthPage() {
               </button>
             </div>
           </form>
-
-          {/* Quick Demo Roles Bar */}
-          <div className="mt-8 pt-6 border-t border-zinc-100 flex items-center justify-between gap-2">
-            <span className="text-[11px] text-zinc-400 font-mono">
-              QUICK DEMO:
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => loginAsDemo("STUDENT")}
-                className="px-2.5 py-1 text-[11px] bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-medium rounded transition-colors cursor-pointer"
-              >
-                Student
-              </button>
-              <button
-                type="button"
-                onClick={() => loginAsDemo("TEACHER")}
-                className="px-2.5 py-1 text-[11px] bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-medium rounded transition-colors cursor-pointer"
-              >
-                Teacher
-              </button>
-              <button
-                type="button"
-                onClick={() => loginAsDemo("ADMIN")}
-                className="px-2.5 py-1 text-[11px] bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-medium rounded transition-colors cursor-pointer"
-              >
-                Admin
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Bottom Footer */}
@@ -357,7 +343,9 @@ export default function AuthPage() {
             Secured Email & Password Access.
           </h2>
           <p className="text-sm text-zinc-400 leading-relaxed font-sans">
-            Every user is verified via a 6-digit confirmation code before account registration, ensuring 100% database security and data integrity.
+            Every user is verified via a 6-digit confirmation code before
+            account registration, ensuring 100% database security and data
+            integrity.
           </p>
         </div>
 

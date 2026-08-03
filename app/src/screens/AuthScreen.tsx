@@ -18,7 +18,7 @@ import { useAuth } from "../context/AuthContext";
 const { width } = Dimensions.get("window");
 
 export function AuthScreen() {
-  const { login, sendVerificationCode, register, loginAsDemo } = useAuth();
+  const { login, sendVerificationCode, register } = useAuth();
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
@@ -223,7 +223,7 @@ export function AuthScreen() {
                     value={firstName}
                     onChangeText={setFirstName}
                     placeholder="Jane"
-                    placeholderTextColor="#71717a"
+                    placeholderTextColor="rgba(255, 255, 255, 0.3)"
                     autoCapitalize="words"
                   />
                 </View>
@@ -234,7 +234,7 @@ export function AuthScreen() {
                     value={lastName}
                     onChangeText={setLastName}
                     placeholder="Doe"
-                    placeholderTextColor="#71717a"
+                    placeholderTextColor="rgba(255, 255, 255, 0.3)"
                     autoCapitalize="words"
                   />
                 </View>
@@ -250,7 +250,7 @@ export function AuthScreen() {
                     value={email}
                     onChangeText={setEmail}
                     placeholder="jane@lumora.edu"
-                    placeholderTextColor="#71717a"
+                    placeholderTextColor="rgba(255, 255, 255, 0.3)"
                     keyboardType="email-address"
                     autoCapitalize="none"
                   />
@@ -271,7 +271,7 @@ export function AuthScreen() {
                   value={email}
                   onChangeText={setEmail}
                   placeholder="jane@lumora.edu"
-                  placeholderTextColor="#71717a"
+                  placeholderTextColor="rgba(255, 255, 255, 0.3)"
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
@@ -286,7 +286,7 @@ export function AuthScreen() {
                   value={verificationCode}
                   onChangeText={setVerificationCode}
                   placeholder="Enter 6-digit code"
-                  placeholderTextColor="#71717a"
+                  placeholderTextColor="rgba(255, 255, 255, 0.3)"
                   keyboardType="number-pad"
                 />
               </View>
@@ -300,7 +300,7 @@ export function AuthScreen() {
                   value={password}
                   onChangeText={setPassword}
                   placeholder="••••••••"
-                  placeholderTextColor="#71717a"
+                  placeholderTextColor="rgba(255, 255, 255, 0.3)"
                   secureTextEntry={!showPassword}
                 />
                 <TouchableOpacity
@@ -343,34 +343,6 @@ export function AuthScreen() {
                 : "New here? Create an account"}
             </Text>
           </TouchableOpacity>
-
-          {/* Quick Demo Access Bar */}
-          <View style={styles.demoSection}>
-            <Text style={styles.demoLabel}>QUICK ACCESS</Text>
-            <View style={styles.demoRow}>
-              <TouchableOpacity
-                style={[styles.demoChip, { backgroundColor: "#5451FF" }]}
-                onPress={() => loginAsDemo("STUDENT")}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.demoChipText}>STUDENT</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.demoChip, { backgroundColor: "#FF5745" }]}
-                onPress={() => loginAsDemo("TEACHER")}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.demoChipText}>TEACHER</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.demoChip, { backgroundColor: "#121316" }]}
-                onPress={() => loginAsDemo("ADMIN")}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.demoChipText}>ADMIN</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -397,7 +369,8 @@ const styles = StyleSheet.create({
   wordmark: {
     fontSize: 17,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     color: "#121316",
     letterSpacing: 1,
   },
@@ -408,7 +381,8 @@ const styles = StyleSheet.create({
   heroHeading: {
     fontSize: 52,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     color: "#121316",
     lineHeight: 54,
     letterSpacing: -1,
@@ -416,7 +390,8 @@ const styles = StyleSheet.create({
   heroSub: {
     fontSize: 13,
     color: "#4A5248",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_500Medium',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_500Medium",
     lineHeight: 19,
     fontWeight: "500",
     maxWidth: 280,
@@ -447,7 +422,8 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 11,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     color: "#4A5248",
     letterSpacing: 0.5,
   },
@@ -464,7 +440,8 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 12,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
   infoBox: {
     backgroundColor: "#121316",
@@ -476,7 +453,8 @@ const styles = StyleSheet.create({
     color: "#4ade80",
     fontSize: 12,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
   formCard: {
     backgroundColor: "#121316",
@@ -495,7 +473,8 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 10,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     color: "#71717a",
     letterSpacing: 1,
     marginBottom: 6,
@@ -514,7 +493,8 @@ const styles = StyleSheet.create({
     height: 48,
     fontSize: 14,
     fontWeight: "500",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_500Medium',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_500Medium",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.07)",
     width: "100%",
@@ -532,7 +512,8 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 11,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     letterSpacing: 0.5,
   },
   togglePasswordBtn: {
@@ -550,7 +531,8 @@ const styles = StyleSheet.create({
     color: "#71717a",
     fontSize: 10,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     letterSpacing: 0.5,
   },
   submitBtn: {
@@ -565,7 +547,8 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 13,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     letterSpacing: 1,
   },
   toggleRow: {
@@ -576,35 +559,8 @@ const styles = StyleSheet.create({
     color: "#4A5248",
     fontSize: 12,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     textDecorationLine: "underline",
-  },
-  demoSection: {
-    gap: 10,
-  },
-  demoLabel: {
-    fontSize: 9,
-    fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
-    color: "#4A5248",
-    letterSpacing: 1.5,
-    textAlign: "center",
-  },
-  demoRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  demoChip: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  demoChipText: {
-    color: "#ffffff",
-    fontSize: 10,
-    fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
-    letterSpacing: 0.8,
   },
 });

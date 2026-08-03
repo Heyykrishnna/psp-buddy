@@ -74,7 +74,7 @@ export function OnboardingScreen() {
                   value={studentRegistrationNo}
                   onChangeText={setStudentRegistrationNo}
                   placeholder="e.g. STU-2026-8941"
-                  placeholderTextColor="rgba(255,255,255,0.4)"
+                  placeholderTextColor="rgba(255, 255, 255, 0.3)"
                 />
               </View>
 
@@ -85,7 +85,7 @@ export function OnboardingScreen() {
                   value={gradeLevel}
                   onChangeText={setGradeLevel}
                   placeholder="1st Sem"
-                  placeholderTextColor="rgba(255,255,255,0.4)"
+                  placeholderTextColor="rgba(255, 255, 255, 0.3)"
                 />
               </View>
             </>
@@ -98,7 +98,7 @@ export function OnboardingScreen() {
                   value={employeeId}
                   onChangeText={setEmployeeId}
                   placeholder="e.g. EMP-1042"
-                  placeholderTextColor="rgba(255,255,255,0.4)"
+                  placeholderTextColor="rgba(255, 255, 255, 0.3)"
                 />
               </View>
 
@@ -109,7 +109,7 @@ export function OnboardingScreen() {
                   value={department}
                   onChangeText={setDepartment}
                   placeholder="Computer Science"
-                  placeholderTextColor="rgba(255,255,255,0.4)"
+                  placeholderTextColor="rgba(255, 255, 255, 0.3)"
                 />
               </View>
             </>
