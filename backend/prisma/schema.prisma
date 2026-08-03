@@ -67,12 +67,31 @@ enum NotificationType {
   ASSESSMENT
   BADGE
   STREAK
+  ACHIEVEMENT
+  CONTEST
+  CHALLENGE
 }
 
 enum ProblemProgressStatus {
   NOT_STARTED
   ATTEMPTED
   SOLVED
+}
+
+enum ContestStatus {
+  UPCOMING
+  LIVE
+  ENDED
+}
+
+enum AchievementCategory {
+  STREAK
+  PROBLEMS_SOLVED
+  XP
+  CONTEST
+  BADGE
+  SPEED
+  PERFECT_SCORE
 }
 
 model User {
@@ -138,6 +157,9 @@ model Student {
   coins                 Int                    @default(0)
   currentStreak         Int                    @default(0)
   maxStreak             Int                    @default(0)
+  lastActivityDate      DateTime?              @map("last_activity_date")
+  contestRating         Int                    @default(1200) @map("contest_rating")
+  contestsParticipated  Int                    @default(0) @map("contests_participated")
   createdAt             DateTime               @default(now())
   answers               Answer[]
   attempts              AssessmentAttempt[]
@@ -147,8 +169,159 @@ model Student {
   unlockedBadges        StudentBadge[]
   leaderboardEntries    LeaderboardEntry[]
   topicMasteries        StudentTopicMastery[]
+  streakLogs            StreakLog[]
+  contestParticipations ContestParticipant[]
+  userAchievements      UserAchievement[]
+  weeklyProgress        UserWeeklyProgress[]
+  dailyChallengeEntries DailyChallengeEntry[]
 
   @@map("students")
+}
+
+// ── Streak Logging ────────────────────────────────────────────────────────────
+model StreakLog {
+  id        String   @id @default(uuid())
+  studentId String   @map("student_id")
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  date      DateTime @map("date")
+  xpEarned  Int      @default(0) @map("xp_earned")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([studentId, date])
+  @@map("streak_logs")
+}
+
+// ── Daily Challenge ────────────────────────────────────────────────────────────
+model DailyChallenge {
+  id          String   @id @default(uuid())
+  problemId   String   @map("problem_id")
+  problem     Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  challengeDate DateTime @unique @map("challenge_date") @db.Date
+  bonusXp     Int      @default(50) @map("bonus_xp")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  entries     DailyChallengeEntry[]
+
+  @@map("daily_challenges")
+}
+
+model DailyChallengeEntry {
+  id               String         @id @default(uuid())
+  challengeId      String         @map("challenge_id")
+  challenge        DailyChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  studentId        String         @map("student_id")
+  student          Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  solved           Boolean        @default(false)
+  bonusXpAwarded   Boolean        @default(false) @map("bonus_xp_awarded")
+  solvedAt         DateTime?      @map("solved_at")
+  createdAt        DateTime       @default(now()) @map("created_at")
+
+  @@unique([challengeId, studentId])
+  @@map("daily_challenge_entries")
+}
+
+// ── Weekly Challenges ─────────────────────────────────────────────────────────
+model WeeklyChallenge {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  weekNumber  Int      @map("week_number")
+  year        Int
+  startDate   DateTime @map("start_date")
+  endDate     DateTime @map("end_date")
+  xpReward    Int      @default(200) @map("xp_reward")
+  goalType    String   @default("PROBLEMS_SOLVED") @map("goal_type") // PROBLEMS_SOLVED | XP_EARNED | STREAK_DAYS
+  goalTarget  Int      @default(5) @map("goal_target")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  userProgress UserWeeklyProgress[]
+
+  @@unique([weekNumber, year])
+  @@map("weekly_challenges")
+}
+
+model UserWeeklyProgress {
+  id                String          @id @default(uuid())
+  weeklyChallengeId String          @map("weekly_challenge_id")
+  weeklyChallenge   WeeklyChallenge @relation(fields: [weeklyChallengeId], references: [id], onDelete: Cascade)
+  studentId         String          @map("student_id")
+  student           Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  progress          Int             @default(0)
+  completed         Boolean         @default(false)
+  xpAwarded         Boolean         @default(false) @map("xp_awarded")
+  completedAt       DateTime?       @map("completed_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@unique([weeklyChallengeId, studentId])
+  @@map("user_weekly_progress")
+}
+
+// ── Achievements ──────────────────────────────────────────────────────────────
+model Achievement {
+  id          String              @id @default(uuid())
+  key         String              @unique
+  title       String
+  description String
+  icon        String
+  category    AchievementCategory
+  xpReward    Int                 @default(0) @map("xp_reward")
+  threshold   Int                 @default(1)
+  createdAt   DateTime            @default(now()) @map("created_at")
+
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  studentId     String      @map("student_id")
+  student       Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  achievementId String      @map("achievement_id")
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  unlockedAt    DateTime    @default(now()) @map("unlocked_at")
+
+  @@unique([studentId, achievementId])
+  @@map("user_achievements")
+}
+
+// ── Contests ──────────────────────────────────────────────────────────────────
+model Contest {
+  id              String            @id @default(uuid())
+  title           String
+  description     String
+  slug            String            @unique
+  status          ContestStatus     @default(UPCOMING)
+  startTime       DateTime          @map("start_time")
+  endTime         DateTime          @map("end_time")
+  durationMinutes Int               @map("duration_minutes")
+  maxParticipants Int?              @map("max_participants")
+  isRated         Boolean           @default(true) @map("is_rated")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  problemIds      String[]          @map("problem_ids")
+  participants    ContestParticipant[]
+
+  @@map("contests")
+}
+
+model ContestParticipant {
+  id              String   @id @default(uuid())
+  contestId       String   @map("contest_id")
+  contest         Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  studentId       String   @map("student_id")
+  student         Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  rank            Int?
+  score           Float    @default(0)
+  solvedCount     Int      @default(0) @map("solved_count")
+  penalty         Int      @default(0) // penalty time in minutes
+  ratingChange    Int      @default(0) @map("rating_change")
+  registeredAt    DateTime @default(now()) @map("registered_at")
+  finishedAt      DateTime? @map("finished_at")
+
+  @@unique([contestId, studentId])
+  @@map("contest_participants")
 }
 
 model StudentTopicMastery {
@@ -221,6 +394,7 @@ model Problem {
   submissions       Submission[]
   userProgress      UserProblemProgress[]
   bookmarks         ProblemBookmark[]
+  dailyChallenges   DailyChallenge[]
 
   @@map("problems")
 }
@@ -556,4 +730,3 @@ model ChatMessage {
 
   @@map("chat_messages")
 }
-

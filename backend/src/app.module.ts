@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { AiModule } from './ai/ai.module';
 import { MailModule } from './mail/mail.module';
 import { ProblemModule } from './problem/problem.module';
+import { CompetitiveModule } from './competitive/competitive.module';
 import { AssessmentController } from './assessment/assessment.controller';
 import { AssessmentService } from './assessment/assessment.service';
 import { LeaderboardController } from './leaderboard/leaderboard.controller';
@@ -15,28 +16,16 @@ import { SyncGateway } from './gateway/sync.gateway';
 
 @Module({
   imports: [
-    // Named throttlers: 'default' (global), 'run', 'submit'
     ThrottlerModule.forRoot([
-      {
-        name: 'default',
-        ttl: 60_000,    // 1 minute window
-        limit: 100,     // 100 requests per minute (global default)
-      },
-      {
-        name: 'run',
-        ttl: 60_000,
-        limit: 20,      // 20 run requests per minute per IP/user
-      },
-      {
-        name: 'submit',
-        ttl: 60_000,
-        limit: 10,      // 10 submissions per minute per IP/user
-      },
+      { name: 'default', ttl: 60_000, limit: 100 },
+      { name: 'run',     ttl: 60_000, limit: 20 },
+      { name: 'submit',  ttl: 60_000, limit: 10 },
     ]),
     AuthModule,
     AiModule,
     MailModule,
     ProblemModule,
+    CompetitiveModule,
   ],
   controllers: [AssessmentController, LeaderboardController, AnalyticsController],
   providers: [
@@ -44,11 +33,7 @@ import { SyncGateway } from './gateway/sync.gateway';
     AssessmentService,
     LeaderboardService,
     AnalyticsService,
-    // Apply ThrottlerGuard globally to ALL routes
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
 export class AppModule {}

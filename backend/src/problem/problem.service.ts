@@ -6,12 +6,14 @@ import { SubmitProblemDto } from './dto/submit-problem.dto';
 import { DifficultyLevel, SubmissionStatus, ProblemProgressStatus } from '@/types';
 import { AiService } from '@/ai/ai.service';
 import { ExecutionQueueService } from '@/queue/execution-queue.service';
+import { CompetitiveService, XP_VALUES } from '@/competitive/competitive.service';
 
 @Injectable()
 export class ProblemService {
   constructor(
     private readonly aiService: AiService,
     private readonly queueService: ExecutionQueueService,
+    private readonly competitiveService: CompetitiveService,
   ) {}
 
   async createProblem(dto: CreateProblemDto) {
@@ -402,20 +404,54 @@ export class ProblemService {
       },
     });
 
-    // Reward XP to student if newly solved
+    // ── Award XP & fire competitive hooks on first solve ──────────────────────
     let xpEarned = 0;
-    if (student && isSolved && existingProgress?.status !== ProblemProgressStatus.SOLVED) {
-      xpEarned = problem.points || 10;
-      await db.student.update({
-        where: { id: student.id },
-        data: { totalXp: { increment: xpEarned } },
-      });
+    let streakBonus = 0;
+    let newAchievements: string[] = [];
+    const isFirstSolve = isSolved && existingProgress?.status !== ProblemProgressStatus.SOLVED;
+
+    if (student && isFirstSolve) {
+      // XP based on difficulty
+      const diffXp =
+        problem.difficulty === 'HARD' ? XP_VALUES.PROBLEM_SOLVED_HARD
+        : problem.difficulty === 'MEDIUM' ? XP_VALUES.PROBLEM_SOLVED_MEDIUM
+        : XP_VALUES.PROBLEM_SOLVED_EASY;
+      xpEarned = Math.max(diffXp, problem.points || 10);
+
+      // 1. Award XP via competitive service (logs transaction)
+      await this.competitiveService.awardXp(student.id, xpEarned, `Solved: ${problem.title}`);
+
+      // 2. Update streak
+      const streakResult = await this.competitiveService.updateStreak(student.id);
+      streakBonus = streakResult.xpAwarded;
+      xpEarned += streakBonus;
+
+      // 3. Check achievements (all categories triggered)
+      newAchievements = await this.competitiveService.checkAchievements(student.id);
+
+      // 4. Update weekly progress
+      await this.competitiveService.updateWeeklyProgress(student.id, 1);
+
+      // 5. Check if today's daily challenge — award bonus XP
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayChallenge = await db.dailyChallenge.findUnique({ where: { challengeDate: today } });
+      if (todayChallenge && todayChallenge.problemId === problem.id) {
+        const dailyResult = await this.competitiveService.completeDailyChallenge(student.id);
+        if (!dailyResult.alreadyDone) xpEarned += dailyResult.bonusXp;
+      }
+    } else if (student && isSolved && existingProgress?.status === ProblemProgressStatus.SOLVED) {
+      // Partial XP for repeat solves (5 XP)
+      await this.competitiveService.awardXp(student.id, 5, `Re-solved: ${problem.title}`);
+      xpEarned = 5;
     }
 
     return {
       submission,
       progress: updatedProgress,
       xpEarned,
+      streakBonus,
+      newAchievements,
       isSolved,
       judgeResult,
     };
