@@ -198,7 +198,11 @@ const chartStyles = StyleSheet.create({
   dayLabel: { fontSize: 10, color: "#71717a", fontWeight: "700" },
 });
 
-export function DashboardScreen() {
+export interface DashboardScreenProps {
+  onOpenAssessments?: (asmId?: string) => void;
+}
+
+export function DashboardScreen({ onOpenAssessments }: DashboardScreenProps) {
   const { user, logout, apiClient } = useAuth();
   const [xp, setXp] = useState(1250);
   const [streak] = useState(5);
@@ -357,19 +361,37 @@ export function DashboardScreen() {
         {/* ACTIVE ASSESSMENTS (Coral Card) */}
         <View style={styles.assessmentSection}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>ASSESSMENTS</Text>
-            <View style={styles.countPill}>
-              <Text style={styles.countPillText}>{assessments.length}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <Text style={styles.sectionTitle}>ASSESSMENTS</Text>
+              <View style={styles.countPill}>
+                <Text style={styles.countPillText}>{assessments.length}</Text>
+              </View>
             </View>
+            <TouchableOpacity
+              style={styles.viewAllPill}
+              onPress={() => onOpenAssessments?.()}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.viewAllPillText}>VIEW ALL →</Text>
+            </TouchableOpacity>
           </View>
 
           {assessments.map((asm) => (
-            <View key={asm.id} style={styles.asmCard}>
+            <TouchableOpacity
+              key={asm.id}
+              style={styles.asmCard}
+              onPress={() => onOpenAssessments?.(asm.id)}
+              activeOpacity={0.85}
+            >
               <View style={styles.asmTopRow}>
                 <View style={styles.asmClassChip}>
                   <Text style={styles.asmClassText}>{asm.className}</Text>
                 </View>
-                <TouchableOpacity style={styles.asmArrow} activeOpacity={0.85}>
+                <TouchableOpacity
+                  style={styles.asmArrow}
+                  onPress={() => onOpenAssessments?.(asm.id)}
+                  activeOpacity={0.85}
+                >
                   <Text style={styles.asmArrowText}>↗</Text>
                 </TouchableOpacity>
               </View>
@@ -402,8 +424,21 @@ export function DashboardScreen() {
                   </View>
                 )}
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
+
+          <TouchableOpacity
+            style={styles.openPortalButton}
+            onPress={() => onOpenAssessments?.()}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.openPortalButtonText}>
+              VIEW ALL ASSIGNMENTS & ASSESSMENTS
+            </Text>
+            <View style={styles.arrowCircleSmall}>
+              <Text style={styles.arrowTextSmall}>↗</Text>
+            </View>
+          </TouchableOpacity>
         </View>
 
         {/* LEADERBOARD (Dark Card) */}
@@ -688,6 +723,7 @@ const styles = StyleSheet.create({
   sectionHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     gap: 10,
   },
   sectionTitle: {
@@ -708,6 +744,49 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "600",
     fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+  },
+  viewAllPill: {
+    backgroundColor: "#121316",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+  },
+  viewAllPillText: {
+    color: "#5451FF",
+    fontSize: 10,
+    fontWeight: "700",
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    letterSpacing: 0.5,
+  },
+  openPortalButton: {
+    backgroundColor: "#121316",
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 4,
+  },
+  openPortalButtonText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "700",
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    letterSpacing: 0.5,
+  },
+  arrowCircleSmall: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "#5451FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  arrowTextSmall: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "700",
   },
   asmCard: {
     backgroundColor: "#FF5745",

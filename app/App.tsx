@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, Text, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -14,9 +14,12 @@ import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
+import { AssessmentScreen } from './src/screens/AssessmentScreen';
 
 function MainNavigator() {
   const { user, loading } = useAuth();
+  const [currentScreen, setCurrentScreen] = useState<'DASHBOARD' | 'ASSESSMENTS'>('DASHBOARD');
+  const [selectedAsmId, setSelectedAsmId] = useState<string | null>(null);
 
   if (loading) {
     return (
@@ -35,7 +38,23 @@ function MainNavigator() {
     return <OnboardingScreen />;
   }
 
-  return <DashboardScreen />;
+  if (currentScreen === 'ASSESSMENTS') {
+    return (
+      <AssessmentScreen
+        onBackToDashboard={() => setCurrentScreen('DASHBOARD')}
+        selectedAssessmentId={selectedAsmId}
+      />
+    );
+  }
+
+  return (
+    <DashboardScreen
+      onOpenAssessments={(asmId) => {
+        setSelectedAsmId(asmId || null);
+        setCurrentScreen('ASSESSMENTS');
+      }}
+    />
+  );
 }
 
 export default function App() {

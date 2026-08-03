@@ -9,6 +9,10 @@ export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
 export enum QuestionType {
   SINGLE_CHOICE = 'SINGLE_CHOICE',
   MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
+  TRUE_FALSE = 'TRUE_FALSE',
+  SHORT_ANSWER = 'SHORT_ANSWER',
+  FILL_IN_BLANKS = 'FILL_IN_BLANKS',
+  MATCH_FOLLOWING = 'MATCH_FOLLOWING',
   TEXT = 'TEXT',
   CODING = 'CODING',
 }
@@ -92,7 +96,7 @@ export interface AssessmentDTO {
   description?: string;
   className?: string;
   topic?: string;
-  assessmentType: AssessmentType;
+  assessmentType: AssessmentType | string;
   totalMarks: number;
   passingMarks: number;
   durationMinutes: number;
@@ -103,6 +107,9 @@ export interface AssessmentDTO {
   isPublished: boolean;
   questionCount?: number;
   questions?: QuestionDTO[];
+  createdById?: string;
+  createdAt?: string;
+  updatedAt?: string;
   _count?: {
     questions?: number;
     attempts?: number;
@@ -113,7 +120,8 @@ export interface QuestionDTO {
   id: string;
   assessmentId: string;
   questionText: string;
-  questionType: QuestionType;
+  questionType: QuestionType | string;
+  difficulty?: 'EASY' | 'MEDIUM' | 'HARD' | string;
   points: number;
   orderIndex: number;
   explanation?: string;

@@ -98,7 +98,7 @@ export interface AssessmentDTO {
   description?: string;
   className?: string;
   topic?: string;
-  assessmentType: AssessmentType;
+  assessmentType: AssessmentType | string;
   totalMarks: number;
   passingMarks: number;
   durationMinutes: number;
@@ -109,6 +109,9 @@ export interface AssessmentDTO {
   isPublished: boolean;
   questionCount?: number;
   questions?: QuestionDTO[];
+  createdById?: string;
+  createdAt?: string;
+  updatedAt?: string;
   _count?: {
     questions?: number;
     attempts?: number;
