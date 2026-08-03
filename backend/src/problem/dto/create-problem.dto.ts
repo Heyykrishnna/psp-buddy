@@ -1,10 +1,10 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum, IsInt } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEnum, IsInt, IsArray } from 'class-validator';
 import { DifficultyLevel } from '@/types';
 
 export class CreateProblemDto {
   @IsString()
-  @IsNotEmpty()
-  slug!: string;
+  @IsOptional()
+  slug?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -25,6 +25,18 @@ export class CreateProblemDto {
   @IsString()
   @IsNotEmpty()
   starterCodePython!: string;
+
+  @IsString()
+  @IsOptional()
+  examples?: string;
+
+  @IsString()
+  @IsOptional()
+  constraints?: string;
+
+  @IsArray()
+  @IsOptional()
+  topics?: string[];
 
   @IsInt()
   @IsOptional()

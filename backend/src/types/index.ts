@@ -107,6 +107,62 @@ export interface ProblemDTO {
   updatedAt: string;
 }
 
+export interface TestCaseDTO {
+  id?: string;
+  problemId?: string | null;
+  questionId?: string | null;
+  input: string;
+  expectedOutput: string;
+  isHidden?: boolean;
+  isPublic?: boolean;
+  weight?: number;
+  orderIndex?: number;
+  createdAt?: string;
+  explanation?: string;
+}
+
+export enum ProblemProgressStatus {
+  NOT_STARTED = 'NOT_STARTED',
+  ATTEMPTED = 'ATTEMPTED',
+  SOLVED = 'SOLVED',
+}
+
+export interface SubmissionDTO {
+  id: string;
+  userId: string;
+  problemId: string;
+  language: string;
+  sourceCode: string;
+  status: SubmissionStatus | string;
+  score: number;
+  passedTests: number;
+  totalTests: number;
+  runtimeMs?: number | null;
+  memoryKb?: number | null;
+  createdAt: string;
+}
+
+export interface UserProblemProgressDTO {
+  id: string;
+  userId: string;
+  problemId: string;
+  status: ProblemProgressStatus | string;
+  attempts: number;
+  bestScore: number;
+  firstAttemptedAt?: string | null;
+  firstSolvedAt?: string | null;
+  lastAttemptAt: string;
+  problem?: ProblemDTO;
+}
+
+export interface ProblemBookmarkDTO {
+  id: string;
+  userId: string;
+  problemId: string;
+  createdAt: string;
+  problem?: ProblemDTO;
+}
+
 export interface AssessmentDTO {
   id: string;
   title: string;

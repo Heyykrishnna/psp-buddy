@@ -266,7 +266,7 @@ async function main() {
   // Seed Standalone Problems
   const dbProblem = (prisma as any).problem;
   if (dbProblem) {
-    await dbProblem.upsert({
+    const p1 = await dbProblem.upsert({
       where: { slug: 'two-sum' },
       update: {},
       create: {
@@ -281,6 +281,19 @@ async function main() {
         points: 10,
       },
     });
+
+    const dbTc = (prisma as any).testCase;
+    if (dbTc && p1) {
+      await dbTc.deleteMany({ where: { problemId: p1.id } });
+      await dbTc.createMany({
+        data: [
+          { problemId: p1.id, input: '[2, 7, 11, 15], 9', expectedOutput: '[0, 1]', isHidden: false, weight: 1, orderIndex: 1 },
+          { problemId: p1.id, input: '[3, 2, 4], 6', expectedOutput: '[1, 2]', isHidden: false, weight: 1, orderIndex: 2 },
+          { problemId: p1.id, input: '[3, 3], 6', expectedOutput: '[0, 1]', isHidden: true, weight: 2, orderIndex: 3 },
+          { problemId: p1.id, input: '[-1, -2, -3, -4, -5], -8', expectedOutput: '[2, 4]', isHidden: true, weight: 2, orderIndex: 4 },
+        ],
+      });
+    }
 
     await dbProblem.upsert({
       where: { slug: 'reverse-string' },

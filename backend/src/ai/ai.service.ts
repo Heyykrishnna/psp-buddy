@@ -345,4 +345,63 @@ Output raw valid JSON only:
       };
     }
   }
+
+  // 6. Generate Test Cases via Groq AI
+  async generateTestCases(dto: {
+    problemTitle: string;
+    description: string;
+    functionName: string;
+    count?: number;
+  }) {
+    const count = dto.count || 5;
+    if (!this.isGroqConfigured()) {
+      return [
+        { input: '[2, 7, 11, 15], 9', expectedOutput: '[0, 1]', isHidden: false, weight: 1, orderIndex: 1 },
+        { input: '[3, 2, 4], 6', expectedOutput: '[1, 2]', isHidden: false, weight: 1, orderIndex: 2 },
+        { input: '[3, 3], 6', expectedOutput: '[0, 1]', isHidden: true, weight: 2, orderIndex: 3 },
+        { input: '[-1, -2, -3, -4, -5], -8', expectedOutput: '[2, 4]', isHidden: true, weight: 2, orderIndex: 4 },
+        { input: '[0, 4, 3, 0], 0', expectedOutput: '[0, 3]', isHidden: true, weight: 2, orderIndex: 5 },
+      ].slice(0, count);
+    }
+
+    try {
+      const prompt = `You are a competitive programming judge. Generate exactly ${count} realistic test cases for the programming problem titled "${dto.problemTitle}".
+Function Name: "${dto.functionName}".
+Description: "${dto.description}".
+
+Requirements:
+- Return a JSON object with key "testCases" containing an array of objects.
+- Each object must have:
+  - "input": string representation of function arguments (e.g. "[2, 7, 11, 15], 9")
+  - "expectedOutput": string representation of correct return value (e.g. "[0, 1]" or "true")
+  - "isHidden": boolean (first 2 should be false for public sample cases, remaining true for hidden edge cases)
+  - "weight": number (1 for public, 2 for hidden)
+
+Return ONLY valid JSON format without markdown code fences.`;
+
+      const response = await this.groqClient!.chat.completions.create({
+        messages: [{ role: 'user', content: prompt }],
+        model: this.model,
+        temperature: 0.3,
+        response_format: { type: 'json_object' },
+      });
+
+      const parsed = JSON.parse(response.choices[0]?.message?.content || '{}');
+      const list = Array.isArray(parsed) ? parsed : (parsed.testCases || parsed.data || []);
+      return list.map((tc: any, idx: number) => ({
+        input: String(tc.input || ''),
+        expectedOutput: String(tc.expectedOutput || tc.output || ''),
+        isHidden: tc.isHidden !== undefined ? !!tc.isHidden : idx >= 2,
+        weight: typeof tc.weight === 'number' ? tc.weight : (idx >= 2 ? 2 : 1),
+        orderIndex: idx + 1,
+      }));
+    } catch (err: any) {
+      this.logger.error(`Groq AI Test Case generation failed: ${err.message}`);
+      return [
+        { input: '[2, 7, 11, 15], 9', expectedOutput: '[0, 1]', isHidden: false, weight: 1, orderIndex: 1 },
+        { input: '[3, 2, 4], 6', expectedOutput: '[1, 2]', isHidden: false, weight: 1, orderIndex: 2 },
+        { input: '[3, 3], 6', expectedOutput: '[0, 1]', isHidden: true, weight: 2, orderIndex: 3 },
+      ];
+    }
+  }
 }

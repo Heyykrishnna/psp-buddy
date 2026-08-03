@@ -49,7 +49,8 @@ const MonacoPlayground = dynamic(
 
 export default function StudentPlaygroundPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, checkAuth } = useAuth();
+  const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
 
   // Selected Problem / Example
   const [selectedExampleId, setSelectedExampleId] =
@@ -187,13 +188,54 @@ export default function StudentPlaygroundPage() {
   };
 
   // Submit Code logic
-  const handleSubmitCode = () => {
+  const handleSubmitCode = async () => {
     setSubmitting(true);
     handleRunCode();
-    setTimeout(() => {
+    try {
+      if (currentExample.id) {
+        const res = await apiFetch<any>(
+          `/problems/${currentExample.id}/submit`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              sourceCode: code,
+              language: language,
+            }),
+          },
+        );
+        if (res?.xpEarned && checkAuth) {
+          try {
+            await checkAuth();
+          } catch {}
+        }
+      }
+    } catch (err) {
+      console.error("Submission error:", err);
+    } finally {
       setSubmitting(false);
       setActiveConsoleTab("tests");
-    }, 600);
+    }
+  };
+
+  // Toggle Bookmark logic
+  const handleToggleBookmark = async () => {
+    try {
+      if (currentExample.id) {
+        const res = await apiFetch<any>(
+          `/problems/${currentExample.id}/bookmark`,
+          {
+            method: "POST",
+          },
+        );
+        if (res?.isBookmarked !== undefined) {
+          setIsBookmarked(res.isBookmarked);
+        } else {
+          setIsBookmarked((prev) => !prev);
+        }
+      }
+    } catch {
+      setIsBookmarked((prev) => !prev);
+    }
   };
 
   // Send AI Tutor Message
@@ -272,15 +314,24 @@ export default function StudentPlaygroundPage() {
             </span>
             <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
             <span>
-              {user?.totalXp !== undefined ? user.totalXp.toLocaleString() : "0"}
+              {user?.totalXp !== undefined
+                ? user.totalXp.toLocaleString()
+                : "0"}
             </span>
           </div>
 
           <button
             title="Bookmark Problem"
-            className="p-1.5 text-zinc-400 hover:text-zinc-800 rounded-lg hover:bg-zinc-100 cursor-pointer"
+            onClick={handleToggleBookmark}
+            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+              isBookmarked
+                ? "text-amber-500 bg-amber-50"
+                : "text-zinc-400 hover:text-zinc-800 hover:bg-zinc-100"
+            }`}
           >
-            <Bookmark className="w-4 h-4" />
+            <Bookmark
+              className={`w-4 h-4 ${isBookmarked ? "fill-amber-500 text-amber-500" : ""}`}
+            />
           </button>
 
           <button
