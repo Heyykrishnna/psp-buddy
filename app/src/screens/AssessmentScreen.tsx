@@ -383,14 +383,14 @@ export function AssessmentScreen({
         >
           <Ionicons name="arrow-back" size={22} color="#4ade80" />
         </TouchableOpacity>
-        <Text style={styles.navTitle}>
+        <Text style={styles.navTitle} numberOfLines={1} ellipsizeMode="tail">
           {mode === "LIST"
             ? "ASSESSMENTS"
             : mode === "RUNNER"
-              ? "TEST RUNNER"
+              ? selectedAsm?.title?.toUpperCase() || "ASSESSMENT"
               : "EVALUATION SUMMARY"}
         </Text>
-        <View style={{ width: 80 }} />
+        <View style={{ width: 32 }} />
       </View>
 
       {mode === "LIST" && (
@@ -1681,7 +1681,9 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 13,
     fontWeight: "700",
-    letterSpacing: 1.5,
+    letterSpacing: 1.2,
+    flex: 1,
+    textAlign: "center",
     fontFamily:
       Platform.OS === "web"
         ? "'Space Grotesk', sans-serif"

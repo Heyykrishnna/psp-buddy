@@ -102,6 +102,17 @@ export function AnalyticsScreen({ onBackToDashboard }: AnalyticsScreenProps) {
         </View>
       ) : (
         <ScrollView style={styles.flex1} contentContainerStyle={styles.contentPadding}>
+          {/* HERO ASSESSMENT PORTAL CARD */}
+          <View style={styles.heroCard}>
+            <Text style={styles.heroSubTag}>MOBILE ASSESSMENT PORTAL</Text>
+            <Text style={styles.heroTitle}>
+              Master your topics with active quizzes & exams.
+            </Text>
+            <Text style={styles.heroDescription}>
+              Real-time score calculation, negative marking & topic insights.
+            </Text>
+          </View>
+
           {/* Section Header */}
           <Text style={styles.sectionHeaderTitle}>STUDENT PERFORMANCE OVERVIEW</Text>
 
@@ -316,5 +327,35 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '800',
     fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_800ExtraBold',
+  },
+
+  // Hero Card Styles
+  heroCard: {
+    backgroundColor: '#5451FF',
+    borderRadius: 24,
+    padding: 24,
+    marginVertical: 4,
+    gap: 8,
+  },
+  heroSubTag: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: 'rgba(255, 255, 255, 0.85)',
+    letterSpacing: 1.5,
+    fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
+  },
+  heroTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#ffffff',
+    lineHeight: 28,
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_800ExtraBold',
+  },
+  heroDescription: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.9)',
+    lineHeight: 18,
+    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_500Medium',
   },
 });
