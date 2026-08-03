@@ -286,7 +286,7 @@ export default function DashboardPage() {
                         }
                         className="px-4 py-2 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all whitespace-nowrap cursor-pointer"
                       >
-                        Mobile App Only
+                        Start Assessment
                       </button>
                     </div>
                   ))}

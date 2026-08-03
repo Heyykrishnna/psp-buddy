@@ -104,27 +104,27 @@ export default function StudentAssessmentsPage() {
           </button>
         </header>
 
-        {/* Mobile Exclusive Banner */}
-        <div className="p-4 bg-amber-50 border border-amber-200/80 rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-2xs">
+        {/* Web Playground & Assessment Banner */}
+        <div className="p-4 bg-emerald-50 border border-emerald-200/80 rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-2xs">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center shrink-0">
-              <ExclamationTriangleIcon className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
+              <RocketIcon className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-xs font-semibold text-amber-950 uppercase tracking-wider font-mono">
-                Mobile Exclusive Feature
+              <h3 className="text-xs font-semibold text-emerald-950 uppercase tracking-wider font-mono">
+                Web Playground & Assessment Portal
               </h3>
-              <p className="text-xs text-amber-900 mt-0.5 font-sans">
-                Quizzes, Exams & Assessment Tests must be completed on the PSP Lumora Mobile App. Practice coding anytime in the Web Code Playground.
+              <p className="text-xs text-emerald-900 mt-0.5 font-sans">
+                Attempt Playground & Practice assessments directly on the web with Monaco Code Editor, or practice anytime in the Code Playground.
               </p>
             </div>
           </div>
           <button
             onClick={() => router.push("/student/playground")}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-900 hover:bg-amber-950 text-white text-xs font-medium rounded-lg transition-all shrink-0 cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium rounded-lg transition-all shrink-0 cursor-pointer"
           >
             <RocketIcon className="w-3.5 h-3.5" />
-            Open Playground
+            Open Code Playground
           </button>
         </div>
 
