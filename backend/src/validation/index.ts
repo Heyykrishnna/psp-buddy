@@ -5,12 +5,30 @@ export const registerSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters long'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
-  role: z.enum(['ADMIN', 'TEACHER', 'STUDENT']),
+  role: z.enum(['ADMIN', 'TEACHER', 'STUDENT']).optional().default('STUDENT'),
   studentRegistrationNo: z.string().optional(),
   employeeId: z.string().optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
+
+export const googleAuthSchema = z.object({
+  idToken: z.string().min(1, 'Google ID token is required'),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+});
+
+export type GoogleAuthInput = z.infer<typeof googleAuthSchema>;
+
+export const onboardingSchema = z.object({
+  gradeLevel: z.string().optional(),
+  studentRegistrationNo: z.string().optional(),
+  employeeId: z.string().optional(),
+  department: z.string().optional(),
+  avatarUrl: z.string().optional(),
+});
+
+export type OnboardingInput = z.infer<typeof onboardingSchema>;
 
 export const loginSchema = z.object({
   email: z.string().email('Invalid email address'),

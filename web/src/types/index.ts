@@ -54,6 +54,7 @@ export interface UserProfile {
   role: RoleName;
   isActive: boolean;
   isEmailVerified: boolean;
+  isOnboarded: boolean;
   createdAt: string;
 }
 

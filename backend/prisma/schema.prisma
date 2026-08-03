@@ -57,13 +57,14 @@ enum NotificationType {
 model User {
   id              String         @id @default(uuid())
   email           String         @unique
-  passwordHash    String
+  passwordHash    String?
   firstName       String
   lastName        String
   avatarUrl       String?
   role            RoleName       @default(STUDENT)
   isActive        Boolean        @default(true)
   isEmailVerified Boolean        @default(false)
+  isOnboarded     Boolean        @default(false)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   sessions        Session[]
