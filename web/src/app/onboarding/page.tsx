@@ -25,10 +25,10 @@ export default function OnboardingPage() {
 
     try {
       await onboard({
-        studentRegistrationNo: isTeacher ? undefined : studentRegistrationNo,
-        gradeLevel: isTeacher ? undefined : gradeLevel,
-        employeeId: isTeacher ? employeeId : undefined,
-        department: isTeacher ? department : undefined,
+        studentRegistrationNo: isTeacher || isAdmin ? undefined : studentRegistrationNo,
+        gradeLevel: isTeacher || isAdmin ? undefined : gradeLevel,
+        employeeId: isTeacher || isAdmin ? employeeId : undefined,
+        department: isTeacher || isAdmin ? department : undefined,
         avatarUrl: avatarUrl || undefined,
       });
     } catch (err: any) {
@@ -39,31 +39,34 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col justify-center items-center px-4 py-12 text-zinc-100 font-sans">
-      <div className="w-full max-w-lg bg-zinc-900/90 border border-zinc-800 rounded-2xl p-8 shadow-2xl backdrop-blur-md">
-        <div className="text-center mb-8">
-          <span className="inline-block px-3 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 rounded-full text-xs font-semibold uppercase tracking-wider mb-3">
-            Step 2 of 2
+    <div className="min-h-screen bg-[#B8C6B6] text-[#121316] font-sans p-4 sm:p-8 flex flex-col justify-center items-center">
+      <div className="w-full max-w-xl bg-[#5451FF] text-white rounded-[36px] p-6 sm:p-10 shadow-2xl border border-white/10 relative overflow-hidden">
+        
+        {/* Header */}
+        <div className="text-center mb-8 pb-6 border-b border-white/15">
+          <span className="inline-block px-4 py-1 bg-white/20 text-white rounded-full text-xs font-mono font-bold uppercase tracking-widest mb-3">
+            STEP 2 OF 2: PROFILE ONBOARDING
           </span>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Complete Your Profile</h1>
-          <p className="text-sm text-zinc-400 mt-1">
-            Welcome to PSP LUMORA, {user?.firstName}! Please provide your details to access your dashboard.
+          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight">COMPLETE YOUR PROFILE</h1>
+          <p className="text-sm text-white/80 mt-1 font-medium">
+            Welcome to PSP LUMORA, <span className="font-bold text-amber-300">{user?.firstName} {user?.lastName}</span>!
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center">
-            {error}
+          <div className="mb-6 p-4 rounded-2xl bg-[#FF5745] text-white text-xs font-bold text-center shadow-lg">
+            ⚠️ {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="p-4 bg-zinc-950/60 border border-zinc-800 rounded-xl flex items-center justify-between">
+          {/* User Info Pill */}
+          <div className="p-4 bg-[#3E3BE0] border border-white/20 rounded-2xl flex items-center justify-between">
             <div>
-              <p className="text-xs text-zinc-500 font-mono">ASSIGNED ROLE (FROM DB)</p>
-              <p className="text-sm font-bold text-indigo-400">{user?.role || 'STUDENT'}</p>
+              <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-white/70">ASSIGNED ROLE</p>
+              <p className="text-base font-black text-amber-300 uppercase">{user?.role || 'STUDENT'}</p>
             </div>
-            <div className="text-xs text-zinc-400 text-right">
+            <div className="text-xs font-mono text-white/90 text-right bg-white/10 px-3 py-1.5 rounded-full border border-white/10">
               {user?.email}
             </div>
           </div>
@@ -71,85 +74,90 @@ export default function OnboardingPage() {
           {!isTeacher && !isAdmin ? (
             <>
               <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">
-                  Student Registration Number
+                <label className="block text-xs font-bold uppercase tracking-wider text-white/90 mb-1.5">
+                  STUDENT REGISTRATION NUMBER
                 </label>
                 <input
                   type="text"
                   value={studentRegistrationNo}
                   onChange={(e) => setStudentRegistrationNo(e.target.value)}
                   placeholder="e.g. STU-2026-8941"
-                  className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full px-4 py-3.5 bg-[#3E3BE0] border border-white/20 rounded-2xl text-white placeholder-white/50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">
-                  Grade / Level
+                <label className="block text-xs font-bold uppercase tracking-wider text-white/90 mb-1.5">
+                  GRADE / LEVEL
                 </label>
                 <select
                   value={gradeLevel}
                   onChange={(e) => setGradeLevel(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full px-4 py-3.5 bg-[#3E3BE0] border border-white/20 rounded-2xl text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white"
                 >
-                  <option value="Grade 9">Grade 9</option>
-                  <option value="Grade 10">Grade 10</option>
-                  <option value="Grade 11">Grade 11</option>
-                  <option value="Grade 12">Grade 12</option>
-                  <option value="Undergraduate">Undergraduate</option>
+                  <option value="Grade 9" className="bg-[#121316]">Grade 9</option>
+                  <option value="Grade 10" className="bg-[#121316]">Grade 10</option>
+                  <option value="Grade 11" className="bg-[#121316]">Grade 11</option>
+                  <option value="Grade 12" className="bg-[#121316]">Grade 12</option>
+                  <option value="Undergraduate" className="bg-[#121316]">Undergraduate</option>
                 </select>
               </div>
             </>
           ) : (
             <>
               <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">
-                  Employee / Staff ID
+                <label className="block text-xs font-bold uppercase tracking-wider text-white/90 mb-1.5">
+                  EMPLOYEE / STAFF ID
                 </label>
                 <input
                   type="text"
                   value={employeeId}
                   onChange={(e) => setEmployeeId(e.target.value)}
                   placeholder="e.g. EMP-1042"
-                  className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full px-4 py-3.5 bg-[#3E3BE0] border border-white/20 rounded-2xl text-white placeholder-white/50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">
-                  Department
+                <label className="block text-xs font-bold uppercase tracking-wider text-white/90 mb-1.5">
+                  DEPARTMENT
                 </label>
                 <input
                   type="text"
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
                   placeholder="e.g. Computer Science & Engineering"
-                  className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full px-4 py-3.5 bg-[#3E3BE0] border border-white/20 rounded-2xl text-white placeholder-white/50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white"
                 />
               </div>
             </>
           )}
 
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1">
-              Avatar Image URL (Optional)
+            <label className="block text-xs font-bold uppercase tracking-wider text-white/90 mb-1.5">
+              AVATAR IMAGE URL (OPTIONAL)
             </label>
             <input
               type="url"
               value={avatarUrl}
               onChange={(e) => setAvatarUrl(e.target.value)}
               placeholder="https://example.com/avatar.jpg"
-              className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500"
+              className="w-full px-4 py-3.5 bg-[#3E3BE0] border border-white/20 rounded-2xl text-white placeholder-white/50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white"
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm rounded-xl transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50 mt-4"
-          >
-            {loading ? 'Saving Profile...' : 'Complete Onboarding & Enter Dashboard'}
-          </button>
+          <div className="pt-4">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 px-6 bg-[#121316] hover:bg-black text-white font-black text-sm uppercase tracking-wider rounded-full transition-all flex items-center justify-between shadow-2xl disabled:opacity-50 group cursor-pointer"
+            >
+              <span>{loading ? 'SAVING PROFILE...' : 'ENTER SYNCHRONIZED DASHBOARD'}</span>
+              <span className="w-8 h-8 rounded-full bg-[#FF5745] text-white flex items-center justify-center group-hover:translate-x-1 transition-transform text-xs">
+                ↗
+              </span>
+            </button>
+          </div>
         </form>
       </div>
     </div>

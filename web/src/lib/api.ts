@@ -4,7 +4,7 @@ export interface ApiResponse<T = any> {
   message?: string;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 let accessTokenMemory: string | null = null;
 let refreshTokenMemory: string | null = null;
