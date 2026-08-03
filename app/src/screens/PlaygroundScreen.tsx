@@ -39,7 +39,7 @@ export function PlaygroundScreen({ onBackToDashboard }: PlaygroundScreenProps) {
       <View style={styles.content}>
         <View style={styles.card}>
           <View style={styles.iconCircle}>
-            <Text style={styles.iconText}>💻</Text>
+            <Text style={styles.iconText}>IDE</Text>
           </View>
 
           <View style={styles.badge}>
@@ -128,7 +128,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   iconText: {
-    fontSize: 32,
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#5451FF',
   },
   badge: {
     backgroundColor: "rgba(239, 68, 68, 0.15)",

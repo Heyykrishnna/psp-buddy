@@ -120,7 +120,7 @@ export function CompetitiveScreen({ onBackToDashboard }: CompetitiveScreenProps)
                   </View>
                   <View style={[styles.statBox, { backgroundColor: '#FFEDD5' }]}>
                     <Text style={styles.statVal}>{profile.student.currentStreak}d</Text>
-                    <Text style={styles.statLbl}>Streak 🔥</Text>
+                    <Text style={styles.statLbl}>Current Streak</Text>
                   </View>
                   <View style={[styles.statBox, { backgroundColor: '#E0E7FF' }]}>
                     <Text style={styles.statVal}>{profile.student.contestRating}</Text>
@@ -132,7 +132,7 @@ export function CompetitiveScreen({ onBackToDashboard }: CompetitiveScreenProps)
               {/* Daily Challenge Card */}
               <View style={styles.card}>
                 <View style={styles.cardHeader}>
-                  <Text style={styles.cardTitle}>🔥 Daily Challenge</Text>
+                  <Text style={styles.cardTitle}>Daily Challenge</Text>
                   <Text style={styles.xpTag}>+{dailyChallenge?.bonusXp || 50} XP</Text>
                 </View>
                 {dailyChallenge ? (
@@ -150,7 +150,7 @@ export function CompetitiveScreen({ onBackToDashboard }: CompetitiveScreenProps)
               {/* Weekly Challenge Card */}
               <View style={styles.card}>
                 <View style={styles.cardHeader}>
-                  <Text style={styles.cardTitle}>🎯 Weekly Challenge</Text>
+                  <Text style={styles.cardTitle}>Weekly Challenge</Text>
                   <Text style={styles.xpTag}>+{weeklyChallenge?.xpReward || 200} XP</Text>
                 </View>
                 {weeklyChallenge ? (

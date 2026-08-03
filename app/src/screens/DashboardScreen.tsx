@@ -13,7 +13,11 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import { AssessmentDTO, StudentTopicMasteryDTO, LeaderboardEntryDTO } from "../types";
+import {
+  AssessmentDTO,
+  StudentTopicMasteryDTO,
+  LeaderboardEntryDTO,
+} from "../types";
 
 const { width } = Dimensions.get("window");
 
@@ -170,12 +174,13 @@ export function DashboardScreen({
     async function loadData() {
       setLoading(true);
       try {
-        const [list, topicData, overviewData, leaderboardData] = await Promise.allSettled([
-          apiClient.getAssessments(),
-          apiClient.getTopicMastery(),
-          apiClient.getStudentOverview(),
-          apiClient.getLeaderboard(),
-        ]);
+        const [list, topicData, overviewData, leaderboardData] =
+          await Promise.allSettled([
+            apiClient.getAssessments(),
+            apiClient.getTopicMastery(),
+            apiClient.getStudentOverview(),
+            apiClient.getLeaderboard(),
+          ]);
         if (list.status === "fulfilled" && Array.isArray(list.value))
           setAssessments(list.value);
         if (topicData.status === "fulfilled" && Array.isArray(topicData.value))
@@ -184,10 +189,13 @@ export function DashboardScreen({
           setXp(overviewData.value.totalXp || 0);
           setStreak(overviewData.value.currentStreak || 0);
         }
-        if (leaderboardData.status === "fulfilled" && Array.isArray(leaderboardData.value))
+        if (
+          leaderboardData.status === "fulfilled" &&
+          Array.isArray(leaderboardData.value)
+        )
           setLeaderboard(leaderboardData.value);
-      } catch {}
-      finally {
+      } catch {
+      } finally {
         setLoading(false);
       }
     }
@@ -198,9 +206,23 @@ export function DashboardScreen({
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.safeArea, { justifyContent: "center", alignItems: "center" }]}>
+      <SafeAreaView
+        style={[
+          styles.safeArea,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
         <ActivityIndicator size="large" color="#111111" />
-        <Text style={{ marginTop: 14, fontSize: 12, color: "#71717a", fontWeight: "600", letterSpacing: 1, textTransform: "uppercase" }}>
+        <Text
+          style={{
+            marginTop: 14,
+            fontSize: 12,
+            color: "#71717a",
+            fontWeight: "600",
+            letterSpacing: 1,
+            textTransform: "uppercase",
+          }}
+        >
           Loading Dashboard...
         </Text>
       </SafeAreaView>
@@ -264,41 +286,25 @@ export function DashboardScreen({
         {/* QUICK FEATURE LAUNCH GRID */}
         <View style={styles.quickGrid}>
           <TouchableOpacity
-            style={[styles.quickCard, { backgroundColor: "#18181b", borderColor: "#27272a" }]}
-            onPress={() => onOpenPlayground?.()}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.quickCardIcon}>💻</Text>
-            <Text style={styles.quickCardTitle}>Code IDE (Web)</Text>
-            <Text style={styles.quickCardSub}>Desktop Web Required</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.quickCard, { backgroundColor: "#18181b", borderColor: "#27272a" }]}
-            onPress={() => onOpenCompetitive?.()}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.quickCardIcon}>🏆</Text>
-            <Text style={styles.quickCardTitle}>Competitive</Text>
-            <Text style={styles.quickCardSub}>Daily, Streaks, Badges</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.quickCard, { backgroundColor: "#18181b", borderColor: "#27272a" }]}
+            style={[
+              styles.quickCard,
+              { backgroundColor: "#18181b", borderColor: "#27272a" },
+            ]}
             onPress={() => onOpenAiTutor?.()}
             activeOpacity={0.85}
           >
-            <Text style={styles.quickCardIcon}>🤖</Text>
             <Text style={styles.quickCardTitle}>AI Tutor</Text>
             <Text style={styles.quickCardSub}>Ask Questions & Hints</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.quickCard, { backgroundColor: "#18181b", borderColor: "#27272a" }]}
+            style={[
+              styles.quickCard,
+              { backgroundColor: "#18181b", borderColor: "#27272a" },
+            ]}
             onPress={() => onOpenAnalytics?.()}
             activeOpacity={0.85}
           >
-            <Text style={styles.quickCardIcon}>📊</Text>
             <Text style={styles.quickCardTitle}>Analytics</Text>
             <Text style={styles.quickCardSub}>Topic Mastery & Stats</Text>
           </TouchableOpacity>
@@ -456,7 +462,14 @@ export function DashboardScreen({
 
           <View style={styles.leaderList}>
             {leaderboard.length === 0 ? (
-              <Text style={{ fontSize: 12, color: "#71717a", textAlign: "center", paddingVertical: 16 }}>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: "#71717a",
+                  textAlign: "center",
+                  paddingVertical: 16,
+                }}
+              >
                 No leaderboard data yet.
               </Text>
             ) : (
@@ -465,7 +478,10 @@ export function DashboardScreen({
                 return (
                   <View
                     key={item.id}
-                    style={[styles.leaderRow, isCurrentUser && styles.leaderRowUser]}
+                    style={[
+                      styles.leaderRow,
+                      isCurrentUser && styles.leaderRowUser,
+                    ]}
                   >
                     <Text
                       style={[
@@ -487,7 +503,10 @@ export function DashboardScreen({
                       {item.studentName}
                     </Text>
                     <Text
-                      style={[styles.leaderXp, isCurrentUser && styles.leaderXpUser]}
+                      style={[
+                        styles.leaderXp,
+                        isCurrentUser && styles.leaderXpUser,
+                      ]}
                     >
                       {item.totalXp.toLocaleString()} XP
                     </Text>
