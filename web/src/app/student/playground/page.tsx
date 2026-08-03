@@ -266,15 +266,42 @@ export default function StudentPlaygroundPage() {
     }
   };
 
-  // Run Code logic
-  const handleRunCode = () => {
+  // Step 15: Run Code logic (Browser -> Backend API -> JudgeProvider -> Judge0)
+  const handleRunCode = async () => {
     setRunning(true);
     setActiveConsoleTab("output");
-    setOutput("Compiling and executing code...");
+    setOutput("Compiling and executing code via Backend Judge API...");
     setErrorMessage(null);
     setTestResults(null);
 
-    setTimeout(() => {
+    try {
+      if (currentExample.id) {
+        const res = await apiFetch<any>(`/problems/${currentExample.id}/run`, {
+          method: "POST",
+          body: JSON.stringify({
+            sourceCode: code,
+            language: language,
+          }),
+        });
+
+        if (res) {
+          if (res.status === "COMPILATION_ERROR") {
+            setErrorMessage(res.compileOutput || "Compilation error.");
+            setActiveConsoleTab("error");
+            setOutput("");
+          } else {
+            setOutput(
+              res.logs ||
+                (res.allPassed
+                  ? `All ${res.totalPassed}/${res.totalTests} test cases passed successfully!`
+                  : `Passed ${res.totalPassed}/${res.totalTests} test cases.`),
+            );
+          }
+          setTestResults(res.results || []);
+          return;
+        }
+      }
+    } catch {
       const outcome = evaluateCodeSolution(
         code,
         language,
@@ -293,10 +320,10 @@ export default function StudentPlaygroundPage() {
               : `Passed ${outcome.totalPassed}/${outcome.totalTests} test cases.`),
         );
       }
-
       setTestResults(outcome.testResults || []);
+    } finally {
       setRunning(false);
-    }, 400);
+    }
   };
 
   // Submit Code logic
@@ -862,7 +889,7 @@ export default function StudentPlaygroundPage() {
                   }
                   className="px-2.5 py-1 bg-zinc-100 hover:bg-zinc-200 rounded-lg text-[11px] font-medium text-zinc-700 cursor-pointer"
                 >
-                  💡 Solution Strategy
+                  Solution Strategy
                 </button>
                 <button
                   onClick={() =>
@@ -872,7 +899,7 @@ export default function StudentPlaygroundPage() {
                   }
                   className="px-2.5 py-1 bg-zinc-100 hover:bg-zinc-200 rounded-lg text-[11px] font-medium text-zinc-700 cursor-pointer"
                 >
-                  ⚡ Complexity Analysis
+                  Complexity Analysis
                 </button>
               </div>
 
@@ -1076,7 +1103,7 @@ export default function StudentPlaygroundPage() {
                 title="Toggle Theme (Dark / Light)"
                 className="px-2 py-1 bg-white border border-zinc-200 hover:bg-zinc-100 rounded text-[11px] font-mono text-zinc-700 cursor-pointer"
               >
-                {editorTheme === "vs-dark" ? "🌙 Dark" : "☀️ Light"}
+                {editorTheme === "vs-dark" ? "Dark" : "Light"}
               </button>
 
               {/* Font Size Control */}
@@ -1098,7 +1125,7 @@ export default function StudentPlaygroundPage() {
                 title="Save solution locally (Ctrl+S / Cmd+S)"
                 className="px-2 py-1 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
               >
-                💾 {saveToast || "Save Local"}
+                {saveToast || "Save Local"}
               </button>
             </div>
 

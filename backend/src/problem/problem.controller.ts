@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Request, UseGuards, BadRequestException } from '@nestjs/common';
 import { ProblemService } from './problem.service';
 import { CreateProblemDto } from './dto/create-problem.dto';
 import { CreateTestCaseDto } from './dto/create-test-case.dto';
@@ -145,5 +145,17 @@ export class ProblemController {
   ) {
     const userId = req.user?.sub || req.user?.id || 'demo-user-id';
     return this.problemService.toggleBookmark(problemId, userId);
+  }
+
+  // 15. POST /problems/:id/run - Step 15 Backend Execution API (Browser -> Backend API -> JudgeProvider -> Judge0)
+  @Post(':id/run')
+  async runCode(
+    @Param('id') problemId: string,
+    @Body() body: { sourceCode: string; language?: string },
+  ) {
+    if (!body?.sourceCode) {
+      throw new BadRequestException('sourceCode is required.');
+    }
+    return this.problemService.runProblemCode(problemId, body.sourceCode, body.language);
   }
 }

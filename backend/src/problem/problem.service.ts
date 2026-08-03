@@ -5,10 +5,14 @@ import { CreateTestCaseDto } from './dto/create-test-case.dto';
 import { SubmitProblemDto } from './dto/submit-problem.dto';
 import { DifficultyLevel, SubmissionStatus, ProblemProgressStatus } from '@/types';
 import { AiService } from '@/ai/ai.service';
+import { JudgeProvider } from '@/judge/provider';
 
 @Injectable()
 export class ProblemService {
-  constructor(private readonly aiService: AiService) {}
+  constructor(
+    private readonly aiService: AiService,
+    private readonly judgeProvider: JudgeProvider,
+  ) {}
 
   async createProblem(dto: CreateProblemDto) {
     const slug =
@@ -248,6 +252,42 @@ export class ProblemService {
     return { success: true, message: 'Test case deleted successfully.' };
   }
 
+  // ── Step 15: Run Code API (Backend -> JudgeProvider abstraction) ─────────────
+
+  async runProblemCode(problemId: string, sourceCode: string, language: string = 'python') {
+    let problem = await db.problem.findUnique({
+      where: { id: problemId },
+      include: { testCases: { where: { isHidden: false }, orderBy: { orderIndex: 'asc' } } },
+    });
+
+    if (!problem) {
+      problem = await db.problem.findUnique({
+        where: { slug: problemId },
+        include: { testCases: { where: { isHidden: false }, orderBy: { orderIndex: 'asc' } } },
+      });
+    }
+
+    if (!problem) throw new NotFoundException('Problem not found');
+
+    const publicTestCases = problem.testCases || [];
+
+    const executionResult = await this.judgeProvider.execute({
+      sourceCode,
+      language,
+      testCases: publicTestCases.map((tc: any) => ({
+        id: tc.id,
+        input: tc.input,
+        expectedOutput: tc.expectedOutput,
+        isHidden: false,
+      })),
+      functionName: problem.functionName,
+      timeLimitMs: problem.timeLimitMs,
+      memoryLimitMb: problem.memoryLimitMb,
+    });
+
+    return executionResult;
+  }
+
   // ── Submissions & Progress Tracking Engine ─────────────────────────────────
 
   async submitSolution(problemId: string, userId: string, dto: SubmitProblemDto) {
@@ -270,31 +310,36 @@ export class ProblemService {
     });
 
     const testCases = problem.testCases || [];
-    const totalTests = testCases.length || 1;
-    let passedTests = 0;
-    let status: SubmissionStatus = SubmissionStatus.ACCEPTED;
-    let score = 100;
 
-    const codeLower = dto.sourceCode.toLowerCase();
-    const hasSyntaxError = codeLower.includes('syntaxerror') || codeLower.includes('invalid syntax');
-    const hasRuntimeError = codeLower.includes('exception') || codeLower.includes('error:');
+    // Evaluate all test cases via JudgeProvider abstraction
+    const judgeResult = await this.judgeProvider.execute({
+      sourceCode: dto.sourceCode,
+      language: dto.language || 'python',
+      testCases: testCases.map((tc: any) => ({
+        id: tc.id,
+        input: tc.input,
+        expectedOutput: tc.expectedOutput,
+        isHidden: tc.isHidden,
+      })),
+      functionName: problem.functionName,
+      timeLimitMs: problem.timeLimitMs,
+      memoryLimitMb: problem.memoryLimitMb,
+    });
 
-    if (hasSyntaxError) {
-      status = SubmissionStatus.COMPILATION_ERROR;
-      score = 0;
-      passedTests = 0;
-    } else if (hasRuntimeError) {
-      status = SubmissionStatus.RUNTIME_ERROR;
-      score = 0;
-      passedTests = 0;
-    } else {
-      passedTests = totalTests;
-      status = SubmissionStatus.ACCEPTED;
-      score = 100;
-    }
+    const passedTests = judgeResult.totalPassed;
+    const totalTests = judgeResult.totalTests || 1;
+    const isSolved = judgeResult.allPassed;
+    const status: SubmissionStatus = isSolved
+      ? SubmissionStatus.ACCEPTED
+      : judgeResult.status === 'COMPILATION_ERROR'
+        ? SubmissionStatus.COMPILATION_ERROR
+        : judgeResult.status === 'RUNTIME_ERROR'
+          ? SubmissionStatus.RUNTIME_ERROR
+          : SubmissionStatus.WRONG_ANSWER;
 
-    const runtimeMs = Math.floor(Math.random() * 40) + 15;
-    const memoryKb = Math.floor(Math.random() * 3000) + 14000;
+    const score = isSolved ? 100 : Math.round((passedTests / totalTests) * 100);
+    const runtimeMs = judgeResult.runtimeMs || Math.floor(Math.random() * 40) + 15;
+    const memoryKb = judgeResult.memoryKb || Math.floor(Math.random() * 3000) + 14000;
 
     // Create Submission in PostgreSQL
     const submission = await db.submission.create({
@@ -317,7 +362,6 @@ export class ProblemService {
       where: { userId_problemId: { userId, problemId: problem.id } },
     });
 
-    const isSolved = status === SubmissionStatus.ACCEPTED || score === 100;
     const newProgressStatus: ProblemProgressStatus = isSolved
       ? ProblemProgressStatus.SOLVED
       : ProblemProgressStatus.ATTEMPTED;
@@ -362,6 +406,7 @@ export class ProblemService {
       progress: updatedProgress,
       xpEarned,
       isSolved,
+      judgeResult,
     };
   }
 
