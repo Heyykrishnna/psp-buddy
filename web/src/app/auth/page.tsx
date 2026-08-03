@@ -34,18 +34,11 @@ export default function AuthPage() {
 
     setLoading(true);
     try {
-      const res = await sendVerificationCode(email.trim());
+      await sendVerificationCode(email.trim());
       setCodeSent(true);
-      if (res.verificationCode) {
-        setVerificationCode(res.verificationCode);
-        setInfoMessage(
-          `Confirmation code sent! (Code: ${res.verificationCode})`,
-        );
-      } else {
-        setInfoMessage(
-          "Confirmation code sent to your email! Please check your inbox.",
-        );
-      }
+      setInfoMessage(
+        "Confirmation code sent to your email address! Please check your inbox.",
+      );
     } catch (err: any) {
       setError(err.message || "Failed to send confirmation code.");
     } finally {

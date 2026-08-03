@@ -67,14 +67,9 @@ export function AuthScreen() {
     setInfoMessage("");
     setLoading(true);
     try {
-      const res = await sendVerificationCode(email.trim());
+      await sendVerificationCode(email.trim());
       setCodeSent(true);
-      if (res.verificationCode) {
-        setVerificationCode(res.verificationCode);
-        setInfoMessage(`Code sent! (Code: ${res.verificationCode})`);
-      } else {
-        setInfoMessage("Confirmation code sent to your email!");
-      }
+      setInfoMessage("Confirmation code sent to your email address!");
     } catch (err: any) {
       setError(err.message || "Failed to send code.");
     } finally {

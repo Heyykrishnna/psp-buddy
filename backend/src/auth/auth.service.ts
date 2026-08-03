@@ -4,10 +4,14 @@ import * as argon2 from 'argon2';
 import { db } from '@/database';
 import { RegisterInput, LoginInput, OnboardingInput } from '@/validation';
 import { RoleName, UserProfile } from '@/types';
+import { MailService } from '@/mail/mail.service';
 
 @Injectable()
 export class AuthService {
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    private jwtService: JwtService,
+    private mailService: MailService,
+  ) {}
 
   async sendVerificationCode(email: string) {
     const existing = await db.user.findUnique({ where: { email } });
@@ -24,14 +28,11 @@ export class AuthService {
       create: { email, code, expiresAt },
     });
 
-    console.log(`\n=======================================================`);
-    console.log(`✉️ [CONFIRMATION EMAIL] Sent to: ${email}`);
-    console.log(`🔑 CONFIRMATION CODE: [ ${code} ]`);
-    console.log(`=======================================================\n`);
+    // Send actual email via Nodemailer
+    await this.mailService.sendVerificationEmail(email, code);
 
     return {
       message: `Confirmation code sent to ${email}`,
-      verificationCode: code,
       expiresAt,
     };
   }
