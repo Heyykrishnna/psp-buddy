@@ -611,45 +611,222 @@ export function AssessmentScreen({
           contentContainerStyle={styles.resultScroll}
           showsVerticalScrollIndicator={false}
         >
+          {/* Main Score & Grade Hero Card */}
           <View style={styles.resultCard}>
-            <Text style={styles.resultHeaderTag}>EVALUATION COMPLETE</Text>
-            <Text style={styles.resultScoreBig}>
-              {resultScore}{" "}
-              <Text style={styles.resultScoreMax}>/ {maxScore}</Text>
-            </Text>
-
-            <View style={styles.accuracyBarContainer}>
+            <View style={styles.statusPillRow}>
               <View
-                style={[styles.accuracyBarFill, { width: `${accuracy}%` }]}
-              />
+                style={[
+                  styles.statusPill,
+                  accuracy >= 70 ? styles.statusPass : styles.statusNeedsWork,
+                ]}
+              >
+                <Ionicons
+                  name={accuracy >= 70 ? "trophy" : "alert-circle"}
+                  size={14}
+                  color={accuracy >= 70 ? "#4ade80" : "#f59e0b"}
+                />
+                <Text
+                  style={[
+                    styles.statusPillText,
+                    { color: accuracy >= 70 ? "#4ade80" : "#f59e0b" },
+                  ]}
+                >
+                  {accuracy >= 90
+                    ? "PASSED WITH DISTINCTION"
+                    : accuracy >= 70
+                      ? "ASSESSMENT PASSED"
+                      : "NEEDS PRACTICE"}
+                </Text>
+              </View>
             </View>
-            <Text style={styles.accuracyText}>
-              {accuracy}% Overall Accuracy
-            </Text>
 
+            <View style={styles.scoreHeroRow}>
+              <Text style={styles.resultScoreBig}>
+                {resultScore}
+                <Text style={styles.resultScoreMax}> / {maxScore}</Text>
+              </Text>
+              <Text style={styles.scoreHeroLabel}>TOTAL MARKS EARNED</Text>
+            </View>
+
+            {/* Accuracy Progress Bar */}
+            <View style={{ width: "100%", gap: 6, marginTop: 4 }}>
+              <View style={styles.accuracyHeaderRow}>
+                <Text style={styles.accuracyTitle}>ACCURACY PERFORMANCE</Text>
+                <Text style={styles.accuracyValueText}>{accuracy}%</Text>
+              </View>
+              <View style={styles.accuracyBarContainer}>
+                <View
+                  style={[
+                    styles.accuracyBarFill,
+                    {
+                      width: `${accuracy}%`,
+                      backgroundColor:
+                        accuracy >= 70
+                          ? "#4ade80"
+                          : accuracy >= 50
+                            ? "#f59e0b"
+                            : "#ef4444",
+                    },
+                  ]}
+                />
+              </View>
+            </View>
+
+            {/* Detailed Metric Cards Grid */}
             <View style={styles.resultStatsGrid}>
               <View style={styles.resStatBox}>
+                <Ionicons
+                  name="help-circle-outline"
+                  size={18}
+                  color="#3B82F6"
+                />
                 <Text style={styles.resStatVal}>{questions.length}</Text>
                 <Text style={styles.resStatLabel}>Total Questions</Text>
               </View>
               <View style={styles.resStatBox}>
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={18}
+                  color="#4ade80"
+                />
                 <Text style={styles.resStatVal}>
                   {Object.keys(selectedAnswers).length}
                 </Text>
-                <Text style={styles.resStatLabel}>Answered</Text>
+                <Text style={styles.resStatLabel}>Attempted</Text>
               </View>
               <View style={styles.resStatBox}>
+                <Ionicons name="flash-outline" size={18} color="#F4C463" />
                 <Text style={styles.resStatVal}>+{resultScore * 10} XP</Text>
                 <Text style={styles.resStatLabel}>XP Earned</Text>
               </View>
             </View>
+          </View>
+
+          {/* Question-by-Question Detailed Review Breakdown */}
+          <View style={styles.questionReviewContainer}>
+            <Text style={styles.reviewSectionTitle}>
+              QUESTION BREAKDOWN & SOLUTIONS
+            </Text>
+
+            {questions.map((q, idx) => {
+              const userAnsId = selectedAnswers[q.id];
+              const isCorrect = userAnsId === q.correctOptionId;
+              const userAnsText = q.options?.find(
+                (o) => o.id === userAnsId,
+              )?.text;
+              const correctAnsText = q.options?.find(
+                (o) => o.id === q.correctOptionId,
+              )?.text;
+
+              return (
+                <View key={q.id} style={styles.reviewCard}>
+                  <View style={styles.reviewHeaderRow}>
+                    <Text style={styles.reviewQNum}>QUESTION {idx + 1}</Text>
+                    <View
+                      style={[
+                        styles.reviewStatusChip,
+                        isCorrect ? styles.chipCorrect : styles.chipIncorrect,
+                      ]}
+                    >
+                      <Ionicons
+                        name={isCorrect ? "checkmark-circle" : "close-circle"}
+                        size={13}
+                        color={isCorrect ? "#4ade80" : "#ef4444"}
+                      />
+                      <Text
+                        style={[
+                          styles.reviewStatusText,
+                          { color: isCorrect ? "#4ade80" : "#ef4444" },
+                        ]}
+                      >
+                        {isCorrect
+                          ? "CORRECT"
+                          : userAnsId
+                            ? "INCORRECT"
+                            : "SKIPPED"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.reviewQText}>{q.questionText}</Text>
+
+                  {/* Answers Comparison */}
+                  <View style={styles.answersBox}>
+                    {userAnsText && (
+                      <View style={styles.ansLine}>
+                        <Text style={styles.ansLabel}>Your Choice:</Text>
+                        <Text
+                          style={[
+                            styles.ansVal,
+                            { color: isCorrect ? "#4ade80" : "#ef4444" },
+                          ]}
+                        >
+                          {userAnsText}
+                        </Text>
+                      </View>
+                    )}
+                    {!isCorrect && correctAnsText && (
+                      <View style={styles.ansLine}>
+                        <Text style={styles.ansLabel}>Correct Answer:</Text>
+                        <Text style={[styles.ansVal, { color: "#4ade80" }]}>
+                          {correctAnsText}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* AI Explanation / Key Takeaway */}
+                  <View style={styles.explanationBox}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                    >
+                      <Ionicons name="bulb-outline" size={14} color="#5451FF" />
+                      <Text style={styles.explanationTitle}>
+                        KEY EXPLANATION
+                      </Text>
+                    </View>
+                    <Text style={styles.explanationText}>
+                      {q.explanation ||
+                        `The correct answer is "${correctAnsText || "Option A"}". Review data structure algorithms and time complexity for this topic.`}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+
+          {/* Action Buttons Row */}
+          <View style={styles.actionButtonsRow}>
+            <TouchableOpacity
+              style={styles.retryBtn}
+              onPress={() => setMode("RUNNER")}
+              activeOpacity={0.85}
+            >
+              <Ionicons
+                name="reload-outline"
+                size={16}
+                color="#ffffff"
+                style={{ marginRight: 6 }}
+              />
+              <Text style={styles.retryBtnText}>RETRY TEST</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.finishBtn}
               onPress={onBackToDashboard}
               activeOpacity={0.85}
             >
-              <Text style={styles.finishBtnText}>RETURN TO DASHBOARD →</Text>
+              <Text style={styles.finishBtnText}>RETURN TO DASHBOARD</Text>
+              <Feather
+                name="arrow-right"
+                size={16}
+                color="#ffffff"
+                style={{ marginLeft: 6 }}
+              />
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -1083,28 +1260,61 @@ const styles = StyleSheet.create({
   },
   resultScroll: {
     padding: 20,
-    flexGrow: 1,
-    justifyContent: "center",
+    gap: 20,
+    paddingBottom: 40,
   },
   resultCard: {
     backgroundColor: "#191a1e",
     borderRadius: 28,
-    padding: 28,
+    padding: 24,
     alignItems: "center",
     gap: 16,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
   },
-  resultHeaderTag: {
-    color: "#4ade80",
+  statusPillRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  statusPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.05)",
+  },
+  statusPass: {
+    backgroundColor: "rgba(74,222,128,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(74,222,128,0.3)",
+  },
+  statusNeedsWork: {
+    backgroundColor: "rgba(245,158,11,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(245,158,11,0.3)",
+  },
+  statusPillText: {
     fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+  scoreHeroRow: {
+    alignItems: "center",
+    gap: 2,
+    marginVertical: 4,
+  },
+  scoreHeroLabel: {
+    color: "#71717a",
+    fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1.5,
   },
   resultScoreBig: {
     color: "#ffffff",
-    fontSize: 48,
-    fontWeight: "700",
+    fontSize: 52,
+    fontWeight: "800",
     fontFamily:
       Platform.OS === "web"
         ? "'Space Grotesk', sans-serif"
@@ -1113,6 +1323,22 @@ const styles = StyleSheet.create({
   resultScoreMax: {
     color: "#71717a",
     fontSize: 24,
+  },
+  accuracyHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  accuracyTitle: {
+    color: "#71717a",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1,
+  },
+  accuracyValueText: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "700",
   },
   accuracyBarContainer: {
     width: "100%",
@@ -1123,48 +1349,159 @@ const styles = StyleSheet.create({
   },
   accuracyBarFill: {
     height: "100%",
-    backgroundColor: "#4ade80",
-  },
-  accuracyText: {
-    color: "#9ca3af",
-    fontSize: 13,
+    borderRadius: 4,
   },
   resultStatsGrid: {
     flexDirection: "row",
-    gap: 12,
+    gap: 10,
     width: "100%",
     marginTop: 8,
   },
   resStatBox: {
     flex: 1,
     backgroundColor: "#22242a",
-    padding: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
     borderRadius: 16,
     alignItems: "center",
+    gap: 4,
   },
   resStatVal: {
     color: "#ffffff",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
   },
   resStatLabel: {
     color: "#71717a",
     fontSize: 10,
-    marginTop: 2,
+    textAlign: "center",
   },
-  finishBtn: {
-    backgroundColor: "#3B82F6",
-    height: 52,
-    borderRadius: 14,
-    width: "100%",
+  questionReviewContainer: {
+    gap: 14,
+  },
+  reviewSectionTitle: {
+    color: "#71717a",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1.5,
+    marginLeft: 4,
+  },
+  reviewCard: {
+    backgroundColor: "#191a1e",
+    borderRadius: 20,
+    padding: 18,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  reviewHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    justifyContent: "center",
-    marginTop: 12,
   },
-  finishBtnText: {
+  reviewQNum: {
+    color: "#5451FF",
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+  reviewStatusChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  chipCorrect: {
+    backgroundColor: "rgba(74,222,128,0.15)",
+  },
+  chipIncorrect: {
+    backgroundColor: "rgba(239,68,68,0.15)",
+  },
+  reviewStatusText: {
+    fontSize: 10,
+    fontWeight: "800",
+  },
+  reviewQText: {
     color: "#ffffff",
     fontSize: 14,
     fontWeight: "600",
+    lineHeight: 20,
+  },
+  answersBox: {
+    backgroundColor: "#22242a",
+    borderRadius: 14,
+    padding: 12,
+    gap: 6,
+  },
+  ansLine: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  ansLabel: {
+    color: "#71717a",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  ansVal: {
+    fontSize: 12,
+    fontWeight: "600",
+    flex: 1,
+  },
+  explanationBox: {
+    backgroundColor: "rgba(84,81,255,0.08)",
+    borderRadius: 14,
+    padding: 12,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "rgba(84,81,255,0.2)",
+  },
+  explanationTitle: {
+    color: "#5451FF",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+  explanationText: {
+    color: "#9ca3af",
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  actionButtonsRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 8,
+  },
+  retryBtn: {
+    flex: 1,
+    backgroundColor: "#22242a",
+    height: 52,
+    borderRadius: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  retryBtnText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  finishBtn: {
+    flex: 1,
+    backgroundColor: "#5451FF",
+    height: 52,
+    borderRadius: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  finishBtnText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "700",
   },
   centerContainer: {
     padding: 40,

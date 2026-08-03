@@ -125,15 +125,17 @@ export interface QuestionDTO {
   points: number;
   orderIndex: number;
   explanation?: string;
+  correctOptionId?: string;
   options?: OptionDTO[];
 }
 
 export interface OptionDTO {
   id: string;
-  questionId: string;
+  questionId?: string;
   optionText: string;
+  text?: string;
   isCorrect?: boolean;
-  orderIndex: number;
+  orderIndex?: number;
 }
 
 export interface WorkbookUploadDTO {
