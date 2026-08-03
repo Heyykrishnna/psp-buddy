@@ -877,8 +877,14 @@ export function AssessmentScreen({
                 {/* Hero Evaluation Status & Score Card */}
                 <View style={styles.solutionHeroCard}>
                   <View style={styles.solutionStatusBadge}>
-                    <Ionicons name="checkmark-circle" size={16} color="#4ade80" />
-                    <Text style={styles.solutionStatusText}>EVALUATION COMPLETE</Text>
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={16}
+                      color="#4ade80"
+                    />
+                    <Text style={styles.solutionStatusText}>
+                      EVALUATION COMPLETE
+                    </Text>
                   </View>
 
                   <View style={styles.solutionScoreRow}>
@@ -886,10 +892,14 @@ export function AssessmentScreen({
                       <Text style={styles.solutionScoreBig}>
                         {workbookResult.obtainedMarks}
                         <Text style={styles.solutionScoreSub}>
-                          /{workbookResult.maxMarks || workbookModalAsm?.totalMarks}
+                          /
+                          {workbookResult.maxMarks ||
+                            workbookModalAsm?.totalMarks}
                         </Text>
                       </Text>
-                      <Text style={styles.solutionScoreMeta}>MARKS OBTAINED</Text>
+                      <Text style={styles.solutionScoreMeta}>
+                        MARKS OBTAINED
+                      </Text>
                     </View>
 
                     <View style={styles.solutionDivider} />
@@ -898,7 +908,9 @@ export function AssessmentScreen({
                       <Text style={styles.solutionAccuracyBig}>
                         {workbookResult.accuracyPercentage || 88}%
                       </Text>
-                      <Text style={styles.solutionScoreMeta}>ACCURACY RATE</Text>
+                      <Text style={styles.solutionScoreMeta}>
+                        ACCURACY RATE
+                      </Text>
                     </View>
 
                     <View style={styles.solutionDivider} />
@@ -933,7 +945,11 @@ export function AssessmentScreen({
                         resizeMode="cover"
                       />
                       <View style={styles.uploadedImageOverlayBadge}>
-                        <Ionicons name="checkmark-done" size={12} color="#4ade80" />
+                        <Ionicons
+                          name="checkmark-done"
+                          size={12}
+                          color="#4ade80"
+                        />
                         <Text style={styles.uploadedImageOverlayText}>
                           Verified Solution Image
                         </Text>
@@ -977,51 +993,55 @@ export function AssessmentScreen({
                     </View>
 
                     <View style={{ gap: 10 }}>
-                      {workbookResult.steps.map((stepItem: any, sIdx: number) => (
-                        <View key={sIdx} style={styles.evalStepCard}>
-                          <View style={styles.evalStepHeader}>
-                            <View style={styles.evalStepNumBadge}>
-                              <Text style={styles.evalStepNumText}>
-                                STEP {stepItem.stepNumber || sIdx + 1}
+                      {workbookResult.steps.map(
+                        (stepItem: any, sIdx: number) => (
+                          <View key={sIdx} style={styles.evalStepCard}>
+                            <View style={styles.evalStepHeader}>
+                              <View style={styles.evalStepNumBadge}>
+                                <Text style={styles.evalStepNumText}>
+                                  STEP {stepItem.stepNumber || sIdx + 1}
+                                </Text>
+                              </View>
+                              <Text style={styles.evalStepTitle}>
+                                {stepItem.title}
                               </Text>
-                            </View>
-                            <Text style={styles.evalStepTitle}>
-                              {stepItem.title}
-                            </Text>
-                            <View
-                              style={[
-                                styles.evalStepStatusChip,
-                                stepItem.status === "CORRECT"
-                                  ? {
-                                      backgroundColor: "rgba(74,222,128,0.15)",
-                                      borderColor: "rgba(74,222,128,0.4)",
-                                    }
-                                  : {
-                                      backgroundColor: "rgba(244,196,99,0.15)",
-                                      borderColor: "rgba(244,196,99,0.4)",
-                                    },
-                              ]}
-                            >
-                              <Text
+                              <View
                                 style={[
-                                  styles.evalStepStatusText,
-                                  {
-                                    color:
-                                      stepItem.status === "CORRECT"
-                                        ? "#4ade80"
-                                        : "#F4C463",
-                                  },
+                                  styles.evalStepStatusChip,
+                                  stepItem.status === "CORRECT"
+                                    ? {
+                                        backgroundColor:
+                                          "rgba(74,222,128,0.15)",
+                                        borderColor: "rgba(74,222,128,0.4)",
+                                      }
+                                    : {
+                                        backgroundColor:
+                                          "rgba(244,196,99,0.15)",
+                                        borderColor: "rgba(244,196,99,0.4)",
+                                      },
                                 ]}
                               >
-                                {stepItem.status || "PASSED"}
-                              </Text>
+                                <Text
+                                  style={[
+                                    styles.evalStepStatusText,
+                                    {
+                                      color:
+                                        stepItem.status === "CORRECT"
+                                          ? "#4ade80"
+                                          : "#F4C463",
+                                    },
+                                  ]}
+                                >
+                                  {stepItem.status || "PASSED"}
+                                </Text>
+                              </View>
                             </View>
+                            <Text style={styles.evalStepNotes}>
+                              {stepItem.notes}
+                            </Text>
                           </View>
-                          <Text style={styles.evalStepNotes}>
-                            {stepItem.notes}
-                          </Text>
-                        </View>
-                      ))}
+                        ),
+                      )}
                     </View>
                   </View>
                 )}
@@ -1093,20 +1113,13 @@ export function AssessmentScreen({
                 {/* Bottom Modal Actions */}
                 <View style={{ flexDirection: "row", gap: 10, marginTop: 4 }}>
                   <TouchableOpacity
-                    style={styles.reuploadBtn}
-                    onPress={() => setWorkbookResult(null)}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="refresh-outline" size={16} color="#ffffff" />
-                    <Text style={styles.reuploadBtnText}>RE-UPLOAD</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
                     style={styles.doneBtnPrimary}
                     onPress={() => setWorkbookModalAsm(null)}
                     activeOpacity={0.85}
                   >
-                    <Text style={styles.doneBtnTextPrimary}>CLOSE & RETURN</Text>
+                    <Text style={styles.doneBtnTextPrimary}>
+                      CLOSE & RETURN
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </ScrollView>
