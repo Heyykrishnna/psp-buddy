@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,9 +6,17 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-} from "react-native";
-import { useAuth } from "../context/AuthContext";
-import { AssessmentDTO } from "../types";
+} from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { useAuth } from '../context/AuthContext';
+import { AssessmentDTO, StudentTopicMasteryDTO } from '../types';
+
+const DEMO_TOPICS: StudentTopicMasteryDTO[] = [
+  { topic: 'Arrays', masteryScore: 82, accuracy: 82, totalAttempts: 10, correctAnswers: 8, assessmentCount: 3, lastPracticedAt: '', status: 'Mastered', isWeak: false },
+  { topic: 'Loops', masteryScore: 64, accuracy: 64, totalAttempts: 8, correctAnswers: 5, assessmentCount: 2, lastPracticedAt: '', status: 'Proficient', isWeak: false },
+  { topic: 'Recursion', masteryScore: 31, accuracy: 31, totalAttempts: 6, correctAnswers: 2, assessmentCount: 2, lastPracticedAt: '', status: 'Needs Improvement', isWeak: true },
+  { topic: 'Graphs', masteryScore: 20, accuracy: 20, totalAttempts: 3, correctAnswers: 0, assessmentCount: 1, lastPracticedAt: '', status: 'Needs Improvement', isWeak: true },
+];
 
 export function DashboardScreen() {
   const { user, logout, apiClient } = useAuth();
@@ -16,13 +24,12 @@ export function DashboardScreen() {
   const [streak] = useState(5);
   const [assessments, setAssessments] = useState<AssessmentDTO[]>([
     {
-      id: "demo-asm-1",
-      title: "Algorithm Complexity & Data Structures Quiz",
-      description:
-        "Mid-term evaluation covering Big-O analysis, sorting algorithms, and boolean logic.",
-      className: "Class 10-A",
-      topic: "Computer Science",
-      assessmentType: "QUIZ" as any,
+      id: 'demo-asm-1',
+      title: 'Algorithm Complexity & Data Structures Quiz',
+      description: 'Mid-term evaluation covering Big-O analysis, sorting algorithms, and boolean logic.',
+      className: 'Class 10-A',
+      topic: 'Computer Science',
+      assessmentType: 'QUIZ' as any,
       totalMarks: 25,
       passingMarks: 15,
       durationMinutes: 30,
@@ -31,159 +38,185 @@ export function DashboardScreen() {
       isPublished: true,
     },
   ]);
+  const [topics, setTopics] = useState<StudentTopicMasteryDTO[]>(DEMO_TOPICS);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const list = await apiClient.getAssessments();
-        if (list && list.length > 0) {
-          setAssessments(list);
-        }
+        const [list, topicData] = await Promise.allSettled([
+          apiClient.getAssessments(),
+          apiClient.getTopicMastery(),
+        ]);
+        if (list.status === 'fulfilled' && list.value?.length > 0) setAssessments(list.value);
+        if (topicData.status === 'fulfilled' && topicData.value?.length > 0) setTopics(topicData.value);
       } catch {}
     }
     loadData();
   }, [apiClient]);
 
-  const simulateQuiz = () => {
-    setXp((prev) => prev + 50);
+  const simulateQuiz = () => setXp((prev) => prev + 50);
+
+  const getMasteryBarColor = (score: number) => {
+    if (score >= 80) return '#16a34a';
+    if (score >= 50) return '#2563eb';
+    return '#d97706';
   };
+
+  const weakTopics = topics.filter((t) => t.isWeak);
+  const leaderboard = [
+    { rank: 1, name: 'Alex Johnson', xp: 2450 },
+    { rank: 2, name: `${user?.firstName || 'You'}`, xp, isUser: true },
+    { rank: 3, name: 'Sophia Lee', xp: 980 },
+    { rank: 4, name: 'Marcus Vance', xp: 850 },
+  ];
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Top Navbar */}
-        <View style={styles.topNav}>
-          <View style={styles.brandRow}>
-            <View style={styles.brandBadge}>
-              <Text style={styles.brandBadgeText}>PSP</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+
+        {/* Top Navigation Bar */}
+        <View style={styles.navbar}>
+          <View style={styles.navLeft}>
+            <View style={styles.navLogo}>
+              <Feather name="layers" size={16} color="#ffffff" />
             </View>
             <View>
-              <Text style={styles.brandTitle}>PSP LUMORA MOBILE</Text>
-              <Text style={styles.brandUser}>
-                {user?.firstName} {user?.lastName}
-              </Text>
+              <Text style={styles.navBrand}>PSP LUMORA</Text>
+              <Text style={styles.navUser}>{user?.firstName} {user?.lastName}</Text>
             </View>
           </View>
-
-          <TouchableOpacity
-            style={styles.signOutButton}
-            onPress={() => logout()}
-          >
-            <Text style={styles.signOutText}>SIGN OUT</Text>
+          <TouchableOpacity style={styles.signOutBtn} onPress={() => logout()} activeOpacity={0.8}>
+            <Feather name="log-out" size={13} color="#ffffff" />
+            <Text style={styles.signOutText}>Sign Out</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Role Banner Card */}
-        <View style={styles.roleCard}>
-          <View style={styles.roleHeaderRow}>
+        {/* Role Banner */}
+        <View style={styles.roleBanner}>
+          <View style={styles.roleTagRow}>
             <View style={styles.roleTag}>
-              <Text style={styles.roleTagText}>ROLE: {String(user?.role)}</Text>
+              <Feather name={user?.role === 'TEACHER' ? 'briefcase' : user?.role === 'ADMIN' ? 'shield' : 'book-open'} size={11} color="#ffffff" />
+              <Text style={styles.roleTagText}>{String(user?.role)}</Text>
             </View>
             <View style={styles.syncedTag}>
-              <Text style={styles.syncedTagText}>SYNCED WITH BACKEND</Text>
+              <View style={styles.syncDot} />
+              <Text style={styles.syncedTagText}>SYNCED</Text>
             </View>
           </View>
-
           <Text style={styles.roleTitle}>
-            {user?.role === "STUDENT"
-              ? "Student Learning Portal"
-              : user?.role === "TEACHER"
-                ? "Teacher Assessment Desk"
-                : "Admin System Console"}
+            {user?.role === 'STUDENT' ? 'Student Learning Portal' : user?.role === 'TEACHER' ? 'Teacher Assessment Desk' : 'Admin Console'}
           </Text>
-          <Text style={styles.userEmail}>{user?.email}</Text>
+          <Text style={styles.roleEmail}>{user?.email}</Text>
         </View>
 
-        {/* ASSESSMENT ENGINE CARDS (MOBILE) */}
-        <View style={styles.assessmentSection}>
-          <Text style={styles.sectionHeader}>📋 ACTIVE ASSESSMENTS</Text>
+        {/* ANALYTICS: Topic Mastery Bars */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Feather name="target" size={15} color="#111111" />
+            <Text style={styles.cardTitle}>Topic Mastery</Text>
+            {weakTopics.length > 0 && (
+              <View style={styles.weakBadge}>
+                <Feather name="alert-circle" size={11} color="#d97706" />
+                <Text style={styles.weakBadgeText}>{weakTopics.length} weak</Text>
+              </View>
+            )}
+          </View>
 
-          {assessments.map((asm) => (
-            <View key={asm.id} style={styles.asmCard}>
-              <View style={styles.asmHeaderRow}>
-                <View style={styles.classChip}>
-                  <Text style={styles.classChipText}>
-                    {asm.className || "Class 10-A"}
-                  </Text>
+          <View style={styles.masteryList}>
+            {topics.map((topic) => (
+              <View key={topic.topic} style={styles.masteryItem}>
+                <View style={styles.masteryLabelRow}>
+                  <Text style={styles.masteryTopic}>{topic.topic}</Text>
+                  <Text style={styles.masteryPct}>{Math.round(topic.masteryScore)}%</Text>
                 </View>
-                <Text style={styles.asmDuration}>
-                  {asm.durationMinutes} mins
+                <View style={styles.masteryTrack}>
+                  <View
+                    style={[
+                      styles.masteryFill,
+                      { width: `${Math.min(100, topic.masteryScore)}%` as any, backgroundColor: getMasteryBarColor(topic.masteryScore) },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.masteryMeta}>
+                  {topic.correctAnswers}/{topic.totalAttempts} correct · {topic.status}
                 </Text>
               </View>
+            ))}
+          </View>
+        </View>
 
+        {/* Active Assessments */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Feather name="file-text" size={15} color="#111111" />
+            <Text style={styles.cardTitle}>Active Assessments</Text>
+          </View>
+          {assessments.map((asm) => (
+            <View key={asm.id} style={styles.asmItem}>
+              <View style={styles.asmMeta}>
+                <View style={styles.asmClassChip}>
+                  <Text style={styles.asmClassText}>{asm.className}</Text>
+                </View>
+                <Text style={styles.asmDuration}>
+                  <Feather name="clock" size={11} color="#71717a" /> {asm.durationMinutes} mins
+                </Text>
+              </View>
               <Text style={styles.asmTitle}>{asm.title}</Text>
               <Text style={styles.asmDesc}>{asm.description}</Text>
-
               <View style={styles.asmFooter}>
-                <Text style={styles.asmMarks}>
-                  {asm.totalMarks} Marks • Negative:{" "}
-                  {asm.hasNegativeMarking ? `-${asm.negativeMarkValue}` : "Off"}
-                </Text>
-                <TouchableOpacity
-                  style={styles.startBtn}
-                  onPress={simulateQuiz}
-                >
-                  <Text style={styles.startBtnText}>START ATTEMPT →</Text>
+                <Text style={styles.asmMarks}>{asm.totalMarks} marks</Text>
+                {asm.hasNegativeMarking && (
+                  <Text style={styles.asmNeg}>-{asm.negativeMarkValue} marking</Text>
+                )}
+                <TouchableOpacity style={styles.startBtn} onPress={simulateQuiz} activeOpacity={0.8}>
+                  <Text style={styles.startBtnText}>Start</Text>
+                  <Feather name="arrow-right" size={12} color="#ffffff" />
                 </TouchableOpacity>
               </View>
             </View>
           ))}
         </View>
 
-        {/* Stats Card (Charcoal Black Card) */}
+        {/* XP Stats */}
         <View style={styles.statsCard}>
-          <Text style={styles.statsHeader}>⚡ REAL-TIME XP & PROGRESS</Text>
-
+          <View style={styles.cardHeader}>
+            <Feather name="zap" size={15} color="#ffffff" />
+            <Text style={[styles.cardTitle, { color: '#ffffff' }]}>XP & Progress</Text>
+          </View>
           <View style={styles.statsGrid}>
             <View style={styles.statBox}>
-              <Text style={styles.statBoxLabel}>TOTAL XP</Text>
-              <Text style={styles.xpValue}>{xp} XP</Text>
+              <Text style={styles.statLabel}>TOTAL XP</Text>
+              <Text style={styles.statXp}>{xp.toLocaleString()}</Text>
             </View>
-
             <View style={styles.statBox}>
-              <Text style={styles.statBoxLabel}>STREAK</Text>
-              <Text style={styles.streakValue}>🔥 {streak} Days</Text>
+              <Text style={styles.statLabel}>STREAK</Text>
+              <Text style={styles.statStreak}>{streak} Days</Text>
             </View>
           </View>
-
-          <TouchableOpacity style={styles.quizButton} onPress={simulateQuiz}>
-            <Text style={styles.quizButtonText}>
-              + SOLVE PRACTICE QUIZ (+50 XP)
-            </Text>
-            <View style={styles.arrowCircleWhite}>
-              <Text style={styles.arrowTextBlack}>↗</Text>
-            </View>
+          <TouchableOpacity style={styles.xpBtn} onPress={simulateQuiz} activeOpacity={0.8}>
+            <Text style={styles.xpBtnText}>Solve Practice Quiz (+50 XP)</Text>
+            <Feather name="arrow-right" size={13} color="#111111" />
           </TouchableOpacity>
         </View>
 
-        {/* Leaderboard Card */}
-        <View style={styles.leaderboardCard}>
-          <Text style={styles.leaderboardTitle}>🏆 LIVE LEADERBOARD</Text>
-
-          {[
-            { rank: 1, name: "Alex Johnson", xp: 2450 },
-            {
-              rank: 2,
-              name: `${user?.firstName || "You"} (${String(user?.role)})`,
-              xp,
-              isUser: true,
-            },
-            { rank: 3, name: "Sophia Lee", xp: 980 },
-            { rank: 4, name: "Marcus Vance", xp: 850 },
-          ].map((item) => (
-            <View
-              key={item.rank}
-              style={[
-                styles.leaderRow,
-                item.isUser && styles.highlightLeaderRow,
-              ]}
-            >
-              <Text style={styles.rankText}>#{item.rank}</Text>
-              <Text style={styles.nameText}>{item.name}</Text>
-              <Text style={styles.xpText}>{item.xp} XP</Text>
+        {/* Leaderboard */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Feather name="award" size={15} color="#111111" />
+            <Text style={styles.cardTitle}>Leaderboard</Text>
+          </View>
+          {leaderboard.map((item) => (
+            <View key={item.rank} style={[styles.leaderRow, item.isUser && styles.leaderRowUser]}>
+              <Text style={styles.leaderRank}>#{item.rank}</Text>
+              <Text style={[styles.leaderName, item.isUser && styles.leaderNameUser]}>{item.name}</Text>
+              <View style={styles.leaderXpRow}>
+                <Feather name="zap" size={11} color={item.isUser ? '#ffffff' : '#71717a'} />
+                <Text style={[styles.leaderXp, item.isUser && styles.leaderXpUser]}>{item.xp.toLocaleString()} XP</Text>
+              </View>
             </View>
           ))}
         </View>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -192,273 +225,362 @@ export function DashboardScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#B8C6B6",
+    backgroundColor: '#F4F4F6',
   },
   scrollContent: {
     padding: 18,
-    gap: 16,
+    paddingBottom: 40,
+    gap: 14,
   },
-  topNav: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 4,
+
+  // Navbar
+  navbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
   },
-  brandRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  navLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
   },
-  brandBadge: {
+  navLogo: {
     width: 38,
     height: 38,
-    borderRadius: 19,
-    backgroundColor: "#121316",
-    alignItems: "center",
-    justifyContent: "center",
+    borderRadius: 12,
+    backgroundColor: '#111111',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  brandBadgeText: {
-    color: "#ffffff",
-    fontWeight: "900",
-    fontSize: 14,
+  navBrand: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#111111',
+    letterSpacing: 0.5,
   },
-  brandTitle: {
-    fontSize: 16,
-    fontWeight: "900",
-    color: "#121316",
-  },
-  brandUser: {
+  navUser: {
     fontSize: 11,
-    fontWeight: "700",
-    color: "#5451FF",
+    color: '#71717a',
+    fontWeight: '500',
   },
-  signOutButton: {
-    backgroundColor: "#121316",
+  signOutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#111111',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
   },
   signOutText: {
-    color: "#ffffff",
-    fontSize: 10,
-    fontWeight: "900",
-  },
-  roleCard: {
-    backgroundColor: "#5451FF",
-    borderRadius: 28,
-    padding: 20,
-    gap: 8,
-  },
-  roleHeaderRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  roleTag: {
-    backgroundColor: "rgba(255,255,255,0.2)",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  roleTagText: {
-    color: "#ffffff",
-    fontSize: 10,
-    fontWeight: "800",
-  },
-  syncedTag: {
-    backgroundColor: "rgba(74, 222, 128, 0.2)",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  syncedTagText: {
-    color: "#4ade80",
-    fontSize: 10,
-    fontWeight: "800",
-  },
-  roleTitle: {
-    color: "#ffffff",
-    fontSize: 18,
-    fontWeight: "900",
-    marginTop: 2,
-  },
-  userEmail: {
-    color: "rgba(255,255,255,0.8)",
+    color: '#ffffff',
     fontSize: 11,
+    fontWeight: '700',
   },
-  assessmentSection: {
-    backgroundColor: "#ffffff",
-    borderRadius: 28,
-    padding: 20,
-    gap: 12,
-  },
-  sectionHeader: {
-    color: "#121316",
-    fontSize: 13,
-    fontWeight: "900",
-  },
-  asmCard: {
-    backgroundColor: "#F4F4F6",
-    padding: 14,
-    borderRadius: 16,
+
+  // Role Banner
+  roleBanner: {
+    backgroundColor: '#111111',
+    borderRadius: 18,
+    padding: 18,
     gap: 6,
   },
-  asmHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  roleTagRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 2,
   },
-  classChip: {
-    backgroundColor: "#121316",
+  roleTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  roleTagText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  syncedTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(74,222,128,0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  syncDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#4ade80',
+  },
+  syncedTagText: {
+    color: '#4ade80',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  roleTitle: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  roleEmail: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 12,
+  },
+
+  // Generic Card
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 18,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#e4e4e7',
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
+    gap: 12,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#111111',
+    flex: 1,
+  },
+  weakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#fef3c7',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#fde68a',
   },
-  classChipText: {
-    color: "#ffffff",
+  weakBadgeText: {
+    color: '#d97706',
     fontSize: 10,
-    fontWeight: "800",
+    fontWeight: '700',
+  },
+
+  // Mastery Bars
+  masteryList: {
+    gap: 12,
+  },
+  masteryItem: {
+    gap: 4,
+  },
+  masteryLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  masteryTopic: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#111111',
+  },
+  masteryPct: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#111111',
+    fontVariant: ['tabular-nums'],
+  },
+  masteryTrack: {
+    height: 6,
+    backgroundColor: '#f4f4f6',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  masteryFill: {
+    height: 6,
+    borderRadius: 3,
+  },
+  masteryMeta: {
+    fontSize: 10,
+    color: '#a1a1aa',
+    fontWeight: '500',
+  },
+
+  // Assessment Items
+  asmItem: {
+    backgroundColor: '#f9f9fb',
+    borderRadius: 12,
+    padding: 14,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#e4e4e7',
+  },
+  asmMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  asmClassChip: {
+    backgroundColor: '#111111',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  asmClassText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '800',
   },
   asmDuration: {
-    color: "#71717a",
     fontSize: 11,
-    fontWeight: "700",
+    color: '#71717a',
+    fontWeight: '600',
   },
   asmTitle: {
-    color: "#121316",
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: '700',
+    color: '#111111',
   },
   asmDesc: {
-    color: "#71717a",
     fontSize: 11,
+    color: '#71717a',
+    lineHeight: 16,
   },
   asmFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 6,
-    paddingTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingTop: 6,
     borderTopWidth: 1,
-    borderTopColor: "#e4e4e7",
+    borderTopColor: '#e4e4e7',
+    marginTop: 2,
   },
   asmMarks: {
-    color: "#71717a",
+    fontSize: 11,
+    color: '#71717a',
+    fontWeight: '600',
+    flex: 1,
+  },
+  asmNeg: {
     fontSize: 10,
-    fontWeight: "700",
+    color: '#ef4444',
+    fontWeight: '700',
   },
   startBtn: {
-    backgroundColor: "#121316",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#111111',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
   },
   startBtnText: {
-    color: "#ffffff",
-    fontSize: 10,
-    fontWeight: "900",
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '700',
   },
+
+  // Stats Card (dark)
   statsCard: {
-    backgroundColor: "#121316",
-    borderRadius: 28,
-    padding: 20,
+    backgroundColor: '#111111',
+    borderRadius: 18,
+    padding: 18,
     gap: 14,
   },
-  statsHeader: {
-    color: "#ffffff",
-    fontSize: 13,
-    fontWeight: "900",
-  },
   statsGrid: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 10,
   },
   statBox: {
     flex: 1,
-    backgroundColor: "#1f2024",
+    backgroundColor: '#1c1c1e',
+    borderRadius: 12,
     padding: 14,
-    borderRadius: 18,
   },
-  statBoxLabel: {
-    color: "#71717a",
+  statLabel: {
     fontSize: 9,
-    fontWeight: "800",
+    fontWeight: '700',
+    color: '#71717a',
+    letterSpacing: 0.5,
+    marginBottom: 6,
   },
-  xpValue: {
-    color: "#F4C463",
+  statXp: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#f4c463',
+  },
+  statStreak: {
     fontSize: 22,
-    fontWeight: "900",
-    marginTop: 4,
+    fontWeight: '800',
+    color: '#ff5745',
   },
-  streakValue: {
-    color: "#FF5745",
-    fontSize: 20,
-    fontWeight: "900",
-    marginTop: 4,
-  },
-  quizButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#FF5745",
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    borderRadius: 24,
-  },
-  quizButtonText: {
-    color: "#ffffff",
-    fontSize: 11,
-    fontWeight: "900",
-  },
-  arrowCircleWhite: {
-    width: 28,
-    height: 28,
+  xpBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f4f4f6',
+    paddingVertical: 13,
+    paddingHorizontal: 16,
     borderRadius: 14,
-    backgroundColor: "#ffffff",
-    alignItems: "center",
-    justifyContent: "center",
   },
-  arrowTextBlack: {
-    color: "#121316",
-    fontWeight: "bold",
-  },
-  leaderboardCard: {
-    backgroundColor: "#121316",
-    borderRadius: 28,
-    padding: 20,
-    gap: 10,
-  },
-  leaderboardTitle: {
-    color: "#ffffff",
+  xpBtnText: {
+    color: '#111111',
     fontSize: 13,
-    fontWeight: "900",
-    marginBottom: 4,
+    fontWeight: '700',
   },
+
+  // Leaderboard
   leaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#1f2024",
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#f9f9fb',
     padding: 12,
-    borderRadius: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e4e4e7',
   },
-  highlightLeaderRow: {
-    backgroundColor: "#5451FF",
+  leaderRowUser: {
+    backgroundColor: '#111111',
+    borderColor: '#111111',
   },
-  rankText: {
-    color: "#F4C463",
-    fontWeight: "900",
+  leaderRank: {
     fontSize: 12,
-    width: 30,
+    fontWeight: '800',
+    color: '#a1a1aa',
+    width: 24,
   },
-  nameText: {
-    color: "#ffffff",
-    fontSize: 12,
-    fontWeight: "700",
+  leaderName: {
     flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#111111',
   },
-  xpText: {
-    color: "#ffffff",
+  leaderNameUser: {
+    color: '#ffffff',
+  },
+  leaderXpRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  leaderXp: {
     fontSize: 12,
-    fontWeight: "900",
+    fontWeight: '700',
+    color: '#71717a',
+  },
+  leaderXpUser: {
+    color: '#ffffff',
   },
 });
