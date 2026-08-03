@@ -8,23 +8,27 @@ import { apiFetch } from "@/lib/api";
 import { AssessmentDTO, QuestionDTO, OptionDTO } from "@/types";
 import { evaluateCodeSolution } from "@/lib/codeEvaluator";
 import {
-  Code,
-  ArrowLeft,
-  CheckCircle2,
-  Clock,
-  Target,
-  Sparkles,
-  ChevronRight,
   ChevronLeft,
-  ShieldAlert,
+  ChevronRight,
+  Zap,
+  Bookmark,
   Play,
-  Check,
   Send,
-  AlertTriangle,
+  FileText,
+  Sparkles,
+  Lightbulb,
+  Settings,
+  Minimize2,
+  Maximize2,
   RotateCcw,
-  FileCode,
-  HelpCircle,
+  CheckCircle2,
+  XCircle,
+  Clock,
   Award,
+  Target,
+  HelpCircle,
+  AlertTriangle,
+  ChevronDown,
 } from "lucide-react";
 
 // Dynamically import Monaco Editor to prevent SSR issues
@@ -33,9 +37,9 @@ const MonacoPlayground = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="w-full h-64 bg-zinc-900 rounded-xl flex items-center justify-center text-zinc-400 font-mono text-xs border border-zinc-800">
+      <div className="w-full h-full bg-white flex items-center justify-center text-zinc-400 font-mono text-xs border border-zinc-200">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          <div className="w-4 h-4 border-2 border-[#111111] border-t-transparent rounded-full animate-spin" />
           Loading Monaco Code Editor...
         </div>
       </div>
@@ -78,12 +82,22 @@ export default function StudentAssessmentRunnerPage({
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [showSubmitModal, setShowSubmitModal] = useState<boolean>(false);
 
-  // Coding Test Execution State
+  // Left Panel & Console Tabs UI State
+  const [activeLeftTab, setActiveLeftTab] = useState<
+    "question" | "ai" | "hints"
+  >("question");
+  const [activeConsoleTab, setActiveConsoleTab] = useState<
+    "input" | "output" | "error" | "tests"
+  >("output");
+  const [customInput, setCustomInput] = useState<string>("");
+
+  // Code Execution State
   const [evaluating, setEvaluating] = useState<boolean>(false);
   const [evalOutput, setEvalOutput] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [evalResults, setEvalResults] = useState<any[] | null>(null);
 
-  // Fetch Assessment details on load
+  // Load Assessment details on mount
   useEffect(() => {
     async function loadAssessment() {
       try {
@@ -144,7 +158,6 @@ export default function StudentAssessmentRunnerPage({
       if (attempt) {
         setAttemptId(attempt.id);
 
-        // Restore any existing saved answers from backend
         if (attempt.answers && Array.isArray(attempt.answers)) {
           const restored: Record<string, any> = {};
           const restoredCode: Record<string, string> = {};
@@ -162,8 +175,7 @@ export default function StudentAssessmentRunnerPage({
           setCodingSolutions(restoredCode);
         }
       }
-    } catch (err) {
-      console.warn("Using offline attempt mode:", err);
+    } catch {
       setAttemptId(`attempt-${Date.now()}`);
     } finally {
       setTimeLeftSeconds((assessment?.durationMinutes || 15) * 60);
@@ -173,7 +185,7 @@ export default function StudentAssessmentRunnerPage({
     }
   };
 
-  // Save answer locally & sync to backend
+  // Save Answer & sync with backend
   const handleAnswerSelect = async (
     qId: string,
     answer: { optionId?: string; textAnswer?: string; booleanAnswer?: boolean },
@@ -195,44 +207,51 @@ export default function StudentAssessmentRunnerPage({
           }),
         });
       } catch (err) {
-        console.warn("Autosave error:", err);
+        console.warn("Autosave warning:", err);
       }
     }
   };
 
-  // Run Code Evaluation for Coding Questions
-  const handleRunCode = async (question: QuestionDTO) => {
+  // Run Code logic for Coding Question
+  const handleRunCode = (question: QuestionDTO) => {
     const codeToRun =
       codingSolutions[question.id] || question.starterCode || "";
     const lang = codingLanguages[question.id] || "python";
 
     setEvaluating(true);
+    setActiveConsoleTab("output");
     setEvalOutput("Compiling and executing code against test cases...");
+    setErrorMessage(null);
     setEvalResults(null);
 
     setTimeout(() => {
-      const res = evaluateCodeSolution(
+      const outcome = evaluateCodeSolution(
         codeToRun,
         lang,
         question.testCases || [],
       );
 
-      setEvalOutput(
-        res.logs ||
-          (res.allPassed
-            ? `All ${res.totalPassed}/${res.totalTests} test cases passed successfully!`
-            : res.error ||
-              `Passed ${res.totalPassed}/${res.totalTests} test cases.`),
-      );
-      setEvalResults(res.testResults);
+      if (outcome.error) {
+        setErrorMessage(outcome.error);
+        setActiveConsoleTab("error");
+        setEvalOutput("");
+      } else {
+        setEvalOutput(
+          outcome.logs ||
+            (outcome.allPassed
+              ? `All ${outcome.totalPassed}/${outcome.totalTests} test cases passed successfully!`
+              : `Passed ${outcome.totalPassed}/${outcome.totalTests} test cases.`),
+        );
+      }
+
+      setEvalResults(outcome.testResults || []);
       setEvaluating(false);
 
-      // Save code solution as textAnswer
       handleAnswerSelect(question.id, { textAnswer: codeToRun });
-    }, 600);
+    }, 400);
   };
 
-  // Final Assessment Submit
+  // Final Submit Attempt
   const handleFinalSubmit = async () => {
     setSubmitting(true);
     try {
@@ -244,9 +263,6 @@ export default function StudentAssessmentRunnerPage({
       } else {
         router.push(`/student/assessments`);
       }
-    } catch (err) {
-      console.error("Failed to submit assessment:", err);
-      router.push(`/student/assessments`);
     } finally {
       setSubmitting(false);
     }
@@ -254,11 +270,11 @@ export default function StudentAssessmentRunnerPage({
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#F9F9FB] flex flex-col items-center justify-center p-6">
+      <main className="h-screen w-screen bg-[#F8F9FA] flex flex-col items-center justify-center p-6 font-sans">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-9 h-9 border-3 border-[#111111] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
           <span className="text-xs font-mono text-zinc-500">
-            Preparing Assessment Environment...
+            Loading Assessment IDE Workspace...
           </span>
         </div>
       </main>
@@ -266,78 +282,24 @@ export default function StudentAssessmentRunnerPage({
   }
 
   const currentQ = questions[currentIdx];
-  const isLastQuestion = currentIdx === questions.length - 1;
   const answeredCount = Object.keys(selectedAnswers).length;
 
   return (
-    <main className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans selection:bg-[#111111] selection:text-white flex flex-col">
-      {/* Top Navigation Header */}
-      <header className="border-b border-zinc-200 bg-white/90 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-[#111111] text-white rounded-lg flex items-center justify-center font-bold text-xs">
-              PS
-            </div>
-            <div>
-              <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-widest block">
-                PSP LUMORA WEB
-              </span>
-              <span className="text-xs font-semibold text-[#111111]">
-                {assessment?.title || "Playground Assessment"}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {mode === "RUNNER" && (
-              <div
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border font-mono text-xs font-bold transition-all ${
-                  timeLeftSeconds < 120
-                    ? "bg-red-50 text-red-700 border-red-200 animate-pulse"
-                    : "bg-zinc-100 text-zinc-800 border-zinc-200"
-                }`}
-              >
-                <Clock className="w-3.5 h-3.5" />
-                <span>{formatTime(timeLeftSeconds)}</span>
-              </div>
-            )}
-
-            <button
-              onClick={() => {
-                if (mode === "RUNNER") {
-                  setShowSubmitModal(true);
-                } else {
-                  router.push("/student/assessments");
-                }
-              }}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 border border-zinc-200 text-xs font-medium text-zinc-700 rounded-lg hover:bg-zinc-100 transition-all cursor-pointer"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              {mode === "RUNNER" ? "Exit Assessment" : "Back to Assessments"}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Mode 1: OVERVIEW SCREEN */}
+    <main className="h-screen w-screen overflow-hidden bg-[#F8F9FA] text-[#111111] font-sans flex flex-col selection:bg-blue-600 selection:text-white">
+      {/* ── OVERVIEW MODE LANDING SCREEN ───────────────────────────────────────── */}
       {mode === "OVERVIEW" && (
-        <div className="flex-1 max-w-4xl w-full mx-auto px-6 py-10 flex flex-col items-center justify-center">
+        <div className="flex-1 max-w-4xl w-full mx-auto px-6 py-12 flex flex-col items-center justify-center">
           <div className="w-full bg-white border border-zinc-200 rounded-2xl p-8 md:p-12 shadow-sm space-y-8 relative overflow-hidden">
-            {/* Background Gradient Accents */}
-            <div className="absolute -top-24 -right-24 w-48 h-48 bg-purple-50 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-emerald-50 rounded-full blur-2xl pointer-events-none" />
-
-            {/* Assessment Header */}
             <div className="space-y-3 text-center max-w-2xl mx-auto">
-              <div className="flex items-center justify-center gap-2 flex-wrap">
-                <span className="px-2.5 py-0.5 bg-[#111111] text-white text-[10px] font-mono font-bold rounded">
+              <div className="flex items-center justify-center gap-2 flex-wrap font-mono text-[10px]">
+                <span className="px-2.5 py-0.5 bg-[#111111] text-white font-bold rounded">
                   {assessment?.className || "Computer Science"}
                 </span>
-                <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-900 text-[10px] font-mono font-bold rounded uppercase">
+                <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-900 font-bold rounded uppercase">
                   {assessment?.assessmentType || "PRACTICE"}
                 </span>
                 {assessment?.topic && (
-                  <span className="px-2.5 py-0.5 bg-zinc-100 text-zinc-600 text-[10px] font-mono rounded">
+                  <span className="px-2.5 py-0.5 bg-zinc-100 text-zinc-600 rounded">
                     {assessment.topic}
                   </span>
                 )}
@@ -353,7 +315,7 @@ export default function StudentAssessmentRunnerPage({
               </p>
             </div>
 
-            {/* Metadata Stats Grid */}
+            {/* Metadata Specs Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono">
               <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl flex flex-col items-center justify-center text-center">
                 <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
@@ -400,300 +362,578 @@ export default function StudentAssessmentRunnerPage({
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
               <button
                 onClick={handleStartAttempt}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-[#111111] hover:bg-black text-white text-xs font-semibold rounded-xl shadow-md transition-all cursor-pointer"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-[#0066FF] hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-md transition-all cursor-pointer"
               >
                 <Play className="w-4 h-4 fill-white" />
-                Start Assessment Now
-                <ChevronRight className="w-4 h-4 opacity-70" />
+                Start Assessment IDE
+                <ChevronRight className="w-4 h-4" />
               </button>
 
               <button
-                onClick={() => router.push("/student/playground")}
+                onClick={() => router.push("/student/assessments")}
                 className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-800 text-xs font-medium rounded-xl shadow-xs transition-all cursor-pointer"
               >
-                <Code className="w-4 h-4 text-purple-600" />
-                Open Code Playground
+                Back to Assessments
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Mode 2: INTERACTIVE ASSESSMENT RUNNER */}
+      {/* ── RUNNER MODE IDE WORKSPACE (Matching Image 2) ────────────────────────── */}
       {mode === "RUNNER" && currentQ && (
-        <div className="flex-1 max-w-5xl w-full mx-auto px-6 py-8 flex flex-col gap-6">
-          {/* Question Fast-Jump Navigator Bar */}
-          <div className="bg-white border border-zinc-200 rounded-xl p-4 shadow-xs flex items-center justify-between gap-4 overflow-x-auto">
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider">
-                Questions ({answeredCount}/{questions.length}):
-              </span>
+        <>
+          {/* Top Navbar Header (Image 2 style) */}
+          <header className="h-14 bg-white border-b border-zinc-200 px-4 flex items-center justify-between shrink-0 z-30 shadow-2xs">
+            {/* Left: Back + Title + Question Pill Selector */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowSubmitModal(true)}
+                className="flex items-center gap-1 text-xs font-semibold text-zinc-700 hover:text-black transition-colors cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>Back</span>
+              </button>
+              <span className="text-zinc-300 font-mono">|</span>
+              <h1 className="text-sm font-semibold text-zinc-900 truncate max-w-xs md:max-w-md">
+                {assessment?.title}
+              </h1>
+
+              {/* Question Pills */}
+              <div className="hidden md:flex items-center gap-1.5 ml-4">
+                {questions.map((q, idx) => {
+                  const isCurrent = idx === currentIdx;
+                  const isAnswered = !!selectedAnswers[q.id];
+
+                  return (
+                    <button
+                      key={q.id}
+                      onClick={() => setCurrentIdx(idx)}
+                      className={`w-7 h-7 rounded-lg text-xs font-mono font-bold flex items-center justify-center transition-all cursor-pointer shrink-0 ${
+                        isCurrent
+                          ? "bg-blue-600 text-white ring-2 ring-blue-600 ring-offset-1"
+                          : isAnswered
+                            ? "bg-emerald-500 text-white"
+                            : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                      }`}
+                    >
+                      {idx + 1}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="flex items-center gap-1.5 overflow-x-auto py-1">
-              {questions.map((q, idx) => {
-                const isCurrent = idx === currentIdx;
-                const isAnswered = !!selectedAnswers[q.id];
+            {/* Right: Timer + XP + Actions */}
+            <div className="flex items-center gap-3">
+              {/* Countdown Timer */}
+              <div
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-mono text-xs font-bold border transition-all ${
+                  timeLeftSeconds < 120
+                    ? "bg-red-50 text-red-700 border-red-200 animate-pulse"
+                    : "bg-zinc-100 text-zinc-800 border-zinc-200"
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>{formatTime(timeLeftSeconds)}</span>
+              </div>
 
-                return (
-                  <button
-                    key={q.id}
-                    onClick={() => setCurrentIdx(idx)}
-                    className={`w-8 h-8 rounded-lg text-xs font-mono font-bold flex items-center justify-center transition-all cursor-pointer shrink-0 ${
-                      isCurrent
-                        ? "bg-[#111111] text-white ring-2 ring-offset-1 ring-[#111111]"
-                        : isAnswered
-                          ? "bg-emerald-500 text-white"
-                          : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
-                    }`}
-                  >
-                    {idx + 1}
-                  </button>
-                );
-              })}
+              {/* XP Badge */}
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-xs font-bold text-amber-900 font-mono">
+                <span className="text-zinc-500 text-[11px] font-sans font-semibold">
+                  Total XP
+                </span>
+                <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                <span>31,923</span>
+              </div>
+
+              <button
+                title="Bookmark Problem"
+                className="p-1.5 text-zinc-400 hover:text-zinc-800 rounded-lg hover:bg-zinc-100 cursor-pointer"
+              >
+                <Bookmark className="w-4 h-4" />
+              </button>
+
+              {/* Run Button (for Coding questions) */}
+              {currentQ.questionType === "CODING" && (
+                <button
+                  onClick={() => handleRunCode(currentQ)}
+                  disabled={evaluating}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-800 text-xs font-semibold rounded-lg shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <Play className="w-3.5 h-3.5 fill-zinc-800" />
+                  <span>{evaluating ? "Running..." : "Run"}</span>
+                </button>
+              )}
+
+              {/* Submit Button */}
+              <button
+                onClick={() => setShowSubmitModal(true)}
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-[#0066FF] hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Submit</span>
+              </button>
             </div>
+          </header>
 
-            <button
-              onClick={() => setShowSubmitModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-2xs transition-all shrink-0 cursor-pointer"
-            >
-              <Send className="w-3.5 h-3.5" />
-              Submit Assessment
-            </button>
-          </div>
+          {/* ── MAIN 2-PANEL WORKSPACE SPLIT (Image 2 style) ────────────────────── */}
+          <div className="flex-1 flex overflow-hidden">
+            {/* Far Left Navigation Icon Rail */}
+            <aside className="w-12 bg-white border-r border-zinc-200 flex flex-col items-center justify-between py-3 shrink-0">
+              <div className="flex flex-col items-center gap-4">
+                <button
+                  onClick={() => setActiveLeftTab("question")}
+                  title="Question Details"
+                  className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                    activeLeftTab === "question"
+                      ? "text-zinc-900 bg-zinc-100"
+                      : "text-zinc-400 hover:text-zinc-800 hover:bg-zinc-50"
+                  }`}
+                >
+                  <FileText className="w-4 h-4" />
+                </button>
 
-          {/* Question Card */}
-          <div className="bg-white border border-zinc-200 rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
-            {/* Header: Question Meta */}
-            <div className="flex items-center justify-between gap-4 pb-4 border-b border-zinc-100 flex-wrap">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 bg-[#111111] text-white text-xs font-mono font-bold rounded">
-                  Q{currentIdx + 1} of {questions.length}
-                </span>
-                <span className="px-2.5 py-1 bg-purple-50 text-purple-700 border border-purple-200 text-xs font-mono font-bold rounded">
-                  {currentQ.questionType.replace("_", " ")}
-                </span>
-                {currentQ.difficulty && (
-                  <span
-                    className={`px-2.5 py-1 text-xs font-mono font-bold rounded ${
-                      currentQ.difficulty === "EASY"
-                        ? "bg-emerald-50 text-emerald-700"
-                        : currentQ.difficulty === "MEDIUM"
-                          ? "bg-amber-50 text-amber-700"
-                          : "bg-red-50 text-red-700"
-                    }`}
-                  >
-                    {currentQ.difficulty}
+                <button
+                  onClick={() => setActiveLeftTab("ai")}
+                  title="AI Tutor & Hints"
+                  className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                    activeLeftTab === "ai"
+                      ? "text-zinc-900 bg-zinc-100"
+                      : "text-zinc-400 hover:text-zinc-800 hover:bg-zinc-50"
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4" />
+                </button>
+
+                <button
+                  onClick={() => setActiveLeftTab("hints")}
+                  title="Question Hints"
+                  className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                    activeLeftTab === "hints"
+                      ? "text-zinc-900 bg-zinc-100"
+                      : "text-zinc-400 hover:text-zinc-800 hover:bg-zinc-50"
+                  }`}
+                >
+                  <Lightbulb className="w-4 h-4" />
+                </button>
+              </div>
+
+              <button
+                title="Settings"
+                className="p-2 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg cursor-pointer"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+            </aside>
+
+            {/* ── LEFT PANEL: QUESTION / PROBLEM STATEMENT ────────────────────── */}
+            <section className="w-5/12 bg-white border-r border-zinc-200 flex flex-col overflow-hidden">
+              {/* Header Bar */}
+              <div className="h-10 border-b border-zinc-200 px-4 flex items-center justify-between bg-zinc-50/60 shrink-0">
+                <div className="flex items-center gap-2 text-[11px] font-mono font-bold uppercase text-zinc-500 tracking-wider">
+                  <FileText className="w-3.5 h-3.5 text-blue-600" />
+                  <span>
+                    QUESTION {currentIdx + 1} OF {questions.length}
                   </span>
-                )}
+                </div>
+                <div className="flex items-center gap-2 text-zinc-400">
+                  <button
+                    title="Minimize"
+                    className="hover:text-zinc-700 cursor-pointer"
+                  >
+                    <Minimize2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold text-zinc-500">
-                  {currentQ.points} Points
-                </span>
-              </div>
-            </div>
+              {/* Scrollable Question Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 text-zinc-800 text-xs leading-relaxed font-sans">
+                {/* Title */}
+                <div>
+                  <h2 className="text-lg font-bold text-zinc-900">
+                    {currentQ.questionText}
+                  </h2>
+                </div>
 
-            {/* Question Text */}
-            <div className="space-y-2">
-              <h2 className="text-base md:text-lg font-semibold text-[#111111] leading-relaxed">
-                {currentQ.questionText}
-              </h2>
-            </div>
+                {/* Badges Row */}
+                <div className="flex items-center gap-2 font-mono text-[11px]">
+                  {currentQ.difficulty && (
+                    <span
+                      className={`px-2.5 py-0.5 font-bold rounded-full ${
+                        currentQ.difficulty === "EASY"
+                          ? "bg-emerald-100 text-emerald-900"
+                          : currentQ.difficulty === "MEDIUM"
+                            ? "bg-amber-100 text-amber-900"
+                            : "bg-red-100 text-red-900"
+                      }`}
+                    >
+                      {currentQ.difficulty}
+                    </span>
+                  )}
+                  <span className="px-2 py-0.5 bg-zinc-100 text-zinc-600 font-semibold rounded">
+                    2x
+                  </span>
+                  <span className="px-2.5 py-0.5 bg-zinc-100 text-zinc-800 font-bold rounded">
+                    {currentQ.points} Points
+                  </span>
+                </div>
 
-            {/* ANSWER INPUT INTERFACE */}
-            <div className="pt-2">
-              {/* Option A: SINGLE_CHOICE / MULTIPLE_CHOICE */}
-              {(currentQ.questionType === "SINGLE_CHOICE" ||
-                currentQ.questionType === "MULTIPLE_CHOICE") &&
-                currentQ.options && (
-                  <div className="space-y-3">
-                    {currentQ.options.map((opt: OptionDTO, oIdx: number) => {
-                      const isSelected =
-                        selectedAnswers[currentQ.id]?.optionId === opt.id;
-                      const letter = String.fromCharCode(65 + oIdx);
+                {/* Specs */}
+                <div className="text-[11px] font-mono text-zinc-400">
+                  Time Limit: 2s, Memory Limit: 128000
+                </div>
 
-                      return (
-                        <button
-                          key={opt.id}
-                          onClick={() =>
-                            handleAnswerSelect(currentQ.id, {
-                              optionId: opt.id,
-                            })
-                          }
-                          className={`w-full flex items-center justify-between p-4 rounded-xl border text-left transition-all cursor-pointer ${
-                            isSelected
-                              ? "bg-zinc-900 text-white border-zinc-900 shadow-sm"
-                              : "bg-white hover:bg-zinc-50 border-zinc-200 text-zinc-800"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`w-7 h-7 rounded-lg text-xs font-mono font-bold flex items-center justify-center border ${
+                {/* User Task */}
+                <div className="space-y-1">
+                  <h3 className="font-bold text-zinc-900 text-xs">
+                    User Task:
+                  </h3>
+                  <p className="text-zinc-600 leading-relaxed font-sans">
+                    Read the question logic carefully and select or write the
+                    appropriate solution to complete the task.
+                  </p>
+                </div>
+
+                {/* NON-CODING OPTIONS IN QUESTION SIDEBAR */}
+                {currentQ.questionType !== "CODING" && (
+                  <div className="pt-2 space-y-3">
+                    <h3 className="font-bold text-zinc-900 text-xs">
+                      Select Your Answer:
+                    </h3>
+
+                    {/* Single / Multiple Choice */}
+                    {(currentQ.questionType === "SINGLE_CHOICE" ||
+                      currentQ.questionType === "MULTIPLE_CHOICE") &&
+                      currentQ.options && (
+                        <div className="space-y-2.5">
+                          {currentQ.options.map(
+                            (opt: OptionDTO, oIdx: number) => {
+                              const isSelected =
+                                selectedAnswers[currentQ.id]?.optionId ===
+                                opt.id;
+                              const letter = String.fromCharCode(65 + oIdx);
+
+                              return (
+                                <button
+                                  key={opt.id}
+                                  onClick={() =>
+                                    handleAnswerSelect(currentQ.id, {
+                                      optionId: opt.id,
+                                    })
+                                  }
+                                  className={`w-full flex items-center justify-between p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                                    isSelected
+                                      ? "bg-zinc-900 text-white border-zinc-900 shadow-sm"
+                                      : "bg-zinc-50 hover:bg-zinc-100 border-zinc-200 text-zinc-800"
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className={`w-6 h-6 rounded-md text-[11px] font-mono font-bold flex items-center justify-center border ${
+                                        isSelected
+                                          ? "bg-white text-zinc-900 border-white"
+                                          : "bg-white text-zinc-600 border-zinc-200"
+                                      }`}
+                                    >
+                                      {letter}
+                                    </div>
+                                    <span className="text-xs font-medium font-sans">
+                                      {opt.optionText || opt.text}
+                                    </span>
+                                  </div>
+                                  {isSelected && (
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                  )}
+                                </button>
+                              );
+                            },
+                          )}
+                        </div>
+                      )}
+
+                    {/* True / False */}
+                    {currentQ.questionType === "TRUE_FALSE" && (
+                      <div className="grid grid-cols-2 gap-3">
+                        {[true, false].map((val) => {
+                          const isSelected =
+                            selectedAnswers[currentQ.id]?.booleanAnswer === val;
+
+                          return (
+                            <button
+                              key={String(val)}
+                              onClick={() =>
+                                handleAnswerSelect(currentQ.id, {
+                                  booleanAnswer: val,
+                                })
+                              }
+                              className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                                 isSelected
-                                  ? "bg-white text-zinc-900 border-white"
-                                  : "bg-zinc-100 text-zinc-600 border-zinc-200"
+                                  ? "bg-zinc-900 text-white border-zinc-900 shadow-sm"
+                                  : "bg-zinc-50 hover:bg-zinc-100 border-zinc-200 text-zinc-800"
                               }`}
                             >
-                              {letter}
-                            </div>
-                            <span className="text-xs md:text-sm font-medium font-sans">
-                              {opt.optionText || opt.text}
-                            </span>
-                          </div>
+                              <span className="text-sm font-bold font-mono">
+                                {val ? "TRUE" : "FALSE"}
+                              </span>
+                              {isSelected && (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
 
-                          {isSelected && (
-                            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-                          )}
-                        </button>
-                      );
-                    })}
+                    {/* Short Answer */}
+                    {(currentQ.questionType === "SHORT_ANSWER" ||
+                      currentQ.questionType === "FILL_IN_BLANKS") && (
+                      <textarea
+                        rows={4}
+                        value={selectedAnswers[currentQ.id]?.textAnswer || ""}
+                        onChange={(e) =>
+                          handleAnswerSelect(currentQ.id, {
+                            textAnswer: e.target.value,
+                          })
+                        }
+                        placeholder="Type your answer text here..."
+                        className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-xl text-xs font-sans text-zinc-900 focus:outline-none focus:bg-white focus:border-blue-600 transition-all"
+                      />
+                    )}
                   </div>
                 )}
 
-              {/* Option B: TRUE_FALSE */}
-              {currentQ.questionType === "TRUE_FALSE" && (
-                <div className="grid grid-cols-2 gap-4">
-                  {[true, false].map((val) => {
-                    const isSelected =
-                      selectedAnswers[currentQ.id]?.booleanAnswer === val;
+                {/* Constraints for Coding */}
+                {currentQ.questionType === "CODING" && (
+                  <div className="space-y-1.5">
+                    <h3 className="font-bold text-zinc-900 text-xs">
+                      Constraints:
+                    </h3>
+                    <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-lg font-mono text-[11px] text-zinc-800 space-y-1">
+                      <div>1 ≤ N ≤ 1000</div>
+                      <div>0 ≤ Element.data ≤ 100</div>
+                    </div>
+                  </div>
+                )}
+              </div>
 
-                    return (
-                      <button
-                        key={String(val)}
-                        onClick={() =>
-                          handleAnswerSelect(currentQ.id, {
-                            booleanAnswer: val,
-                          })
-                        }
-                        className={`p-6 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
-                          isSelected
-                            ? "bg-zinc-900 text-white border-zinc-900 shadow-sm"
-                            : "bg-white hover:bg-zinc-50 border-zinc-200 text-zinc-800"
-                        }`}
-                      >
-                        <span className="text-lg font-bold font-mono">
-                          {val ? "TRUE" : "FALSE"}
-                        </span>
-                        {isSelected && (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+              {/* Previous / Next Question Navigation Footer */}
+              <div className="h-14 border-t border-zinc-200 px-4 flex items-center justify-between bg-zinc-50/40 shrink-0">
+                <button
+                  onClick={() => setCurrentIdx((prev) => Math.max(0, prev - 1))}
+                  disabled={currentIdx === 0}
+                  className="flex items-center gap-1 px-3 py-1.5 border border-zinc-200 rounded-lg text-xs font-semibold text-zinc-700 hover:bg-zinc-100 disabled:opacity-40 transition-all cursor-pointer"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  Previous Question
+                </button>
 
-              {/* Option C: SHORT_ANSWER / FILL_IN_BLANKS */}
-              {(currentQ.questionType === "SHORT_ANSWER" ||
-                currentQ.questionType === "FILL_IN_BLANKS") && (
-                <div className="space-y-2">
-                  <label className="text-xs font-mono text-zinc-500 uppercase tracking-wider block">
-                    Type your answer:
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={selectedAnswers[currentQ.id]?.textAnswer || ""}
+                <button
+                  onClick={() =>
+                    setCurrentIdx((prev) =>
+                      Math.min(questions.length - 1, prev + 1),
+                    )
+                  }
+                  disabled={currentIdx === questions.length - 1}
+                  className="flex items-center gap-1 px-3.5 py-1.5 bg-[#111111] hover:bg-black text-white text-xs font-semibold rounded-lg disabled:opacity-40 transition-all cursor-pointer"
+                >
+                  Next Question
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </section>
+
+            {/* ── RIGHT PANEL: MONACO EDITOR & CONSOLE ────────────────────────── */}
+            <section className="flex-1 flex flex-col overflow-hidden bg-white">
+              {/* Top Monaco Bar */}
+              <div className="h-10 border-b border-zinc-200 px-4 flex items-center justify-between bg-zinc-50/60 shrink-0 font-mono text-xs">
+                <div className="flex items-center gap-2">
+                  <select
+                    value={codingLanguages[currentQ.id] || "python"}
                     onChange={(e) =>
-                      handleAnswerSelect(currentQ.id, {
-                        textAnswer: e.target.value,
-                      })
+                      setCodingLanguages((prev) => ({
+                        ...prev,
+                        [currentQ.id]: e.target.value,
+                      }))
                     }
-                    placeholder="Type answer details here..."
-                    className="w-full p-4 bg-[#F4F4F6] border border-transparent rounded-xl text-sm text-[#111111] placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-[#111111] transition-all font-sans"
-                  />
+                    className="bg-white border border-zinc-200 text-zinc-800 rounded px-2.5 py-1 text-xs focus:outline-none cursor-pointer"
+                  >
+                    <option value="python">Python (3.13.1)</option>
+                    <option value="javascript">JavaScript</option>
+                    <option value="typescript">TypeScript</option>
+                    <option value="cpp">C++</option>
+                    <option value="java">Java</option>
+                  </select>
                 </div>
-              )}
 
-              {/* Option D: CODING (MONACO PLAYGROUND) */}
-              {currentQ.questionType === "CODING" && (
-                <div className="space-y-4">
-                  {/* Monaco Editor Header Bar */}
-                  <div className="flex items-center justify-between bg-zinc-900 text-white px-4 py-2.5 rounded-t-xl font-mono text-xs border border-zinc-800">
-                    <div className="flex items-center gap-2">
-                      <FileCode className="w-4 h-4 text-purple-400" />
-                      <span>Monaco Playground Code Editor</span>
+                <div className="flex items-center gap-3 text-zinc-400">
+                  <button
+                    onClick={() => {
+                      const starter = currentQ.starterCode || "";
+                      setCodingSolutions((prev) => ({
+                        ...prev,
+                        [currentQ.id]: starter,
+                      }));
+                    }}
+                    title="Reset Starter Code"
+                    className="hover:text-zinc-700 transition-colors cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    title="Fullscreen Toggle"
+                    className="hover:text-zinc-700 transition-colors cursor-pointer"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Main Monaco Code Editor */}
+              <div className="flex-1 overflow-hidden relative">
+                <MonacoPlayground
+                  value={
+                    codingSolutions[currentQ.id] !== undefined
+                      ? codingSolutions[currentQ.id]
+                      : currentQ.starterCode ||
+                        "# Write your solution code here\n"
+                  }
+                  onChange={(val) => {
+                    setCodingSolutions((prev) => ({
+                      ...prev,
+                      [currentQ.id]: val,
+                    }));
+                    handleAnswerSelect(currentQ.id, { textAnswer: val });
+                  }}
+                  language={codingLanguages[currentQ.id] || "python"}
+                  theme="vs-dark"
+                  height="100%"
+                />
+              </div>
+
+              {/* Bottom Console Panel (INPUT / OUTPUT / ERROR / TEST RESULTS) */}
+              <div className="h-52 border-t border-zinc-200 flex flex-col bg-white shrink-0">
+                {/* Console Tab Header */}
+                <div className="h-9 border-b border-zinc-200 px-4 flex items-center gap-5 bg-zinc-50/60 text-[11px] font-mono font-bold text-zinc-500 shrink-0">
+                  <button
+                    onClick={() => setActiveConsoleTab("input")}
+                    className={`py-1.5 border-b-2 transition-all cursor-pointer ${
+                      activeConsoleTab === "input"
+                        ? "border-blue-600 text-blue-600"
+                        : "border-transparent hover:text-zinc-800"
+                    }`}
+                  >
+                    INPUT
+                  </button>
+                  <button
+                    onClick={() => setActiveConsoleTab("output")}
+                    className={`py-1.5 border-b-2 transition-all cursor-pointer ${
+                      activeConsoleTab === "output"
+                        ? "border-blue-600 text-blue-600"
+                        : "border-transparent hover:text-zinc-800"
+                    }`}
+                  >
+                    OUTPUT
+                  </button>
+                  <button
+                    onClick={() => setActiveConsoleTab("error")}
+                    className={`py-1.5 border-b-2 transition-all cursor-pointer ${
+                      activeConsoleTab === "error"
+                        ? "border-blue-600 text-blue-600"
+                        : "border-transparent hover:text-zinc-800"
+                    }`}
+                  >
+                    ERROR
+                  </button>
+                  <button
+                    onClick={() => setActiveConsoleTab("tests")}
+                    className={`py-1.5 border-b-2 transition-all cursor-pointer ${
+                      activeConsoleTab === "tests"
+                        ? "border-blue-600 text-blue-600"
+                        : "border-transparent hover:text-zinc-800"
+                    }`}
+                  >
+                    TEST RESULTS
+                  </button>
+                </div>
+
+                {/* Console Body */}
+                <div className="flex-1 p-4 font-mono text-xs overflow-y-auto bg-zinc-50/40">
+                  {/* Tab 1: Custom Input */}
+                  {activeConsoleTab === "input" && (
+                    <div className="space-y-2 h-full flex flex-col">
+                      <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
+                        Custom Input:
+                      </label>
+                      <textarea
+                        value={customInput}
+                        onChange={(e) => setCustomInput(e.target.value)}
+                        className="flex-1 w-full p-3 bg-white border border-zinc-200 rounded-lg text-xs font-mono text-zinc-800 focus:outline-none"
+                        placeholder="Enter custom test input..."
+                      />
                     </div>
+                  )}
 
-                    <div className="flex items-center gap-3">
-                      <select
-                        value={codingLanguages[currentQ.id] || "python"}
-                        onChange={(e) =>
-                          setCodingLanguages((prev) => ({
-                            ...prev,
-                            [currentQ.id]: e.target.value,
-                          }))
-                        }
-                        className="bg-zinc-800 border border-zinc-700 text-white rounded px-2.5 py-1 text-xs focus:outline-none"
-                      >
-                        <option value="python">Python 3</option>
-                        <option value="javascript">JavaScript</option>
-                        <option value="cpp">C++</option>
-                        <option value="java">Java</option>
-                      </select>
-
-                      <button
-                        onClick={() => handleRunCode(currentQ)}
-                        disabled={evaluating}
-                        className="flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded transition-all cursor-pointer disabled:opacity-50"
-                      >
-                        <Play className="w-3.5 h-3.5 fill-white" />
-                        {evaluating ? "Evaluating..." : "Run Test Cases"}
-                      </button>
+                  {/* Tab 2: Output */}
+                  {activeConsoleTab === "output" && (
+                    <div className="space-y-2">
+                      {evalOutput ? (
+                        <pre className="text-zinc-900 leading-relaxed whitespace-pre-wrap">
+                          {evalOutput}
+                        </pre>
+                      ) : (
+                        <div className="text-zinc-400 text-[11px] italic">
+                          Click &quot;Run&quot; or &quot;Submit&quot; to execute
+                          your solution code.
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  )}
 
-                  {/* Monaco Code Editor Container */}
-                  <div className="h-80 w-full border border-zinc-800 rounded-b-xl overflow-hidden shadow-inner">
-                    <MonacoPlayground
-                      value={
-                        codingSolutions[currentQ.id] !== undefined
-                          ? codingSolutions[currentQ.id]
-                          : currentQ.starterCode ||
-                            "# Write your solution code here\n"
-                      }
-                      onChange={(val) => {
-                        setCodingSolutions((prev) => ({
-                          ...prev,
-                          [currentQ.id]: val,
-                        }));
-                        handleAnswerSelect(currentQ.id, { textAnswer: val });
-                      }}
-                      language={codingLanguages[currentQ.id] || "python"}
-                      theme="vs-dark"
-                      height="100%"
-                    />
-                  </div>
+                  {/* Tab 3: Error */}
+                  {activeConsoleTab === "error" && (
+                    <div>
+                      {errorMessage ? (
+                        <pre className="text-red-600 font-bold whitespace-pre-wrap">
+                          {errorMessage}
+                        </pre>
+                      ) : (
+                        <div className="text-emerald-600 text-[11px] font-bold">
+                          No runtime errors detected.
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                  {/* Code Evaluation Console Output */}
-                  {evalOutput && (
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3 text-xs font-mono">
-                      <div className="flex items-center justify-between text-zinc-400 border-b border-zinc-800 pb-2">
-                        <span className="font-bold uppercase text-[10px] tracking-wider">
-                          Execution Output Console
-                        </span>
-                      </div>
-
-                      <pre className="text-emerald-400 whitespace-pre-wrap leading-relaxed overflow-x-auto">
-                        {evalOutput}
-                      </pre>
-
-                      {evalResults && (
-                        <div className="space-y-1.5 pt-2 border-t border-zinc-800">
-                          {evalResults.map((tr, idx) => (
+                  {/* Tab 4: Test Results */}
+                  {activeConsoleTab === "tests" && (
+                    <div className="space-y-2">
+                      {evalResults && evalResults.length > 0 ? (
+                        <div className="space-y-2">
+                          {evalResults.map((tr: any, idx: number) => (
                             <div
                               key={idx}
-                              className="flex items-center justify-between p-2 rounded bg-zinc-800/60 text-[11px]"
+                              className="flex items-center justify-between p-2.5 rounded-lg border bg-white border-zinc-200 text-[11px]"
                             >
-                              <span className="text-zinc-300">
-                                Test Case #{idx + 1}:
-                              </span>
+                              <div className="flex items-center gap-2">
+                                {tr.passed ? (
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                                ) : (
+                                  <XCircle className="w-4 h-4 text-red-500 shrink-0" />
+                                )}
+                                <span className="font-bold text-zinc-800">
+                                  Test Case #{idx + 1}
+                                </span>
+                                <span className="text-zinc-500">
+                                  (Input: {tr.input})
+                                </span>
+                              </div>
+
                               <span
                                 className={`font-bold ${
                                   tr.passed
-                                    ? "text-emerald-400"
-                                    : "text-red-400"
+                                    ? "text-emerald-600"
+                                    : "text-red-500"
                                 }`}
                               >
                                 {tr.passed ? "PASSED" : "FAILED"}
@@ -701,54 +941,24 @@ export default function StudentAssessmentRunnerPage({
                             </div>
                           ))}
                         </div>
+                      ) : (
+                        <div className="text-zinc-400 text-[11px] italic">
+                          No test case evaluations yet. Click Run or Submit.
+                        </div>
                       )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-
-            {/* Question Footer Controls */}
-            <div className="flex items-center justify-between pt-6 border-t border-zinc-100">
-              <button
-                onClick={() => setCurrentIdx((prev) => Math.max(0, prev - 1))}
-                disabled={currentIdx === 0}
-                className="flex items-center gap-1.5 px-4 py-2.5 border border-zinc-200 rounded-xl text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-40 transition-all cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Previous Question
-              </button>
-
-              {isLastQuestion ? (
-                <button
-                  onClick={() => setShowSubmitModal(true)}
-                  className="flex items-center gap-1.5 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-all cursor-pointer"
-                >
-                  <Send className="w-4 h-4" />
-                  Submit Assessment
-                </button>
-              ) : (
-                <button
-                  onClick={() =>
-                    setCurrentIdx((prev) =>
-                      Math.min(questions.length - 1, prev + 1),
-                    )
-                  }
-                  className="flex items-center gap-1.5 px-6 py-2.5 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-xl shadow-sm transition-all cursor-pointer"
-                >
-                  Next Question
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+              </div>
+            </section>
           </div>
-        </div>
+        </>
       )}
 
       {/* Submit Confirmation Modal */}
       {showSubmitModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full space-y-6 shadow-2xl border border-zinc-200">
+          <div className="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full space-y-6 shadow-2xl border border-zinc-200 font-sans">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center shrink-0">
                 <AlertTriangle className="w-5 h-5" />
@@ -758,7 +968,8 @@ export default function StudentAssessmentRunnerPage({
                   Submit Assessment?
                 </h3>
                 <p className="text-xs text-zinc-500 mt-0.5">
-                  Are you ready to submit your answers for evaluation?
+                  Are you ready to submit your assessment answers for
+                  evaluation?
                 </p>
               </div>
             </div>
@@ -789,7 +1000,7 @@ export default function StudentAssessmentRunnerPage({
               <button
                 onClick={handleFinalSubmit}
                 disabled={submitting}
-                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-sm cursor-pointer flex items-center gap-2"
+                className="px-5 py-2.5 bg-[#0066FF] hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-sm cursor-pointer flex items-center gap-2"
               >
                 {submitting ? (
                   <>
