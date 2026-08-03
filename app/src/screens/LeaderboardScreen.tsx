@@ -19,65 +19,6 @@ interface LeaderboardScreenProps {
   onBackToDashboard: () => void;
 }
 
-const DEFAULT_MOCK_LEADERBOARD: LeaderboardEntryDTO[] = [
-  {
-    id: "s-1",
-    studentId: "s-1",
-    studentName: "Alex Rivera",
-    totalXp: 3450,
-    rank: 1,
-  },
-  {
-    id: "s-2",
-    studentId: "s-2",
-    studentName: "Sarah Chen",
-    totalXp: 2980,
-    rank: 2,
-  },
-  {
-    id: "s-3",
-    studentId: "s-3",
-    studentName: "Yatharth K.",
-    totalXp: 2450,
-    rank: 3,
-  },
-  {
-    id: "s-4",
-    studentId: "s-4",
-    studentName: "David Miller",
-    totalXp: 2100,
-    rank: 4,
-  },
-  {
-    id: "s-5",
-    studentId: "s-5",
-    studentName: "Elena Rostova",
-    totalXp: 1890,
-    rank: 5,
-  },
-  {
-    id: "s-6",
-    studentId: "s-6",
-    studentName: "Marcus Vance",
-    totalXp: 1720,
-    rank: 6,
-  },
-  {
-    id: "s-7",
-    studentId: "s-7",
-    studentName: "Priya Sharma",
-    totalXp: 1550,
-    rank: 7,
-  },
-  {
-    id: "s-8",
-    studentId: "s-8",
-    studentName: "Jordan Lee",
-    totalXp: 1420,
-    rank: 8,
-  },
-];
-
 export function LeaderboardScreen({
   onBackToDashboard,
 }: LeaderboardScreenProps) {
@@ -85,9 +26,7 @@ export function LeaderboardScreen({
   const [timeframe, setTimeframe] = useState<"WEEKLY" | "MONTHLY" | "ALL_TIME">(
     "ALL_TIME",
   );
-  const [rankings, setRankings] = useState<LeaderboardEntryDTO[]>(
-    DEFAULT_MOCK_LEADERBOARD,
-  );
+  const [rankings, setRankings] = useState<LeaderboardEntryDTO[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -98,10 +37,10 @@ export function LeaderboardScreen({
         if (data && data.length > 0) {
           setRankings(data);
         } else {
-          setRankings(DEFAULT_MOCK_LEADERBOARD);
+          setRankings([]);
         }
       } catch {
-        setRankings(DEFAULT_MOCK_LEADERBOARD);
+        setRankings([]);
       } finally {
         setLoading(false);
       }

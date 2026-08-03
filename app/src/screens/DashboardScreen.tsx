@@ -10,6 +10,7 @@ import {
   Easing,
   Dimensions,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { AssessmentDTO, StudentTopicMasteryDTO, LeaderboardEntryDTO } from "../types";
@@ -155,9 +156,11 @@ export function DashboardScreen({
   const [assessments, setAssessments] = useState<AssessmentDTO[]>([]);
   const [topics, setTopics] = useState<StudentTopicMasteryDTO[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntryDTO[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     async function loadData() {
+      setLoading(true);
       try {
         const [list, topicData, overviewData, leaderboardData] = await Promise.allSettled([
           apiClient.getAssessments(),
@@ -176,11 +179,25 @@ export function DashboardScreen({
         if (leaderboardData.status === "fulfilled" && Array.isArray(leaderboardData.value))
           setLeaderboard(leaderboardData.value);
       } catch {}
+      finally {
+        setLoading(false);
+      }
     }
     loadData();
   }, [apiClient]);
 
   const weakTopics = topics.filter((t) => t.isWeak);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.safeArea, { justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="large" color="#111111" />
+        <Text style={{ marginTop: 14, fontSize: 12, color: "#71717a", fontWeight: "600", letterSpacing: 1, textTransform: "uppercase" }}>
+          Loading Dashboard...
+        </Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
