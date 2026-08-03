@@ -168,9 +168,8 @@ export default function StudentAssessmentsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans p-6 md:p-12 selection:bg-[#111111] selection:text-white">
+    <main className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans px-6 pt-6 pb-24 md:px-12 md:pt-12 md:pb-24 selection:bg-[#111111] selection:text-white">
       <div className="max-w-6xl mx-auto space-y-8">
-
         {/* Header */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-zinc-200">
           <div className="flex items-center gap-3">
@@ -202,10 +201,26 @@ export default function StudentAssessmentsPage() {
         {/* Stats Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "Total", value: stats.total, color: "bg-zinc-900 text-white" },
-            { label: "Quizzes", value: stats.quizzes, color: "bg-blue-50 text-blue-700" },
-            { label: "Exams", value: stats.exams, color: "bg-red-50 text-red-700" },
-            { label: "Practice", value: stats.practice, color: "bg-emerald-50 text-emerald-700" },
+            {
+              label: "Total",
+              value: stats.total,
+              color: "bg-zinc-900 text-white",
+            },
+            {
+              label: "Quizzes",
+              value: stats.quizzes,
+              color: "bg-blue-50 text-blue-700",
+            },
+            {
+              label: "Exams",
+              value: stats.exams,
+              color: "bg-red-50 text-red-700",
+            },
+            {
+              label: "Practice",
+              value: stats.practice,
+              color: "bg-emerald-50 text-emerald-700",
+            },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -214,7 +229,9 @@ export default function StudentAssessmentsPage() {
               <span className="text-xs font-mono text-zinc-400 uppercase tracking-wider">
                 {stat.label}
               </span>
-              <span className={`text-3xl font-bold font-mono ${stat.color === "bg-zinc-900 text-white" ? "text-[#111111]" : stat.color.split(" ")[1]}`}>
+              <span
+                className={`text-3xl font-bold font-mono ${stat.color === "bg-zinc-900 text-white" ? "text-[#111111]" : stat.color.split(" ")[1]}`}
+              >
                 {stat.value}
               </span>
             </div>
@@ -265,11 +282,15 @@ export default function StudentAssessmentsPage() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <div className="w-8 h-8 border-2 border-[#111111] border-t-transparent rounded-full animate-spin" />
-            <span className="text-xs font-mono text-zinc-400">Loading assessments...</span>
+            <span className="text-xs font-mono text-zinc-400">
+              Loading assessments...
+            </span>
           </div>
         ) : filteredAssessments.length === 0 ? (
           <div className="bg-white border border-zinc-200 rounded-xl p-16 text-center space-y-3 shadow-sm">
-            <p className="text-zinc-400 text-sm">No assessments match your criteria.</p>
+            <p className="text-zinc-400 text-sm">
+              No assessments match your criteria.
+            </p>
             <button
               onClick={() => {
                 setSearchQuery("");
@@ -336,15 +357,15 @@ export default function StudentAssessmentsPage() {
                       )}
                       {asm.hasNegativeMarking && (
                         <span className="flex items-center gap-1 text-red-500 font-semibold">
-                          <ExclamationTriangleIcon className="w-3.5 h-3.5" />
-                          -{asm.negativeMarkValue} marking
+                          <ExclamationTriangleIcon className="w-3.5 h-3.5" />-
+                          {asm.negativeMarkValue} marking
                         </span>
                       )}
                     </div>
                   </div>
 
                   {/* Right: Action Button */}
-                  <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="flex items-center gap-3 shrink-0">
                     <button
                       onClick={() =>
                         router.push(`/student/assessments/${asm.id}`)
@@ -366,7 +387,8 @@ export default function StudentAssessmentsPage() {
         <div className="text-[11px] text-zinc-400 flex items-center justify-between pt-6 border-t border-zinc-200">
           <span>© 2026 PSP Lumora. All rights reserved.</span>
           <span className="font-mono">
-            {filteredAssessments.length} of {assessments.length} assessments shown
+            {filteredAssessments.length} of {assessments.length} assessments
+            shown
           </span>
         </div>
       </div>

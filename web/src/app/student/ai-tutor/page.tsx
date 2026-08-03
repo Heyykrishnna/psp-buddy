@@ -55,7 +55,7 @@ export default function AiTutorPage() {
         ...newHistory,
         {
           role: "assistant",
-          content: `⚠️ Error connecting to AI: ${err.message}`,
+          content: `Error connecting to AI: ${err.message}`,
         },
       ]);
     } finally {

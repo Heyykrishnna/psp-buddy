@@ -116,7 +116,7 @@ export default function AnalyticsPage() {
   const weakTopics = topics.filter((t) => t.isWeak).sort((a, b) => a.masteryScore - b.masteryScore);
 
   return (
-    <div className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans p-6 md:p-12">
+    <div className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans px-6 pt-6 pb-24 md:px-12 md:pt-12 md:pb-24">
       <div className="max-w-6xl mx-auto space-y-8">
 
         {/* Header */}

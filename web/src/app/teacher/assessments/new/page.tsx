@@ -49,7 +49,9 @@ export default function NewAssessmentPage() {
     "ONLINE_TEST" | "WORKBOOK_ONLY" | "HYBRID"
   >("HYBRID");
   const [isWorkbook, setIsWorkbook] = useState(true);
-  const [workbookUrl, setWorkbookUrl] = useState("https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c");
+  const [workbookUrl, setWorkbookUrl] = useState(
+    "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c",
+  );
 
   // Questions State
   const [questions, setQuestions] = useState<QuestionInput[]>([
@@ -79,9 +81,9 @@ export default function NewAssessmentPage() {
       points: 15,
       requiresWorkbook: true,
       submissionType: "WORKBOOK_ONLY",
-      workbookInstructions: "Draw step-by-step max heap insertion in physical workbook.",
-      explanation:
-        "Heap tree requires drawing physical node diagrams.",
+      workbookInstructions:
+        "Draw step-by-step max heap insertion in physical workbook.",
+      explanation: "Heap tree requires drawing physical node diagrams.",
       options: [],
     },
   ]);
@@ -262,7 +264,7 @@ export default function NewAssessmentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans p-6 sm:p-10 selection:bg-[#111111] selection:text-white">
+    <div className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans px-6 pt-6 pb-24 sm:px-10 sm:pt-10 sm:pb-24 selection:bg-[#111111] selection:text-white">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Top Bar */}
         <div className="flex items-center justify-between border-b border-zinc-200 pb-6">
@@ -291,7 +293,7 @@ export default function NewAssessmentPage() {
 
         {error && (
           <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-xs rounded-md">
-            ⚠️ {error}
+            {error}
           </div>
         )}
 
@@ -308,12 +310,8 @@ export default function NewAssessmentPage() {
                   onChange={(e) => setClassName(e.target.value)}
                   className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#111111]"
                 >
-                  <option value="1st Sem">
-                    1st Sem (Computer Science)
-                  </option>
-                  <option value="2nd Sem">
-                    2nd Sem (Advanced Algorithms)
-                  </option>
+                  <option value="1st Sem">1st Sem (Computer Science)</option>
+                  <option value="2nd Sem">2nd Sem (Advanced Algorithms)</option>
                 </select>
               </div>
 
@@ -385,9 +383,13 @@ export default function NewAssessmentPage() {
 
             {/* Assessment Submission Mode Choices for Teacher */}
             <div className="p-5 bg-[#F4F4F6] rounded-xl border border-zinc-200 space-y-3">
-              <span className="text-sm font-semibold text-[#111111] block">Assessment Submission Mode & Format</span>
-              <span className="text-xs text-zinc-500 block">Select how students should complete and submit this assessment:</span>
-              
+              <span className="text-sm font-semibold text-[#111111] block">
+                Assessment Submission Mode & Format
+              </span>
+              <span className="text-xs text-zinc-500 block">
+                Select how students should complete and submit this assessment:
+              </span>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
                 <label
                   onClick={() => setSubmissionMode("ONLINE_TEST")}
@@ -398,10 +400,11 @@ export default function NewAssessmentPage() {
                   }`}
                 >
                   <span className="text-xs font-bold text-[#111111] flex items-center gap-1.5">
-                    💻 Digital Test Only
+                    Digital Test Only
                   </span>
                   <span className="text-[11px] text-zinc-500">
-                    Online interactive questions only. Answers submitted directly in app.
+                    Online interactive questions only. Answers submitted
+                    directly in app.
                   </span>
                 </label>
 
@@ -414,10 +417,11 @@ export default function NewAssessmentPage() {
                   }`}
                 >
                   <span className="text-xs font-bold text-[#111111] flex items-center gap-1.5">
-                    📝 Physical Workbook Only
+                    Physical Workbook Only
                   </span>
                   <span className="text-[11px] text-zinc-500">
-                    Students upload photo/URL of physical solved workbook for AI grading.
+                    Students upload photo/URL of physical solved workbook for AI
+                    grading.
                   </span>
                 </label>
 
@@ -430,10 +434,11 @@ export default function NewAssessmentPage() {
                   }`}
                 >
                   <span className="text-xs font-bold text-[#111111] flex items-center gap-1.5">
-                    🔀 Hybrid (Test + Workbook)
+                    Hybrid (Test + Workbook)
                   </span>
                   <span className="text-[11px] text-zinc-500">
-                    Both digital test and handwritten workbook submission choices supported.
+                    Both digital test and handwritten workbook submission
+                    choices supported.
                   </span>
                 </label>
               </div>
@@ -502,7 +507,7 @@ export default function NewAssessmentPage() {
                   onClick={() => setShowAiModal(true)}
                   className="px-4 py-2 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-semibold rounded-md shadow-sm transition-all flex items-center gap-2 cursor-pointer"
                 >
-                  <span>✨ Auto-Generate with AI</span>
+                  <span>Auto-Generate with AI</span>
                 </button>
               </div>
 
@@ -512,7 +517,7 @@ export default function NewAssessmentPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="p-1.5 bg-purple-600 text-white rounded-md text-xs">
-                        🚀 AI Assistant
+                        AI Assistant
                       </span>
                       <h4 className="font-semibold text-sm text-purple-950">
                         AI Question Generator
@@ -522,7 +527,7 @@ export default function NewAssessmentPage() {
                       onClick={() => setShowAiModal(false)}
                       className="text-xs text-zinc-500 hover:text-zinc-800"
                     >
-                      ✕ Close
+                      ✕
                     </button>
                   </div>
 
@@ -578,7 +583,7 @@ export default function NewAssessmentPage() {
                     >
                       {aiGenerating
                         ? "Generating Questions..."
-                        : "Generate Questions Now ⚡"}
+                        : "Generate Questions Now"}
                     </button>
                   </div>
                 </div>
@@ -606,13 +611,14 @@ export default function NewAssessmentPage() {
                           <span className="px-2 py-0.5 bg-zinc-200 text-zinc-700 text-[10px] font-mono rounded">
                             {q.difficulty}
                           </span>
-                          {q.requiresWorkbook || q.submissionType === "WORKBOOK_ONLY" ? (
+                          {q.requiresWorkbook ||
+                          q.submissionType === "WORKBOOK_ONLY" ? (
                             <span className="px-2 py-0.5 bg-amber-100 text-amber-800 border border-amber-300 border-dashed text-[10px] font-mono font-bold rounded flex items-center gap-1">
-                              📝 WORKBOOK REQUIRED
+                              WORKBOOK REQUIRED
                             </span>
                           ) : q.submissionType === "BOTH" ? (
                             <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-[10px] font-mono font-bold rounded flex items-center gap-1">
-                              🔀 OPTIONAL WORKBOOK
+                              OPTIONAL WORKBOOK
                             </span>
                           ) : null}
                           <span className="text-xs font-mono font-semibold text-zinc-600">
@@ -696,10 +702,11 @@ export default function NewAssessmentPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-xs font-bold text-purple-900 block">
-                      📷 Workbook Handwritten Answer Option for this Question
+                      Workbook Handwritten Answer Option for this Question
                     </span>
                     <span className="text-[11px] text-purple-700 block">
-                      Configure whether students must upload a physical workbook photo for this specific question.
+                      Configure whether students must upload a physical workbook
+                      photo for this specific question.
                     </span>
                   </div>
                   <select
@@ -707,17 +714,24 @@ export default function NewAssessmentPage() {
                     onChange={(e) => {
                       const val = e.target.value as any;
                       setQSubmissionType(val);
-                      setQRequiresWorkbook(val === "WORKBOOK_ONLY" || val === "BOTH");
+                      setQRequiresWorkbook(
+                        val === "WORKBOOK_ONLY" || val === "BOTH",
+                      );
                     }}
                     className="px-3 py-1.5 bg-white border border-purple-300 rounded text-xs font-semibold text-purple-900"
                   >
-                    <option value="ONLINE_ONLY">💻 Digital Answer Only</option>
-                    <option value="WORKBOOK_ONLY">📝 Physical Workbook Required</option>
-                    <option value="BOTH">🔀 Student Choice (Digital or Workbook)</option>
+                    <option value="ONLINE_ONLY">Digital Answer Only</option>
+                    <option value="WORKBOOK_ONLY">
+                      Physical Workbook Required
+                    </option>
+                    <option value="BOTH">
+                      Student Choice (Digital or Workbook)
+                    </option>
                   </select>
                 </div>
 
-                {(qSubmissionType === "WORKBOOK_ONLY" || qSubmissionType === "BOTH") && (
+                {(qSubmissionType === "WORKBOOK_ONLY" ||
+                  qSubmissionType === "BOTH") && (
                   <div>
                     <label className="block text-[11px] font-semibold text-purple-800 mb-1">
                       Workbook Instructions for Student

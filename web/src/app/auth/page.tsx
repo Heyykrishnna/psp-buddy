@@ -135,7 +135,7 @@ export default function AuthPage() {
 
           {error && (
             <div className="mb-6 p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-md flex items-center justify-between">
-              <span>⚠️ {error}</span>
+              <span>{error}</span>
               <button
                 onClick={() => setError("")}
                 className="text-red-400 hover:text-red-700 ml-2"
@@ -147,7 +147,7 @@ export default function AuthPage() {
 
           {infoMessage && (
             <div className="mb-6 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-md flex items-center justify-between">
-              <span>📧 {infoMessage}</span>
+              <span>{infoMessage}</span>
               <button
                 onClick={() => setInfoMessage("")}
                 className="text-emerald-500 hover:text-emerald-800 ml-2"

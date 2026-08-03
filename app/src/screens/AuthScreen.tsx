@@ -157,13 +157,13 @@ export function AuthScreen() {
             {/* Error / Info Messages */}
             {!!error && (
               <View style={styles.errorBox}>
-                <Text style={styles.errorText}>⚠️ {error}</Text>
+                <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
 
             {!!infoMessage && (
               <View style={styles.infoBox}>
-                <Text style={styles.infoText}>📧 {infoMessage}</Text>
+                <Text style={styles.infoText}>{infoMessage}</Text>
               </View>
             )}
 

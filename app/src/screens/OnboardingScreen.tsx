@@ -58,7 +58,7 @@ export function OnboardingScreen() {
 
           {error ? (
             <View style={styles.errorBox}>
-              <Text style={styles.errorText}>⚠️ {error}</Text>
+              <Text style={styles.errorText}>{error}</Text>
             </View>
           ) : null}
 

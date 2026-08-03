@@ -14,12 +14,16 @@
   --font-serif: var(--font-serif);
 }
 
-html, body {
-  background-color: #F9F9FB !important;
+/* Make sure background covers full scrollable document, not just viewport */
+html {
+  background-color: #F9F9FB;
   min-height: 100%;
+  height: auto;
 }
 
 body {
+  background-color: #F9F9FB;
+  min-height: 100%;
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;

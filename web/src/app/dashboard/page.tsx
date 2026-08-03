@@ -204,7 +204,7 @@ export default function DashboardPage() {
   const weakTopics = topicMasteries.filter((t) => t.isWeak);
 
   return (
-    <main className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans p-6 md:p-12 selection:bg-[#111111] selection:text-white">
+    <main className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans px-6 pt-6 pb-24 md:px-12 md:pt-12 md:pb-24 selection:bg-[#111111] selection:text-white">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Top Minimal Navbar */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-zinc-200">

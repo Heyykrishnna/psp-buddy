@@ -203,7 +203,7 @@ export default function StudentAssessmentRunnerPage({
   const currentAns = currentQ ? answers[currentQ.id] || {} : {};
 
   return (
-    <div className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans p-6 sm:p-10 selection:bg-[#111111] selection:text-white">
+    <div className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans px-6 pt-6 pb-24 sm:px-10 sm:pt-10 sm:pb-24 selection:bg-[#111111] selection:text-white">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Top Minimal Bar */}
         <header className="flex items-center justify-between border-b border-zinc-200 pb-4">

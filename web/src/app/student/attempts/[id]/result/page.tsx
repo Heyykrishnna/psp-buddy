@@ -101,7 +101,7 @@ export default function AssessmentResultPage({
     return (
       <div className="min-h-screen bg-[#F9F9FB] flex flex-col items-center justify-center p-6 text-center font-sans">
         <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-xs rounded-md mb-4">
-          ⚠️ {error || "Result not found"}
+          {error || "Result not found"}
         </div>
         <button
           onClick={() => router.push("/dashboard")}
@@ -119,7 +119,7 @@ export default function AssessmentResultPage({
       : 0;
 
   return (
-    <div className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans p-6 sm:p-10 selection:bg-[#111111] selection:text-white">
+    <div className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans px-6 pt-6 pb-24 sm:px-10 sm:pt-10 sm:pb-24 selection:bg-[#111111] selection:text-white">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Top Header */}
         <div className="flex items-center justify-between border-b border-zinc-200 pb-6">
