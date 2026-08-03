@@ -51,7 +51,7 @@ export default function DashboardPage() {
             apiFetch<AssessmentDTO[]>("/assessments"),
             apiFetch<StudentTopicMasteryDTO[]>("/analytics/student/topics"),
             apiFetch<LeaderboardEntryDTO[]>("/analytics/leaderboard"),
-            apiFetch<any>("/student/profile"),
+            apiFetch<any>("/analytics/student/me"),
           ]);
 
         if (asmData.status === "fulfilled" && Array.isArray(asmData.value)) {

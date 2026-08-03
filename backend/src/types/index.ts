@@ -59,6 +59,8 @@ export interface UserProfile {
   gradeLevel?: string | null;
   employeeId?: string | null;
   department?: string | null;
+  totalXp?: number;
+  coins?: number;
   createdAt: string;
 }
 

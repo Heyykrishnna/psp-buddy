@@ -40,19 +40,40 @@ export default function StudentAssessmentsPage() {
     }
   }, [user, router]);
 
+  const [completedAttempts, setCompletedAttempts] = useState<
+    Record<string, { attemptId: string; status: string; score: number }>
+  >({});
+
   useEffect(() => {
-    async function loadAssessments() {
+    async function loadData() {
       try {
         const data = await apiFetch<AssessmentDTO[]>("/assessments");
         setAssessments(data || []);
+
+        if (user?.id) {
+          const userAtts = await apiFetch<any[]>(`/students/${user.id}/attempts`);
+          if (Array.isArray(userAtts)) {
+            const attMap: Record<string, any> = {};
+            userAtts.forEach((att: any) => {
+              if (att.status === "SUBMITTED" || att.status === "EVALUATED") {
+                attMap[att.assessmentId] = {
+                  attemptId: att.id,
+                  status: att.status,
+                  score: att.totalScore || 0,
+                };
+              }
+            });
+            setCompletedAttempts(attMap);
+          }
+        }
       } catch {
         setAssessments([]);
       } finally {
         setLoading(false);
       }
     }
-    loadAssessments();
-  }, []);
+    loadData();
+  }, [user]);
 
   const filteredAssessments = assessments.filter((asm) => {
     const matchesQuery =
@@ -251,6 +272,11 @@ export default function StudentAssessmentsPage() {
                           {asm.topic}
                         </span>
                       )}
+                      {completedAttempts[asm.id] && (
+                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-900 text-[10px] font-mono font-bold rounded">
+                          ✓ COMPLETED
+                        </span>
+                      )}
                     </div>
 
                     <h2 className="text-sm font-semibold text-[#111111] group-hover:text-zinc-700 transition-colors truncate">
@@ -289,16 +315,31 @@ export default function StudentAssessmentsPage() {
 
                   {/* Right: Action Button */}
                   <div className="flex items-center gap-3 shrink-0">
-                    <button
-                      onClick={() =>
-                        router.push(`/student/assessments/${asm.id}`)
-                      }
-                      className="flex items-center gap-2 px-5 py-2.5 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all shadow-sm cursor-pointer whitespace-nowrap"
-                    >
-                      <RocketIcon className="w-3.5 h-3.5" />
-                      Start Attempt
-                      <ChevronRightIcon className="w-3.5 h-3.5" />
-                    </button>
+                    {completedAttempts[asm.id] ? (
+                      <button
+                        onClick={() =>
+                          router.push(
+                            `/student/attempts/${completedAttempts[asm.id].attemptId}/result`,
+                          )
+                        }
+                        className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-md transition-all shadow-sm cursor-pointer whitespace-nowrap"
+                      >
+                        <ReaderIcon className="w-3.5 h-3.5" />
+                        View Result
+                        <ChevronRightIcon className="w-3.5 h-3.5" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() =>
+                          router.push(`/student/assessments/${asm.id}`)
+                        }
+                        className="flex items-center gap-2 px-5 py-2.5 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all shadow-sm cursor-pointer whitespace-nowrap"
+                      >
+                        <RocketIcon className="w-3.5 h-3.5" />
+                        Start Attempt
+                        <ChevronRightIcon className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

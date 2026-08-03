@@ -68,6 +68,8 @@ export interface UserProfile {
   studentRegistrationNo?: string | null;
   employeeId?: string | null;
   department?: string | null;
+  totalXp?: number;
+  coins?: number;
 }
 
 export interface AuthTokens {

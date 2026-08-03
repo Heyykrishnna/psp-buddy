@@ -333,6 +333,8 @@ export class AuthService {
       gradeLevel: user.student?.gradeLevel || null,
       employeeId: user.teacher?.employeeId || null,
       department: user.teacher?.department || null,
+      totalXp: user.student?.totalXp || 0,
+      coins: user.student?.coins || 0,
       createdAt: user.createdAt?.toISOString ? user.createdAt.toISOString() : new Date().toISOString(),
     };
   }

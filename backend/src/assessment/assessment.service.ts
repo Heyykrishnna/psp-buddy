@@ -214,6 +214,21 @@ export class AssessmentService {
       });
     }
 
+    // Check if student has ALREADY submitted an attempt for this assessment
+    const submittedAttempt = await db.assessmentAttempt.findFirst({
+      where: {
+        assessmentId,
+        studentId: student.id,
+        status: { in: ['SUBMITTED', 'EVALUATED'] },
+      },
+    });
+
+    if (submittedAttempt) {
+      throw new BadRequestException(
+        'You have already completed and submitted this assessment. Re-attempts are not permitted.',
+      );
+    }
+
     // Check if active in-progress attempt exists
     const existingAttempt = await db.assessmentAttempt.findFirst({
       where: {
@@ -687,5 +702,153 @@ export class AssessmentService {
     });
 
     return updated;
+  }
+
+  // 14. Get Teacher Assessment Results Summary (Teacher Portal)
+  async getAssessmentResults(assessmentId: string) {
+    const assessment = await db.assessment.findUnique({
+      where: { id: assessmentId },
+      include: {
+        questions: {
+          include: { options: true },
+          orderBy: { orderIndex: 'asc' },
+        },
+        attempts: {
+          where: { status: { in: ['SUBMITTED', 'EVALUATED'] } },
+          include: {
+            student: {
+              include: {
+                user: { select: { firstName: true, lastName: true, email: true } },
+              },
+            },
+            answers: {
+              include: {
+                question: true,
+              },
+            },
+          },
+          orderBy: { submittedAt: 'desc' },
+        },
+      },
+    });
+
+    if (!assessment) throw new NotFoundException('Assessment not found');
+
+    const totalAttempts = assessment.attempts.length;
+    let totalScoreSum = 0;
+    let passCount = 0;
+    let failCount = 0;
+    let highestScore = 0;
+    let lowestScore = totalAttempts > 0 ? assessment.attempts[0].totalScore || 0 : 0;
+
+    const studentResults = assessment.attempts.map((att: any) => {
+      const score = att.totalScore || 0;
+      const maxScore = att.maxScore || assessment.totalMarks;
+      const percentage = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+      const passed = score >= assessment.passingMarks;
+
+      totalScoreSum += score;
+      if (passed) passCount++;
+      else failCount++;
+
+      if (score > highestScore) highestScore = score;
+      if (score < lowestScore) lowestScore = score;
+
+      const studentName = att.student?.user
+        ? `${att.student.user.firstName} ${att.student.user.lastName}`.trim()
+        : att.student?.studentRegistrationNo || 'Student';
+
+      const email = att.student?.user?.email || 'student@psplumora.edu';
+
+      const answers = (att.answers || []).map((ans: any) => ({
+        questionText: ans.question?.questionText || 'Question',
+        topic: ans.question?.topic || 'General',
+        isCorrect: !!ans.isCorrect,
+        marksObtained: ans.marksObtained || 0,
+        maxMarks: ans.question?.points || 10,
+      }));
+
+      return {
+        studentId: att.studentId,
+        attemptId: att.id,
+        studentName,
+        email,
+        score,
+        maxScore,
+        percentage,
+        timeTakenMinutes: Math.max(
+          1,
+          Math.round(((att.submittedAt?.getTime() || 0) - (att.startedAt?.getTime() || 0)) / 60000),
+        ),
+        submittedAt: att.submittedAt ? att.submittedAt.toISOString() : new Date().toISOString(),
+        passed,
+        answers,
+      };
+    });
+
+    const avgScore = totalAttempts > 0 ? Math.round((totalScoreSum / totalAttempts) * 10) / 10 : 0;
+
+    const questionAnalysis = assessment.questions.map((q: any) => {
+      const allAnswersForQ = assessment.attempts.flatMap((att: any) =>
+        (att.answers || []).filter((ans: any) => ans.questionId === q.id),
+      );
+      const totalAnswered = allAnswersForQ.length;
+      const correctCount = allAnswersForQ.filter((ans: any) => ans.isCorrect).length;
+      const accuracy = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
+
+      return {
+        questionText: q.questionText,
+        topic: q.topic || 'General',
+        totalAnswered,
+        correctCount,
+        accuracy,
+      };
+    });
+
+    return {
+      assessmentId: assessment.id,
+      assessmentTitle: assessment.title,
+      className: assessment.className,
+      topic: assessment.topic,
+      assessmentType: assessment.assessmentType,
+      totalMarks: assessment.totalMarks,
+      passingMarks: assessment.passingMarks,
+      durationMinutes: assessment.durationMinutes,
+      totalAttempts,
+      avgScore,
+      passCount,
+      failCount,
+      highestScore,
+      lowestScore,
+      questionAnalysis,
+      studentResults,
+    };
+  }
+
+  // 15. Get All Attempts for a Student
+  async getStudentAttempts(studentId: string) {
+    let student = await db.student.findFirst({
+      where: { OR: [{ id: studentId }, { userId: studentId }] },
+    });
+
+    if (!student) {
+      return [];
+    }
+
+    return db.assessmentAttempt.findMany({
+      where: { studentId: student.id },
+      include: {
+        assessment: {
+          select: {
+            id: true,
+            title: true,
+            className: true,
+            assessmentType: true,
+            totalMarks: true,
+          },
+        },
+      },
+      orderBy: { startedAt: 'desc' },
+    });
   }
 }

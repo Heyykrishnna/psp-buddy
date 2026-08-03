@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import { useAuth } from "@/context/AuthContext";
 import { PLAYGROUND_EXAMPLES, CodeExample } from "@/lib/playgroundExamples";
 import { evaluateCodeSolution } from "@/lib/codeEvaluator";
 import { apiFetch } from "@/lib/api";
@@ -48,6 +49,7 @@ const MonacoPlayground = dynamic(
 
 export default function StudentPlaygroundPage() {
   const router = useRouter();
+  const { user } = useAuth();
 
   // Selected Problem / Example
   const [selectedExampleId, setSelectedExampleId] =
@@ -269,7 +271,9 @@ export default function StudentPlaygroundPage() {
               Total XP
             </span>
             <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-            <span>31,923</span>
+            <span>
+              {user?.totalXp !== undefined ? user.totalXp.toLocaleString() : "0"}
+            </span>
           </div>
 
           <button

@@ -94,4 +94,16 @@ export class AssessmentController {
   ) {
     return this.assessmentService.evaluateWorkbook(workbookId, body.obtainedMarks, body.feedback);
   }
+
+  // 14. GET /assessments/:id/results - Teacher View All Student Attempts & Analytics
+  @Get('assessments/:id/results')
+  async getAssessmentResults(@Param('id') assessmentId: string) {
+    return this.assessmentService.getAssessmentResults(assessmentId);
+  }
+
+  // 15. GET /students/:studentId/attempts - List All Student Completed Attempts
+  @Get('students/:studentId/attempts')
+  async getStudentAttempts(@Param('studentId') studentId: string) {
+    return this.assessmentService.getStudentAttempts(studentId);
+  }
 }

@@ -57,7 +57,7 @@ export default function StudentAssessmentRunnerPage({
 }) {
   const resolvedParams = use(params);
   const assessmentId = resolvedParams.id;
-  const { user } = useAuth();
+  const { user, checkAuth } = useAuth();
   const router = useRouter();
 
   // Primary Data State
@@ -158,6 +158,13 @@ export default function StudentAssessmentRunnerPage({
     };
   }, [isDragging]);
 
+  // Submitted Status State
+  const [hasAlreadySubmitted, setHasAlreadySubmitted] =
+    useState<boolean>(false);
+  const [submittedAttemptId, setSubmittedAttemptId] = useState<string | null>(
+    null,
+  );
+
   // Load Assessment details on mount
   useEffect(() => {
     async function loadAssessment() {
@@ -171,6 +178,23 @@ export default function StudentAssessmentRunnerPage({
             setQuestions(data.questions);
           }
         }
+
+        if (user?.id) {
+          const userAtts = await apiFetch<any[]>(
+            `/students/${user.id}/attempts`,
+          );
+          if (Array.isArray(userAtts)) {
+            const found = userAtts.find(
+              (att) =>
+                att.assessmentId === assessmentId &&
+                (att.status === "SUBMITTED" || att.status === "EVALUATED"),
+            );
+            if (found) {
+              setHasAlreadySubmitted(true);
+              setSubmittedAttemptId(found.id);
+            }
+          }
+        }
       } catch (err) {
         console.error("Failed to load assessment:", err);
       } finally {
@@ -178,7 +202,7 @@ export default function StudentAssessmentRunnerPage({
       }
     }
     loadAssessment();
-  }, [assessmentId]);
+  }, [assessmentId, user]);
 
   // Countdown Timer when in RUNNER mode
   useEffect(() => {
@@ -205,6 +229,10 @@ export default function StudentAssessmentRunnerPage({
 
   // Start Assessment Attempt
   const handleStartAttempt = async () => {
+    if (hasAlreadySubmitted && submittedAttemptId) {
+      router.push(`/student/attempts/${submittedAttemptId}/result`);
+      return;
+    }
     setLoading(true);
     try {
       const studentIdentifier = user?.id || "student";
@@ -236,7 +264,15 @@ export default function StudentAssessmentRunnerPage({
           setCodingSolutions(restoredCode);
         }
       }
-    } catch {
+    } catch (err: any) {
+      if (
+        err?.message &&
+        err.message.includes("already completed") &&
+        submittedAttemptId
+      ) {
+        router.push(`/student/attempts/${submittedAttemptId}/result`);
+        return;
+      }
       setAttemptId(`attempt-${Date.now()}`);
     } finally {
       setTimeLeftSeconds((assessment?.durationMinutes || 15) * 60);
@@ -320,6 +356,11 @@ export default function StudentAssessmentRunnerPage({
         await apiFetch(`/attempts/${attemptId}/submit`, {
           method: "POST",
         });
+        if (checkAuth) {
+          try {
+            await checkAuth();
+          } catch {}
+        }
         router.push(`/student/attempts/${attemptId}/result`);
       } else {
         router.push(`/student/assessments`);
@@ -460,16 +501,50 @@ export default function StudentAssessmentRunnerPage({
               </div>
             </div>
 
+            {/* Already Submitted Notice */}
+            {hasAlreadySubmitted && (
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-3 text-emerald-950 font-sans">
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <div>
+                    <h4 className="text-xs font-bold font-mono uppercase tracking-wider">
+                      Assessment Completed
+                    </h4>
+                    <p className="text-xs text-emerald-900 mt-0.5">
+                      You have already submitted an attempt for this assessment.
+                      Re-attempts are not permitted.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
-              <button
-                onClick={handleStartAttempt}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-[#0066FF] hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-md transition-all cursor-pointer"
-              >
-                <Play className="w-4 h-4 fill-white" />
-                Start Assessment IDE
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              {hasAlreadySubmitted ? (
+                <button
+                  onClick={() =>
+                    submittedAttemptId &&
+                    router.push(
+                      `/student/attempts/${submittedAttemptId}/result`,
+                    )
+                  }
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-md transition-all cursor-pointer"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  View Submission Result
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={handleStartAttempt}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-[#0066FF] hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-md transition-all cursor-pointer"
+                >
+                  <Play className="w-4 h-4 fill-white" />
+                  Start Assessment IDE
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              )}
 
               <button
                 onClick={() => router.push("/student/assessments")}
@@ -544,7 +619,11 @@ export default function StudentAssessmentRunnerPage({
                   Total XP
                 </span>
                 <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                <span>31,923</span>
+                <span>
+                  {user?.totalXp !== undefined
+                    ? user.totalXp.toLocaleString()
+                    : "0"}
+                </span>
               </div>
 
               <button
