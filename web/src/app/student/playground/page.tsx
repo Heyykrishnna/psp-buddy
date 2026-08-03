@@ -254,8 +254,8 @@ export default function StudentPlaygroundPage() {
   }, [code, currentExample.id]);
 
   // Change selected problem & restore local code if present
-  const handleProblemChange = (id: string) => {
-    const found = PLAYGROUND_EXAMPLES.find((ex) => ex.id === id);
+  const handleProblemChange = async (id: string) => {
+    const found = PLAYGROUND_EXAMPLES.find((ex) => ex.id === id || (ex as any).slug === id);
     if (found) {
       setSelectedExampleId(found.id);
       setCurrentExample(found);
@@ -269,6 +269,23 @@ export default function StudentPlaygroundPage() {
       setErrorMessage(null);
       setTestResults(null);
       setUnlockedHints({});
+    }
+
+    // Sync bookmark status for selected problem
+    const problemKey = found ? found.id : id;
+    const listMatch = filteredProblemsList.find((p) => p.id === problemKey || p.slug === problemKey);
+    if (listMatch && listMatch.isBookmarked !== undefined) {
+      setIsBookmarked(Boolean(listMatch.isBookmarked));
+    }
+
+    try {
+      const uId = user?.id || "demo-user-id";
+      const res = await apiFetch<any>(`/problems/${problemKey}?userId=${uId}`);
+      if (res && res.isBookmarked !== undefined) {
+        setIsBookmarked(Boolean(res.isBookmarked));
+      }
+    } catch {
+      // Keep existing
     }
   };
 
@@ -382,23 +399,51 @@ export default function StudentPlaygroundPage() {
   };
 
   // Toggle Bookmark logic
-  const handleToggleBookmark = async () => {
-    try {
-      if (currentExample.id) {
-        const res = await apiFetch<any>(
-          `/problems/${currentExample.id}/bookmark`,
-          {
-            method: "POST",
-          },
-        );
-        if (res?.isBookmarked !== undefined) {
-          setIsBookmarked(res.isBookmarked);
-        } else {
-          setIsBookmarked((prev) => !prev);
-        }
-      }
-    } catch {
+  const handleToggleBookmark = async (targetId?: string) => {
+    const pId = targetId || currentExample.id;
+    if (!pId) return;
+
+    const isCurrentActive = !targetId || targetId === currentExample.id || targetId === (currentExample as any).slug;
+
+    // Optimistic UI state update
+    if (isCurrentActive) {
       setIsBookmarked((prev) => !prev);
+    }
+
+    setFilteredProblemsList((prev) =>
+      prev.map((p) => {
+        if (p.id === pId || p.slug === pId || p.id === targetId || p.slug === targetId) {
+          return { ...p, isBookmarked: !p.isBookmarked };
+        }
+        return p;
+      }),
+    );
+
+    try {
+      const uId = user?.id || "demo-user-id";
+      const res = await apiFetch<any>(
+        `/problems/${pId}/bookmark?userId=${uId}`,
+        {
+          method: "POST",
+          body: JSON.stringify({ userId: uId }),
+        },
+      );
+
+      if (res && res.isBookmarked !== undefined) {
+        if (isCurrentActive) {
+          setIsBookmarked(res.isBookmarked);
+        }
+        setFilteredProblemsList((prev) =>
+          prev.map((p) => {
+            if (p.id === pId || p.slug === pId || p.id === targetId || p.slug === targetId) {
+              return { ...p, isBookmarked: res.isBookmarked };
+            }
+            return p;
+          }),
+        );
+      }
+    } catch (err) {
+      console.error("Bookmark toggle failed:", err);
     }
   };
 
@@ -486,7 +531,7 @@ export default function StudentPlaygroundPage() {
 
           <button
             title="Bookmark Problem"
-            onClick={handleToggleBookmark}
+            onClick={() => handleToggleBookmark()}
             className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
               isBookmarked
                 ? "text-amber-500 bg-amber-50"
@@ -766,13 +811,23 @@ export default function StudentPlaygroundPage() {
                           {p.title}
                         </h4>
 
-                        {/* Step 10 Status Badges */}
+                        {/* Step 10 Status & Bookmark Badges */}
                         <div className="flex items-center gap-1 shrink-0">
-                          {p.isBookmarked && (
-                            <span className="px-1.5 py-0.5 bg-amber-100 text-amber-800 border border-amber-300 rounded text-[10px] font-semibold flex items-center gap-1">
-                              ★ Bookmarked
-                            </span>
-                          )}
+                          <button
+                            type="button"
+                            title={p.isBookmarked ? "Remove Bookmark" : "Add Bookmark"}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleBookmark(p.id || p.slug);
+                            }}
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-semibold flex items-center gap-1 border transition-colors cursor-pointer ${
+                              p.isBookmarked
+                                ? "bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200"
+                                : "bg-zinc-100 text-zinc-400 border-zinc-200 hover:text-zinc-700 hover:bg-zinc-200"
+                            }`}
+                          >
+                            {p.isBookmarked ? "★ Bookmarked" : "☆ Bookmark"}
+                          </button>
 
                           {p.userStatus === "SOLVED" && (
                             <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded text-[10px] font-semibold flex items-center gap-1">

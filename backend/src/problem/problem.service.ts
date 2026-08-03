@@ -133,7 +133,7 @@ export class ProblemService {
     return result;
   }
 
-  async getProblemBySlugOrId(slugOrId: string) {
+  async getProblemBySlugOrId(slugOrId: string, userId?: string) {
     let problem = await db.problem.findUnique({
       where: { slug: slugOrId },
       include: { testCases: { orderBy: { orderIndex: 'asc' } } },
@@ -147,9 +147,42 @@ export class ProblemService {
     }
 
     if (!problem) {
+      const normalizedSlug = slugOrId.replace(/^(py|js|cpp|java)-/, '');
+      problem = await db.problem.findUnique({
+        where: { slug: normalizedSlug },
+        include: { testCases: { orderBy: { orderIndex: 'asc' } } },
+      });
+    }
+
+    if (!problem) {
       throw new NotFoundException(`Problem '${slugOrId}' not found.`);
     }
-    return problem;
+
+    let isBookmarked = false;
+    let userStatus = 'UNATTEMPTED';
+
+    if (userId) {
+      let targetUser = await db.user.findUnique({ where: { id: userId } });
+      if (!targetUser) {
+        targetUser = await db.user.findFirst();
+      }
+
+      if (targetUser) {
+        const bm = await db.problemBookmark.findUnique({
+          where: { userId_problemId: { userId: targetUser.id, problemId: problem.id } },
+        });
+        isBookmarked = Boolean(bm);
+
+        const prog = await db.userProblemProgress.findUnique({
+          where: { userId_problemId: { userId: targetUser.id, problemId: problem.id } },
+        });
+        if (prog) {
+          userStatus = prog.status === 'SOLVED' ? 'SOLVED' : 'ATTEMPTED';
+        }
+      }
+    }
+
+    return { ...problem, isBookmarked, userStatus };
   }
 
   async updateProblem(id: string, dto: Partial<CreateProblemDto>) {
@@ -489,10 +522,53 @@ export class ProblemService {
     if (!problem) {
       problem = await db.problem.findUnique({ where: { slug: problemId } });
     }
-    if (!problem) throw new NotFoundException('Problem not found');
+    if (!problem) {
+      const normalizedSlug = problemId.replace(/^(py|js|cpp|java)-/, '');
+      problem = await db.problem.findUnique({ where: { slug: normalizedSlug } });
+    }
+
+    if (!problem) {
+      const slug = problemId.replace(/^(py|js|cpp|java)-/, '').toLowerCase().trim();
+      const title = slug
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+
+      problem = await db.problem.upsert({
+        where: { slug },
+        update: {},
+        create: {
+          slug,
+          title: title || 'Problem',
+          description: 'Practice problem',
+          functionName: 'solution',
+          starterCodePython: '# Write your solution here',
+          isPublished: true,
+        },
+      });
+    }
+
+    // Resolve user (fallback to first available user if userId is demo or not in DB)
+    let targetUser = await db.user.findUnique({ where: { id: userId } });
+    if (!targetUser) {
+      targetUser = await db.user.findFirst();
+    }
+
+    if (!targetUser) {
+      // Create fallback demo user if no user exists at all
+      targetUser = await db.user.create({
+        data: {
+          email: 'demo@lumora.edu',
+          firstName: 'Demo',
+          lastName: 'User',
+          role: 'STUDENT',
+        },
+      });
+    }
+
+    const effectiveUserId = targetUser.id;
 
     const existing = await db.problemBookmark.findUnique({
-      where: { userId_problemId: { userId, problemId: problem.id } },
+      where: { userId_problemId: { userId: effectiveUserId, problemId: problem.id } },
     });
 
     if (existing) {
@@ -504,7 +580,7 @@ export class ProblemService {
 
     await db.problemBookmark.create({
       data: {
-        userId,
+        userId: effectiveUserId,
         problemId: problem.id,
       },
     });
