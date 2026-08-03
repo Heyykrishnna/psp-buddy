@@ -164,6 +164,28 @@ export class PSPBuddyApiClient {
     return res.data;
   }
 
+  // GROQ AI API
+  async generateAiAssessment(data: { topic: string; questionCount?: number; difficulty?: string }) {
+    const res = await this.http.post('/ai/generate-assessment', data);
+    return res.data;
+  }
+
+  async explainQuestion(data: { questionText: string; questionType?: string; studentAnswer?: string; correctAnswer?: string; topic?: string }) {
+    const res = await this.http.post('/ai/explain-question', data);
+    return res.data;
+  }
+
+  async generateStudyPlan(data: { studentName?: string; weakTopics: Array<{ topic: string; masteryScore: number }> }) {
+    const res = await this.http.post('/ai/generate-study-plan', data);
+    return res.data;
+  }
+
+  async chatTutor(data: { message: string; conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>; topic?: string }) {
+    const res = await this.http.post('/ai/tutor-chat', data);
+    return res.data;
+  }
+
+
   // REALTIME SYNCHRONIZATION
   connectRealtimeSync(wsUrl: string, token: string) {
     if (typeof window === 'undefined' && typeof global === 'undefined') return;

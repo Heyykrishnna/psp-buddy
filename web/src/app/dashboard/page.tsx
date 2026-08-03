@@ -227,6 +227,12 @@ export default function DashboardPage() {
 
           <div className="flex items-center gap-3">
             <button
+              onClick={() => router.push("/student/ai-tutor")}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-md shadow-sm transition-all"
+            >
+              <span>AI Tutor</span>
+            </button>
+            <button
               onClick={() => router.push("/analytics")}
               className="flex items-center gap-1.5 px-3.5 py-2 border border-zinc-200 text-xs font-medium text-zinc-700 rounded-md hover:bg-zinc-100 transition-all"
             >

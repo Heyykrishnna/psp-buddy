@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/api';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { apiFetch } from "@/lib/api";
 
 interface OptionInput {
   optionText: string;
@@ -12,8 +12,8 @@ interface OptionInput {
 
 interface QuestionInput {
   questionText: string;
-  questionType: 'SINGLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
-  difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  questionType: "SINGLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
+  difficulty: "EASY" | "MEDIUM" | "HARD";
   topic: string;
   points: number;
   explanation?: string;
@@ -29,10 +29,14 @@ export default function NewAssessmentPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1); // 1: Config, 2: Questions, 3: Preview
 
   // Config State
-  const [className, setClassName] = useState('Class 10-A');
-  const [topic, setTopic] = useState('Computer Science & Logic');
-  const [title, setTitle] = useState('Algorithm Complexity & Data Structures Quiz');
-  const [description, setDescription] = useState('Mid-term evaluation covering Big-O analysis, sorting algorithms, and boolean logic.');
+  const [className, setClassName] = useState("Class 10-A");
+  const [topic, setTopic] = useState("Computer Science & Logic");
+  const [title, setTitle] = useState(
+    "Algorithm Complexity & Data Structures Quiz",
+  );
+  const [description, setDescription] = useState(
+    "Mid-term evaluation covering Big-O analysis, sorting algorithms, and boolean logic.",
+  );
   const [durationMinutes, setDurationMinutes] = useState(30);
   const [passingMarks, setPassingMarks] = useState(40);
   const [hasNegativeMarking, setHasNegativeMarking] = useState(true);
@@ -41,57 +45,112 @@ export default function NewAssessmentPage() {
   // Questions State
   const [questions, setQuestions] = useState<QuestionInput[]>([
     {
-      questionText: 'What is the average time complexity of QuickSort?',
-      questionType: 'SINGLE_CHOICE',
-      difficulty: 'MEDIUM',
-      topic: 'Sorting Algorithms',
+      questionText: "What is the average time complexity of QuickSort?",
+      questionType: "SINGLE_CHOICE",
+      difficulty: "MEDIUM",
+      topic: "Sorting Algorithms",
       points: 10,
-      explanation: 'Average time complexity is O(N log N) when pivot splits balanced partitions.',
+      explanation:
+        "Average time complexity is O(N log N) when pivot splits balanced partitions.",
       options: [
-        { optionText: 'O(N log N)', isCorrect: true },
-        { optionText: 'O(N^2)', isCorrect: false },
-        { optionText: 'O(N)', isCorrect: false },
-        { optionText: 'O(1)', isCorrect: false },
+        { optionText: "O(N log N)", isCorrect: true },
+        { optionText: "O(N^2)", isCorrect: false },
+        { optionText: "O(N)", isCorrect: false },
+        { optionText: "O(1)", isCorrect: false },
       ],
     },
     {
-      questionText: 'Binary Search requires the array to be sorted before searching.',
-      questionType: 'TRUE_FALSE',
-      difficulty: 'EASY',
-      topic: 'Searching',
+      questionText:
+        "Binary Search requires the array to be sorted before searching.",
+      questionType: "TRUE_FALSE",
+      difficulty: "EASY",
+      topic: "Searching",
       points: 5,
       trueFalseAnswer: true,
-      explanation: 'Binary Search relies on dividing a sorted array by comparing against the middle element.',
+      explanation:
+        "Binary Search relies on dividing a sorted array by comparing against the middle element.",
       options: [],
     },
     {
-      questionText: 'Name the data structure that operates on a Last-In, First-Out (LIFO) principle.',
-      questionType: 'SHORT_ANSWER',
-      difficulty: 'EASY',
-      topic: 'Data Structures',
+      questionText:
+        "Name the data structure that operates on a Last-In, First-Out (LIFO) principle.",
+      questionType: "SHORT_ANSWER",
+      difficulty: "EASY",
+      topic: "Data Structures",
       points: 10,
-      shortAnswerKeywords: 'stack, LIFO stack',
-      explanation: 'A Stack is a LIFO data structure.',
+      shortAnswerKeywords: "stack, LIFO stack",
+      explanation: "A Stack is a LIFO data structure.",
       options: [],
     },
   ]);
 
   // Current Question Builder state
-  const [qText, setQText] = useState('');
-  const [qType, setQType] = useState<'SINGLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER'>('SINGLE_CHOICE');
-  const [qDiff, setQDiff] = useState<'EASY' | 'MEDIUM' | 'HARD'>('MEDIUM');
-  const [qTopic, setQTopic] = useState('Data Structures');
+  const [qText, setQText] = useState("");
+  const [qType, setQType] = useState<
+    "SINGLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER"
+  >("SINGLE_CHOICE");
+  const [qDiff, setQDiff] = useState<"EASY" | "MEDIUM" | "HARD">("MEDIUM");
+  const [qTopic, setQTopic] = useState("Data Structures");
   const [qPoints, setQPoints] = useState(10);
-  const [qExplanation, setQExplanation] = useState('');
+  const [qExplanation, setQExplanation] = useState("");
   const [qTrueFalse, setQTrueFalse] = useState(true);
-  const [qKeywords, setQKeywords] = useState('');
+  const [qKeywords, setQKeywords] = useState("");
   const [qOptions, setQOptions] = useState<OptionInput[]>([
-    { optionText: 'Option A', isCorrect: true },
-    { optionText: 'Option B', isCorrect: false },
+    { optionText: "Option A", isCorrect: true },
+    { optionText: "Option B", isCorrect: false },
   ]);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+
+  // Groq AI Generator State
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiCount, setAiCount] = useState(5);
+  const [aiDifficulty, setAiDifficulty] = useState<"EASY" | "MEDIUM" | "HARD">(
+    "MEDIUM",
+  );
+  const [aiGenerating, setAiGenerating] = useState(false);
+
+  const handleGenerateWithAi = async () => {
+    setAiGenerating(true);
+    setError("");
+    try {
+      const res = await apiFetch<any>("/ai/generate-assessment", {
+        method: "POST",
+        body: JSON.stringify({
+          topic: topic || "Computer Science & Algorithms",
+          questionCount: aiCount,
+          difficulty: aiDifficulty,
+        }),
+      });
+
+      if (res?.questions && Array.isArray(res.questions)) {
+        const formatted: QuestionInput[] = res.questions.map((q: any) => ({
+          questionText: q.questionText,
+          questionType: q.questionType || "SINGLE_CHOICE",
+          difficulty: q.difficulty || aiDifficulty,
+          topic: q.topic || topic || "General",
+          points: q.points || 10,
+          explanation: q.explanation || "",
+          trueFalseAnswer: q.trueFalseAnswer,
+          shortAnswerKeywords: Array.isArray(q.shortAnswerKeywords)
+            ? q.shortAnswerKeywords.join(", ")
+            : q.shortAnswerKeywords,
+          options: (q.options || []).map((opt: any) => ({
+            optionText: opt.optionText,
+            isCorrect: !!opt.isCorrect,
+          })),
+        }));
+
+        setQuestions((prev) => [...prev, ...formatted]);
+        setShowAiModal(false);
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to generate questions with Groq AI");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
 
   const handleAddQuestion = () => {
     if (!qText.trim()) return;
@@ -103,20 +162,20 @@ export default function NewAssessmentPage() {
       topic: qTopic,
       points: qPoints,
       explanation: qExplanation,
-      trueFalseAnswer: qType === 'TRUE_FALSE' ? qTrueFalse : undefined,
-      shortAnswerKeywords: qType === 'SHORT_ANSWER' ? qKeywords : undefined,
-      options: qType === 'SINGLE_CHOICE' ? qOptions : [],
+      trueFalseAnswer: qType === "TRUE_FALSE" ? qTrueFalse : undefined,
+      shortAnswerKeywords: qType === "SHORT_ANSWER" ? qKeywords : undefined,
+      options: qType === "SINGLE_CHOICE" ? qOptions : [],
     };
 
     setQuestions([...questions, newQ]);
 
     // Reset question builder form
-    setQText('');
-    setQExplanation('');
-    setQKeywords('');
+    setQText("");
+    setQExplanation("");
+    setQKeywords("");
     setQOptions([
-      { optionText: 'Option A', isCorrect: true },
-      { optionText: 'Option B', isCorrect: false },
+      { optionText: "Option A", isCorrect: true },
+      { optionText: "Option B", isCorrect: false },
     ]);
   };
 
@@ -128,24 +187,24 @@ export default function NewAssessmentPage() {
 
   const handleSaveAndPublish = async (shouldPublish: boolean) => {
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       // 1. Create Assessment via POST /assessments
-      const created = await apiFetch<any>('/assessments', {
-        method: 'POST',
+      const created = await apiFetch<any>("/assessments", {
+        method: "POST",
         body: JSON.stringify({
           title,
           description,
           className,
           topic,
-          assessmentType: 'QUIZ',
+          assessmentType: "QUIZ",
           totalMarks: totalMarks || 100,
           passingMarks,
           durationMinutes,
           hasNegativeMarking,
           negativeMarkValue,
-          createdById: user?.id || 'teacher-1',
+          createdById: user?.id || "teacher-1",
           questions: questions.map((q, idx) => ({
             questionText: q.questionText,
             questionType: q.questionType,
@@ -155,7 +214,9 @@ export default function NewAssessmentPage() {
             orderIndex: idx + 1,
             explanation: q.explanation,
             trueFalseAnswer: q.trueFalseAnswer,
-            shortAnswerKeywords: q.shortAnswerKeywords ? q.shortAnswerKeywords.split(',').map((s) => s.trim()) : [],
+            shortAnswerKeywords: q.shortAnswerKeywords
+              ? q.shortAnswerKeywords.split(",").map((s) => s.trim())
+              : [],
             options: q.options.map((opt, oIdx) => ({
               optionText: opt.optionText,
               isCorrect: opt.isCorrect,
@@ -167,12 +228,14 @@ export default function NewAssessmentPage() {
 
       // 2. Publish if requested via POST /assessments/:id/publish
       if (shouldPublish && created?.id) {
-        await apiFetch(`/assessments/${created.id}/publish`, { method: 'POST' });
+        await apiFetch(`/assessments/${created.id}/publish`, {
+          method: "POST",
+        });
       }
 
-      router.push('/dashboard');
+      router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message || 'Failed to save assessment');
+      setError(err.message || "Failed to save assessment");
     } finally {
       setLoading(false);
     }
@@ -181,7 +244,6 @@ export default function NewAssessmentPage() {
   return (
     <div className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans p-6 sm:p-10 selection:bg-[#111111] selection:text-white">
       <div className="max-w-4xl mx-auto space-y-8">
-        
         {/* Top Bar */}
         <div className="flex items-center justify-between border-b border-zinc-200 pb-6">
           <div>
@@ -189,13 +251,17 @@ export default function NewAssessmentPage() {
               TEACHER WORKFLOW • STEP {step} OF 3
             </span>
             <h1 className="font-serif text-3xl font-normal text-[#111111] mt-1">
-              {step === 1 ? 'Configure Assessment' : step === 2 ? 'Build Questions' : 'Preview & Publish'}
+              {step === 1
+                ? "Configure Assessment"
+                : step === 2
+                  ? "Build Questions"
+                  : "Preview & Publish"}
             </h1>
           </div>
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push("/dashboard")}
               className="px-3.5 py-1.5 text-xs text-zinc-600 border border-zinc-200 rounded-md hover:bg-zinc-100"
             >
               Cancel
@@ -214,20 +280,30 @@ export default function NewAssessmentPage() {
           <div className="bg-white border border-zinc-200 rounded-xl p-8 space-y-6 shadow-sm">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-zinc-600 mb-1.5">Select Class Target</label>
+                <label className="block text-xs font-medium text-zinc-600 mb-1.5">
+                  Select Class Target
+                </label>
                 <select
                   value={className}
                   onChange={(e) => setClassName(e.target.value)}
                   className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] focus:outline-none focus:bg-white focus:border-[#111111]"
                 >
-                  <option value="Class 10-A">Class 10-A (Computer Science)</option>
-                  <option value="Class 11-B">Class 11-B (Advanced Algorithms)</option>
-                  <option value="Class 12-C">Class 12-C (Software Systems)</option>
+                  <option value="Class 10-A">
+                    Class 10-A (Computer Science)
+                  </option>
+                  <option value="Class 11-B">
+                    Class 11-B (Advanced Algorithms)
+                  </option>
+                  <option value="Class 12-C">
+                    Class 12-C (Software Systems)
+                  </option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-600 mb-1.5">Topic / Module</label>
+                <label className="block text-xs font-medium text-zinc-600 mb-1.5">
+                  Topic / Module
+                </label>
                 <input
                   type="text"
                   value={topic}
@@ -239,7 +315,9 @@ export default function NewAssessmentPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-600 mb-1.5">Assessment Title</label>
+              <label className="block text-xs font-medium text-zinc-600 mb-1.5">
+                Assessment Title
+              </label>
               <input
                 type="text"
                 value={title}
@@ -250,7 +328,9 @@ export default function NewAssessmentPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-600 mb-1.5">Instructions & Description</label>
+              <label className="block text-xs font-medium text-zinc-600 mb-1.5">
+                Instructions & Description
+              </label>
               <textarea
                 rows={3}
                 value={description}
@@ -262,7 +342,9 @@ export default function NewAssessmentPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-zinc-600 mb-1.5">Timer Duration (Minutes)</label>
+                <label className="block text-xs font-medium text-zinc-600 mb-1.5">
+                  Timer Duration (Minutes)
+                </label>
                 <input
                   type="number"
                   value={durationMinutes}
@@ -272,7 +354,9 @@ export default function NewAssessmentPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-600 mb-1.5">Passing Marks</label>
+                <label className="block text-xs font-medium text-zinc-600 mb-1.5">
+                  Passing Marks
+                </label>
                 <input
                   type="number"
                   value={passingMarks}
@@ -285,8 +369,12 @@ export default function NewAssessmentPage() {
             {/* Negative Marking Configuration */}
             <div className="p-4 bg-[#F4F4F6] rounded-md flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-[#111111]">Enable Negative Marking</p>
-                <p className="text-[11px] text-zinc-500">Deduct points for incorrect responses</p>
+                <p className="text-xs font-semibold text-[#111111]">
+                  Enable Negative Marking
+                </p>
+                <p className="text-[11px] text-zinc-500">
+                  Deduct points for incorrect responses
+                </p>
               </div>
 
               <div className="flex items-center gap-3">
@@ -301,7 +389,9 @@ export default function NewAssessmentPage() {
                     type="number"
                     step="0.05"
                     value={negativeMarkValue}
-                    onChange={(e) => setNegativeMarkValue(Number(e.target.value))}
+                    onChange={(e) =>
+                      setNegativeMarkValue(Number(e.target.value))
+                    }
                     className="w-20 px-2 py-1 bg-white border border-zinc-300 rounded text-xs font-mono"
                   />
                 )}
@@ -322,31 +412,139 @@ export default function NewAssessmentPage() {
         {/* STEP 2: ADD QUESTIONS (MCQ, TRUE/FALSE, SHORT ANSWER) */}
         {step === 2 && (
           <div className="space-y-6">
-            
             {/* Added Questions List */}
             <div className="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4 border-b border-zinc-100 pb-3">
-                <h3 className="font-serif text-lg font-normal text-[#111111]">
-                  Assessment Questions ({questions.length})
-                </h3>
-                <span className="text-xs font-mono text-zinc-500">Total Marks: {totalMarks}</span>
+                <div>
+                  <h3 className="font-serif text-lg font-normal text-[#111111]">
+                    Assessment Questions ({questions.length})
+                  </h3>
+                  <span className="text-xs font-mono text-zinc-500">
+                    Total Marks: {totalMarks}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowAiModal(true)}
+                  className="px-4 py-2 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-semibold rounded-md shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <span>✨ Auto-Generate with Groq AI</span>
+                </button>
               </div>
 
+              {/* GROQ AI GENERATOR MODAL */}
+              {showAiModal && (
+                <div className="mb-6 p-5 bg-linear-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="p-1.5 bg-purple-600 text-white rounded-md text-xs">
+                        🚀 Groq AI
+                      </span>
+                      <h4 className="font-semibold text-sm text-purple-950">
+                        AI Question Generator
+                      </h4>
+                    </div>
+                    <button
+                      onClick={() => setShowAiModal(false)}
+                      className="text-xs text-zinc-500 hover:text-zinc-800"
+                    >
+                      ✕ Close
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-purple-900">
+                    Groq AI will create structured questions, options, and
+                    explanations based on topic:{" "}
+                    <strong className="font-mono">{topic}</strong>.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-purple-900 mb-1">
+                        Number of Questions
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={aiCount}
+                        onChange={(e) => setAiCount(Number(e.target.value))}
+                        className="w-full px-3 py-2 bg-white border border-purple-200 rounded text-xs font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-purple-900 mb-1">
+                        Difficulty Level
+                      </label>
+                      <select
+                        value={aiDifficulty}
+                        onChange={(e) => setAiDifficulty(e.target.value as any)}
+                        className="w-full px-3 py-2 bg-white border border-purple-200 rounded text-xs font-mono"
+                      >
+                        <option value="EASY">Easy</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="HARD">Hard</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAiModal(false)}
+                      className="px-3.5 py-1.5 text-xs text-zinc-600 bg-white border border-zinc-200 rounded-md"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={aiGenerating}
+                      onClick={handleGenerateWithAi}
+                      className="px-5 py-1.5 bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold rounded-md shadow-sm disabled:opacity-50 cursor-pointer"
+                    >
+                      {aiGenerating
+                        ? "Generating Questions..."
+                        : "Generate Questions Now ⚡"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {questions.length === 0 ? (
-                <p className="text-xs text-zinc-400 italic py-4 text-center">No questions added yet. Use the form below to add questions.</p>
+                <p className="text-xs text-zinc-400 italic py-4 text-center">
+                  No questions added yet. Use the form below to add questions.
+                </p>
               ) : (
                 <div className="space-y-3">
                   {questions.map((q, idx) => (
-                    <div key={idx} className="p-4 bg-[#F4F4F6] rounded-lg border border-transparent flex items-start justify-between gap-4">
+                    <div
+                      key={idx}
+                      className="p-4 bg-[#F4F4F6] rounded-lg border border-transparent flex items-start justify-between gap-4"
+                    >
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="px-2 py-0.5 bg-[#111111] text-white text-[10px] font-mono rounded">Q{idx + 1}</span>
-                          <span className="px-2 py-0.5 bg-zinc-200 text-zinc-700 text-[10px] font-mono rounded">{q.questionType}</span>
-                          <span className="px-2 py-0.5 bg-zinc-200 text-zinc-700 text-[10px] font-mono rounded">{q.difficulty}</span>
-                          <span className="text-xs font-mono font-semibold text-zinc-600">{q.points} Marks</span>
+                          <span className="px-2 py-0.5 bg-[#111111] text-white text-[10px] font-mono rounded">
+                            Q{idx + 1}
+                          </span>
+                          <span className="px-2 py-0.5 bg-zinc-200 text-zinc-700 text-[10px] font-mono rounded">
+                            {q.questionType}
+                          </span>
+                          <span className="px-2 py-0.5 bg-zinc-200 text-zinc-700 text-[10px] font-mono rounded">
+                            {q.difficulty}
+                          </span>
+                          <span className="text-xs font-mono font-semibold text-zinc-600">
+                            {q.points} Marks
+                          </span>
                         </div>
-                        <p className="text-sm font-medium text-[#111111]">{q.questionText}</p>
-                        {q.topic && <span className="text-[11px] font-mono text-zinc-500 mt-1 block">Topic: {q.topic}</span>}
+                        <p className="text-sm font-medium text-[#111111]">
+                          {q.questionText}
+                        </p>
+                        {q.topic && (
+                          <span className="text-[11px] font-mono text-zinc-500 mt-1 block">
+                            Topic: {q.topic}
+                          </span>
+                        )}
                       </div>
 
                       <button
@@ -369,7 +567,9 @@ export default function NewAssessmentPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-zinc-600 mb-1">Question Type</label>
+                  <label className="block text-xs font-medium text-zinc-600 mb-1">
+                    Question Type
+                  </label>
                   <select
                     value={qType}
                     onChange={(e) => setQType(e.target.value as any)}
@@ -382,7 +582,9 @@ export default function NewAssessmentPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-zinc-600 mb-1">Difficulty</label>
+                  <label className="block text-xs font-medium text-zinc-600 mb-1">
+                    Difficulty
+                  </label>
                   <select
                     value={qDiff}
                     onChange={(e) => setQDiff(e.target.value as any)}
@@ -395,7 +597,9 @@ export default function NewAssessmentPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-zinc-600 mb-1">Marks (Points)</label>
+                  <label className="block text-xs font-medium text-zinc-600 mb-1">
+                    Marks (Points)
+                  </label>
                   <input
                     type="number"
                     value={qPoints}
@@ -406,7 +610,9 @@ export default function NewAssessmentPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-600 mb-1">Question Topic Tag</label>
+                <label className="block text-xs font-medium text-zinc-600 mb-1">
+                  Question Topic Tag
+                </label>
                 <input
                   type="text"
                   value={qTopic}
@@ -417,7 +623,9 @@ export default function NewAssessmentPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-600 mb-1">Question Prompt</label>
+                <label className="block text-xs font-medium text-zinc-600 mb-1">
+                  Question Prompt
+                </label>
                 <textarea
                   rows={2}
                   value={qText}
@@ -428,9 +636,11 @@ export default function NewAssessmentPage() {
               </div>
 
               {/* Dynamic Type Config */}
-              {qType === 'SINGLE_CHOICE' && (
+              {qType === "SINGLE_CHOICE" && (
                 <div className="space-y-2">
-                  <label className="block text-xs font-medium text-zinc-600">Options (Select Correct Option)</label>
+                  <label className="block text-xs font-medium text-zinc-600">
+                    Options (Select Correct Option)
+                  </label>
                   {qOptions.map((opt, oIdx) => (
                     <div key={oIdx} className="flex items-center gap-2">
                       <input
@@ -438,7 +648,12 @@ export default function NewAssessmentPage() {
                         name="correctOpt"
                         checked={opt.isCorrect}
                         onChange={() => {
-                          setQOptions(qOptions.map((o, i) => ({ ...o, isCorrect: i === oIdx })));
+                          setQOptions(
+                            qOptions.map((o, i) => ({
+                              ...o,
+                              isCorrect: i === oIdx,
+                            })),
+                          );
                         }}
                         className="w-4 h-4 accent-[#111111]"
                       />
@@ -457,7 +672,15 @@ export default function NewAssessmentPage() {
                   ))}
                   <button
                     type="button"
-                    onClick={() => setQOptions([...qOptions, { optionText: `Option ${qOptions.length + 1}`, isCorrect: false }])}
+                    onClick={() =>
+                      setQOptions([
+                        ...qOptions,
+                        {
+                          optionText: `Option ${qOptions.length + 1}`,
+                          isCorrect: false,
+                        },
+                      ])
+                    }
                     className="text-xs text-[#111111] font-semibold underline cursor-pointer pt-1"
                   >
                     + Add Option Choice
@@ -465,15 +688,19 @@ export default function NewAssessmentPage() {
                 </div>
               )}
 
-              {qType === 'TRUE_FALSE' && (
+              {qType === "TRUE_FALSE" && (
                 <div>
-                  <label className="block text-xs font-medium text-zinc-600 mb-1.5">Correct True / False Statement</label>
+                  <label className="block text-xs font-medium text-zinc-600 mb-1.5">
+                    Correct True / False Statement
+                  </label>
                   <div className="flex items-center gap-4">
                     <button
                       type="button"
                       onClick={() => setQTrueFalse(true)}
                       className={`px-4 py-2 text-xs font-semibold rounded-md border ${
-                        qTrueFalse ? 'bg-[#111111] text-white border-[#111111]' : 'bg-white text-zinc-700 border-zinc-200'
+                        qTrueFalse
+                          ? "bg-[#111111] text-white border-[#111111]"
+                          : "bg-white text-zinc-700 border-zinc-200"
                       }`}
                     >
                       True
@@ -482,7 +709,9 @@ export default function NewAssessmentPage() {
                       type="button"
                       onClick={() => setQTrueFalse(false)}
                       className={`px-4 py-2 text-xs font-semibold rounded-md border ${
-                        !qTrueFalse ? 'bg-[#111111] text-white border-[#111111]' : 'bg-white text-zinc-700 border-zinc-200'
+                        !qTrueFalse
+                          ? "bg-[#111111] text-white border-[#111111]"
+                          : "bg-white text-zinc-700 border-zinc-200"
                       }`}
                     >
                       False
@@ -491,9 +720,11 @@ export default function NewAssessmentPage() {
                 </div>
               )}
 
-              {qType === 'SHORT_ANSWER' && (
+              {qType === "SHORT_ANSWER" && (
                 <div>
-                  <label className="block text-xs font-medium text-zinc-600 mb-1">Auto-grade Keywords (Comma separated)</label>
+                  <label className="block text-xs font-medium text-zinc-600 mb-1">
+                    Auto-grade Keywords (Comma separated)
+                  </label>
                   <input
                     type="text"
                     value={qKeywords}
@@ -505,7 +736,9 @@ export default function NewAssessmentPage() {
               )}
 
               <div>
-                <label className="block text-xs font-medium text-zinc-600 mb-1">Explanation (Shown after test)</label>
+                <label className="block text-xs font-medium text-zinc-600 mb-1">
+                  Explanation (Shown after test)
+                </label>
                 <input
                   type="text"
                   value={qExplanation}
@@ -552,62 +785,86 @@ export default function NewAssessmentPage() {
               <span className="px-2.5 py-1 bg-zinc-100 text-zinc-700 text-xs font-mono rounded">
                 TARGET CLASS: {className}
               </span>
-              <h2 className="font-serif text-3xl font-normal text-[#111111] mt-2">{title}</h2>
+              <h2 className="font-serif text-3xl font-normal text-[#111111] mt-2">
+                {title}
+              </h2>
               <p className="text-xs text-zinc-500 mt-1">{description}</p>
             </div>
 
             <div className="grid grid-cols-4 gap-4 p-4 bg-[#F4F4F6] rounded-lg text-xs font-mono">
               <div>
                 <span className="text-zinc-400 block">TOTAL MARKS</span>
-                <span className="font-bold text-[#111111] text-sm">{totalMarks}</span>
+                <span className="font-bold text-[#111111] text-sm">
+                  {totalMarks}
+                </span>
               </div>
               <div>
                 <span className="text-zinc-400 block">PASSING MARKS</span>
-                <span className="font-bold text-[#111111] text-sm">{passingMarks}</span>
+                <span className="font-bold text-[#111111] text-sm">
+                  {passingMarks}
+                </span>
               </div>
               <div>
                 <span className="text-zinc-400 block">DURATION</span>
-                <span className="font-bold text-[#111111] text-sm">{durationMinutes} mins</span>
+                <span className="font-bold text-[#111111] text-sm">
+                  {durationMinutes} mins
+                </span>
               </div>
               <div>
                 <span className="text-zinc-400 block">NEGATIVE MARKING</span>
                 <span className="font-bold text-[#111111] text-sm">
-                  {hasNegativeMarking ? `-${negativeMarkValue}` : 'Off'}
+                  {hasNegativeMarking ? `-${negativeMarkValue}` : "Off"}
                 </span>
               </div>
             </div>
 
             <div className="space-y-4">
-              <h3 className="font-serif text-lg font-normal text-[#111111]">Questions Preview</h3>
+              <h3 className="font-serif text-lg font-normal text-[#111111]">
+                Questions Preview
+              </h3>
               {questions.map((q, idx) => (
-                <div key={idx} className="p-4 border border-zinc-200 rounded-lg space-y-2">
+                <div
+                  key={idx}
+                  className="p-4 border border-zinc-200 rounded-lg space-y-2"
+                >
                   <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="font-bold text-[#111111]">Q{idx + 1}. ({q.questionType})</span>
+                    <span className="font-bold text-[#111111]">
+                      Q{idx + 1}. ({q.questionType})
+                    </span>
                     <span className="text-zinc-500">{q.points} Marks</span>
                   </div>
-                  <p className="text-sm font-medium text-[#111111]">{q.questionText}</p>
+                  <p className="text-sm font-medium text-[#111111]">
+                    {q.questionText}
+                  </p>
 
-                  {q.questionType === 'SINGLE_CHOICE' && (
+                  {q.questionType === "SINGLE_CHOICE" && (
                     <div className="pl-4 space-y-1">
                       {q.options.map((opt, oIdx) => (
-                        <div key={oIdx} className="text-xs text-zinc-600 flex items-center gap-2">
-                          <span className={opt.isCorrect ? 'text-emerald-600 font-bold' : ''}>
-                            • {opt.optionText} {opt.isCorrect && '(Correct)'}
+                        <div
+                          key={oIdx}
+                          className="text-xs text-zinc-600 flex items-center gap-2"
+                        >
+                          <span
+                            className={
+                              opt.isCorrect ? "text-emerald-600 font-bold" : ""
+                            }
+                          >
+                            • {opt.optionText} {opt.isCorrect && "(Correct)"}
                           </span>
                         </div>
                       ))}
                     </div>
                   )}
 
-                  {q.questionType === 'TRUE_FALSE' && (
+                  {q.questionType === "TRUE_FALSE" && (
                     <p className="text-xs text-emerald-600 font-semibold pl-4">
-                      Correct Answer: {q.trueFalseAnswer ? 'True' : 'False'}
+                      Correct Answer: {q.trueFalseAnswer ? "True" : "False"}
                     </p>
                   )}
 
-                  {q.questionType === 'SHORT_ANSWER' && (
+                  {q.questionType === "SHORT_ANSWER" && (
                     <p className="text-xs text-zinc-500 font-mono pl-4">
-                      Keywords: {q.shortAnswerKeywords || 'None'}
+                      Keywords: {q.shortAnswerKeywords || "None"}
                     </p>
                   )}
                 </div>
@@ -635,13 +892,12 @@ export default function NewAssessmentPage() {
                   onClick={() => handleSaveAndPublish(true)}
                   className="px-6 py-2.5 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all cursor-pointer shadow-sm"
                 >
-                  {loading ? 'Publishing...' : 'Publish & Notify Students 🚀'}
+                  {loading ? "Publishing..." : "Publish & Notify Students 🚀"}
                 </button>
               </div>
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
+import { AiModule } from './ai/ai.module';
 import { AssessmentController } from './assessment/assessment.controller';
 import { AssessmentService } from './assessment/assessment.service';
 import { LeaderboardController } from './leaderboard/leaderboard.controller';
@@ -18,9 +19,11 @@ import { SyncGateway } from './gateway/sync.gateway';
       },
     ]),
     AuthModule,
+    AiModule,
   ],
   controllers: [AssessmentController, LeaderboardController, AnalyticsController],
   providers: [SyncGateway, AssessmentService, LeaderboardService, AnalyticsService],
 })
-export class AppModule {}
+export class AppModule { }
+
 
