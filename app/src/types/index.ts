@@ -4,6 +4,8 @@ export enum RoleName {
   STUDENT = 'STUDENT',
 }
 
+export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
+
 export enum QuestionType {
   SINGLE_CHOICE = 'SINGLE_CHOICE',
   MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
@@ -51,16 +53,21 @@ export interface UserProfile {
   firstName: string;
   lastName: string;
   avatarUrl?: string | null;
-  role: RoleName;
-  isActive: boolean;
-  isEmailVerified: boolean;
-  createdAt: string;
+  role: RoleName | UserRole | string;
+  isActive?: boolean;
+  isEmailVerified?: boolean;
+  isOnboarded?: boolean;
+  createdAt?: string;
+  gradeLevel?: string | null;
+  studentRegistrationNo?: string | null;
+  employeeId?: string | null;
+  department?: string | null;
 }
 
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
-  expiresIn: number;
+  expiresIn?: number;
 }
 
 export interface AuthResponse {
