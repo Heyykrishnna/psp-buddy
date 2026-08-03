@@ -11,11 +11,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
-  Dimensions,
+  Image,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
-
-const { width } = Dimensions.get("window");
 
 export function AuthScreen() {
   const { login, sendVerificationCode, register } = useAuth();
@@ -35,8 +33,7 @@ export function AuthScreen() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Animated values for smooth transitions
-  const tabAnim = useRef(new Animated.Value(0)).current;
+  // Animated value for form transitions
   const formFadeAnim = useRef(new Animated.Value(1)).current;
 
   const switchTab = (signUp: boolean) => {
@@ -45,7 +42,6 @@ export function AuthScreen() {
     setError("");
     setInfoMessage("");
 
-    // Smooth fade out -> switch -> fade in transition
     Animated.timing(formFadeAnim, {
       toValue: 0,
       duration: 120,
@@ -53,13 +49,6 @@ export function AuthScreen() {
     }).start(() => {
       setIsSignUp(signUp);
       setCodeSent(false);
-
-      Animated.spring(tabAnim, {
-        toValue: signUp ? 1 : 0,
-        useNativeDriver: true,
-        stiffness: 280,
-        damping: 22,
-      }).start();
 
       Animated.timing(formFadeAnim, {
         toValue: 1,
@@ -134,11 +123,6 @@ export function AuthScreen() {
     }
   };
 
-  const tabTranslateX = tabAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, (width - 40) / 2],
-  });
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -150,199 +134,174 @@ export function AuthScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Wordmark Header */}
-          <View style={styles.wordmarkRow}>
-            <Text style={styles.wordmark}>PSP LUMORA</Text>
-          </View>
-
-          {/* Large Hero Heading */}
-          <View style={styles.heroSection}>
-            <Text style={styles.heroHeading}>
-              {isSignUp ? "CREATE\nACCOUNT" : "SIGN IN"}
-            </Text>
-            <Text style={styles.heroSub}>
-              {isSignUp
-                ? "Verify your email with a confirmation code to get started."
-                : "Access your personalised learning dashboard."}
-            </Text>
-          </View>
-
-          {/* Animated Tab Switcher */}
-          <View style={styles.tabContainer}>
-            <Animated.View
-              style={[
-                styles.tabIndicator,
-                { transform: [{ translateX: tabTranslateX }] },
-              ]}
+          {/* Top Illustration Banner */}
+          <View style={styles.headerIllustrationContainer}>
+            <Image
+              source={require("../../assets/image.png")}
+              style={styles.headerIllustration}
+              resizeMode="cover"
             />
-            <TouchableOpacity
-              style={styles.tabBtn}
-              onPress={() => switchTab(false)}
-              activeOpacity={0.8}
-            >
-              <Text
-                style={[styles.tabLabel, !isSignUp && styles.tabLabelActive]}
-              >
-                SIGN IN
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.tabBtn}
-              onPress={() => switchTab(true)}
-              activeOpacity={0.8}
-            >
-              <Text
-                style={[styles.tabLabel, isSignUp && styles.tabLabelActive]}
-              >
-                REGISTER
-              </Text>
-            </TouchableOpacity>
           </View>
 
-          {/* Feedback Messages */}
-          {!!error && (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>⚠️ {error}</Text>
+          {/* Form Content Area */}
+          <View style={styles.contentSection}>
+            {/* Title & Subtitle */}
+            <View style={styles.titleSection}>
+              <Text style={styles.mainTitle}>
+                {isSignUp
+                  ? "Create your account"
+                  : "Your learning, all in\none place"}
+              </Text>
+              <Text style={styles.subTitle}>
+                {isSignUp
+                  ? "Sign up with your email to get started"
+                  : "Sign up or sign in with your email address"}
+              </Text>
             </View>
-          )}
 
-          {!!infoMessage && (
-            <View style={styles.infoBox}>
-              <Text style={styles.infoText}>📧 {infoMessage}</Text>
-            </View>
-          )}
-
-          {/* Form Card with Fade Animation */}
-          <Animated.View style={[styles.formCard, { opacity: formFadeAnim }]}>
-            {isSignUp && (
-              <View style={styles.fieldRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>FIRST NAME</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={firstName}
-                    onChangeText={setFirstName}
-                    placeholder="Jane"
-                    placeholderTextColor="rgba(255, 255, 255, 0.3)"
-                    autoCapitalize="words"
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>LAST NAME</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={lastName}
-                    onChangeText={setLastName}
-                    placeholder="Doe"
-                    placeholderTextColor="rgba(255, 255, 255, 0.3)"
-                    autoCapitalize="words"
-                  />
-                </View>
+            {/* Error / Info Messages */}
+            {!!error && (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>⚠️ {error}</Text>
               </View>
             )}
 
-            <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>EMAIL ADDRESS</Text>
-              {isSignUp ? (
-                <View style={styles.inputRow}>
+            {!!infoMessage && (
+              <View style={styles.infoBox}>
+                <Text style={styles.infoText}>📧 {infoMessage}</Text>
+              </View>
+            )}
+
+            {/* Form Fields Container */}
+            <Animated.View
+              style={[styles.formContainer, { opacity: formFadeAnim }]}
+            >
+              {isSignUp && (
+                <View style={styles.fieldRow}>
                   <TextInput
                     style={[styles.input, { flex: 1 }]}
-                    value={email}
-                    onChangeText={setEmail}
-                    placeholder="jane@lumora.edu"
-                    placeholderTextColor="rgba(255, 255, 255, 0.3)"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
+                    value={firstName}
+                    onChangeText={setFirstName}
+                    placeholder="First name"
+                    placeholderTextColor="#9CA3AF"
+                    autoCapitalize="words"
                   />
+                  <TextInput
+                    style={[styles.input, { flex: 1 }]}
+                    value={lastName}
+                    onChangeText={setLastName}
+                    placeholder="Last name"
+                    placeholderTextColor="#9CA3AF"
+                    autoCapitalize="words"
+                  />
+                </View>
+              )}
+
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={[styles.input, { flex: 1 }]}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="name@lumora.edu"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+                {isSignUp && (
                   <TouchableOpacity
-                    style={styles.actionBtn}
+                    style={styles.codeInlineBtn}
                     onPress={handleSendCode}
                     disabled={loading}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.actionBtnText}>
-                      {codeSent ? "RESEND" : "GET CODE"}
+                    <Text style={styles.codeInlineBtnText}>
+                      {codeSent ? "Resend" : "Get Code"}
                     </Text>
                   </TouchableOpacity>
-                </View>
-              ) : (
-                <TextInput
-                  style={styles.input}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="jane@lumora.edu"
-                  placeholderTextColor="rgba(255, 255, 255, 0.3)"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              )}
-            </View>
+                )}
+              </View>
 
-            {isSignUp && codeSent && (
-              <View style={styles.fieldContainer}>
-                <Text style={styles.fieldLabel}>CONFIRMATION CODE</Text>
+              {isSignUp && codeSent && (
                 <TextInput
                   style={styles.input}
                   value={verificationCode}
                   onChangeText={setVerificationCode}
                   placeholder="Enter 6-digit code"
-                  placeholderTextColor="rgba(255, 255, 255, 0.3)"
+                  placeholderTextColor="#9CA3AF"
                   keyboardType="number-pad"
                 />
-              </View>
-            )}
+              )}
 
-            <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>PASSWORD</Text>
-              <View style={styles.inputRow}>
+              <View style={styles.passwordWrapper}>
                 <TextInput
                   style={[styles.input, { flex: 1 }]}
                   value={password}
                   onChangeText={setPassword}
-                  placeholder="••••••••"
-                  placeholderTextColor="rgba(255, 255, 255, 0.3)"
+                  placeholder="Password"
+                  placeholderTextColor="#9CA3AF"
                   secureTextEntry={!showPassword}
                 />
                 <TouchableOpacity
-                  style={styles.togglePasswordBtn}
+                  style={styles.showPasswordBtn}
                   onPress={() => setShowPassword(!showPassword)}
-                  activeOpacity={0.8}
+                  activeOpacity={0.7}
                 >
-                  <Text style={styles.togglePasswordText}>
+                  <Text style={styles.showPasswordText}>
                     {showPassword ? "HIDE" : "SHOW"}
                   </Text>
                 </TouchableOpacity>
               </View>
-            </View>
 
-            <TouchableOpacity
-              style={styles.submitBtn}
-              onPress={handleSubmit}
-              disabled={loading}
-              activeOpacity={0.85}
-            >
-              {loading ? (
-                <ActivityIndicator color="#ffffff" />
-              ) : (
-                <Text style={styles.submitBtnText}>
-                  {isSignUp ? "VERIFY & CREATE ACCOUNT" : "SIGN IN"}
+              {/* Primary Action Pill Button */}
+              <TouchableOpacity
+                style={styles.primaryPillBtn}
+                onPress={handleSubmit}
+                disabled={loading}
+                activeOpacity={0.85}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <Text style={styles.primaryPillBtnText}>
+                    {isSignUp
+                      ? "Continue with email →"
+                      : "Continue with email →"}
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              {/* Toggle Sign In / Sign Up */}
+              <TouchableOpacity
+                style={styles.toggleRow}
+                onPress={() => switchTab(!isSignUp)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.toggleText}>
+                  {isSignUp ? (
+                    <>
+                      Already have an account?{" "}
+                      <Text style={styles.toggleHighlight}>Sign in</Text>
+                    </>
+                  ) : (
+                    <>
+                      New here?{" "}
+                      <Text style={styles.toggleHighlight}>
+                        Create an account
+                      </Text>
+                    </>
+                  )}
                 </Text>
-              )}
-            </TouchableOpacity>
-          </Animated.View>
+              </TouchableOpacity>
+            </Animated.View>
 
-          {/* Switch Tab Hint */}
-          <TouchableOpacity
-            onPress={() => switchTab(!isSignUp)}
-            style={styles.toggleRow}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.toggleText}>
-              {isSignUp
-                ? "Already have an account? Sign in"
-                : "New here? Create an account"}
-            </Text>
-          </TouchableOpacity>
+            {/* Footer Disclaimer */}
+            <View style={styles.termsFooter}>
+              <Text style={styles.termsText}>
+                By registering your email, you agree to{"\n"}our{" "}
+                <Text style={styles.termsLink}>Terms & Conditions</Text>.
+              </Text>
+            </View>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -352,215 +311,188 @@ export function AuthScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#B8C6B6",
+    backgroundColor: "#EBF5FF",
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 48,
-    gap: 18,
+    flexGrow: 1,
+    backgroundColor: "#ffffff",
   },
-  wordmarkRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 4,
+  headerIllustrationContainer: {
+    backgroundColor: "#EBF5FF",
+    height: 250,
+    overflow: "hidden",
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
   },
-  wordmark: {
-    fontSize: 17,
-    fontWeight: "600",
+  headerIllustration: {
+    width: "100%",
+    height: "100%",
+  },
+  contentSection: {
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 32,
+    gap: 16,
+  },
+  titleSection: {
+    marginBottom: 4,
+  },
+  mainTitle: {
+    fontSize: 28,
+    fontWeight: "700",
     fontFamily:
-      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
-    color: "#121316",
-    letterSpacing: 1,
+      Platform.OS === "web"
+        ? "'Space Grotesk', sans-serif"
+        : "SpaceGrotesk_600SemiBold",
+    color: "#111827",
+    lineHeight: 34,
+    letterSpacing: -0.5,
   },
-  heroSection: {
-    paddingTop: 8,
-    gap: 8,
-  },
-  heroHeading: {
-    fontSize: 52,
-    fontWeight: "600",
-    fontFamily:
-      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
-    color: "#121316",
-    lineHeight: 54,
-    letterSpacing: -1,
-  },
-  heroSub: {
+  subTitle: {
     fontSize: 13,
-    color: "#4A5248",
+    color: "#6B7280",
     fontFamily:
       Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_500Medium",
-    lineHeight: 19,
-    fontWeight: "500",
-    maxWidth: 280,
-  },
-  tabContainer: {
-    flexDirection: "row",
-    backgroundColor: "#a8b6a5",
-    borderRadius: 14,
-    padding: 4,
-    position: "relative",
-    overflow: "hidden",
-  },
-  tabIndicator: {
-    position: "absolute",
-    top: 4,
-    left: 4,
-    width: "50%",
-    height: "100%",
-    backgroundColor: "#121316",
-    borderRadius: 11,
-  },
-  tabBtn: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 11,
-    zIndex: 1,
-  },
-  tabLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    fontFamily:
-      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
-    color: "#4A5248",
-    letterSpacing: 0.5,
-  },
-  tabLabelActive: {
-    color: "#ffffff",
+    marginTop: 6,
   },
   errorBox: {
-    backgroundColor: "#FF5745",
+    backgroundColor: "#FEE2E2",
     borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: "#FCA5A5",
   },
   errorText: {
-    color: "#ffffff",
+    color: "#991B1B",
     fontSize: 12,
     fontWeight: "600",
     fontFamily:
       Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
   infoBox: {
-    backgroundColor: "#121316",
+    backgroundColor: "#ECFDF5",
     borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: "#6EE7B7",
   },
   infoText: {
-    color: "#4ade80",
+    color: "#065F46",
     fontSize: 12,
     fontWeight: "600",
     fontFamily:
       Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
-  formCard: {
-    backgroundColor: "#121316",
-    borderRadius: 28,
-    padding: 22,
-    gap: 16,
-  },
-  fieldContainer: {
-    width: "100%",
+  formContainer: {
+    gap: 12,
+    marginTop: 4,
   },
   fieldRow: {
     flexDirection: "row",
-    gap: 12,
-    width: "100%",
+    gap: 10,
   },
-  fieldLabel: {
-    fontSize: 10,
-    fontWeight: "600",
-    fontFamily:
-      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
-    color: "#71717a",
-    letterSpacing: 1,
-    marginBottom: 6,
-  },
-  inputRow: {
+  inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    width: "100%",
+    position: "relative",
   },
   input: {
-    backgroundColor: "#1f2024",
-    color: "#ffffff",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    height: 48,
+    backgroundColor: "#F3F4F6",
+    color: "#111827",
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    height: 52,
     fontSize: 14,
     fontWeight: "500",
     fontFamily:
       Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_500Medium",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.07)",
     width: "100%",
   },
-  actionBtn: {
-    backgroundColor: "#5451FF",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    height: 48,
-    minWidth: 92,
-    alignItems: "center",
-    justifyContent: "center",
+  codeInlineBtn: {
+    position: "absolute",
+    right: 8,
+    backgroundColor: "#2563EB",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
   },
-  actionBtnText: {
+  codeInlineBtnText: {
     color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "600",
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
+  },
+  passwordWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    position: "relative",
+  },
+  showPasswordBtn: {
+    position: "absolute",
+    right: 14,
+  },
+  showPasswordText: {
+    color: "#6B7280",
     fontSize: 11,
     fontWeight: "600",
     fontFamily:
       Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
     letterSpacing: 0.5,
   },
-  togglePasswordBtn: {
-    backgroundColor: "#1f2024",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    height: 48,
-    minWidth: 62,
-    alignItems: "center",
+  primaryPillBtn: {
+    backgroundColor: "#3B82F6",
+    height: 52,
+    borderRadius: 26,
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.07)",
-  },
-  togglePasswordText: {
-    color: "#71717a",
-    fontSize: 10,
-    fontWeight: "600",
-    fontFamily:
-      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
-    letterSpacing: 0.5,
-  },
-  submitBtn: {
-    backgroundColor: "#5451FF",
-    borderRadius: 14,
-    height: 50,
     alignItems: "center",
-    justifyContent: "center",
-    marginTop: 6,
+    marginTop: 8,
+    shadowColor: "#3B82F6",
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
   },
-  submitBtnText: {
+  primaryPillBtnText: {
     color: "#ffffff",
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: "600",
     fontFamily:
       Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
-    letterSpacing: 1,
   },
   toggleRow: {
     alignItems: "center",
+    marginTop: 8,
     paddingVertical: 4,
   },
   toggleText: {
-    color: "#4A5248",
-    fontSize: 12,
+    color: "#6B7280",
+    fontSize: 13,
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_500Medium",
+  },
+  toggleHighlight: {
+    color: "#2563EB",
     fontWeight: "600",
     fontFamily:
       Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
+  },
+  termsFooter: {
+    marginTop: 16,
+    alignItems: "center",
+  },
+  termsText: {
+    color: "#9CA3AF",
+    fontSize: 11,
+    textAlign: "center",
+    lineHeight: 16,
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_400Regular",
+  },
+  termsLink: {
+    color: "#6B7280",
     textDecorationLine: "underline",
   },
 });

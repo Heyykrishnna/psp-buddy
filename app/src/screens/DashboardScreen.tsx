@@ -563,7 +563,7 @@ const styles = StyleSheet.create({
   greetingText: {
     fontSize: 32,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
     color: "#ffffff",
     letterSpacing: -0.5,
   },
@@ -636,7 +636,7 @@ const styles = StyleSheet.create({
   masteryTitle: {
     fontSize: 20,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
     color: "#ffffff",
     letterSpacing: -0.3,
   },
@@ -655,7 +655,7 @@ const styles = StyleSheet.create({
   xpValue: {
     fontSize: 32,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
     color: "#F4C463",
     letterSpacing: -0.5,
     marginTop: 2,
@@ -693,7 +693,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 13,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
     color: "#121316",
     letterSpacing: 1,
   },
@@ -750,7 +750,7 @@ const styles = StyleSheet.create({
   asmTitle: {
     fontSize: 17,
     fontWeight: "600",
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
     color: "#ffffff",
     lineHeight: 22,
   },

@@ -40,6 +40,7 @@ function MainNavigator() {
 
 export default function App() {
   const [fontsLoaded] = useFonts({
+    SpaceGrotesk_600SemiBold: require('./assets/SpaceGrotesk-SemiBold.ttf'),
     Poppins_400Regular,
     Poppins_500Medium,
     Poppins_600SemiBold,
@@ -52,12 +53,8 @@ export default function App() {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap';
+      link.href = 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap';
       document.head.appendChild(link);
-
-      const style = document.createElement('style');
-      style.textContent = `* { font-family: 'Poppins', system-ui, -apple-system, sans-serif !important; }`;
-      document.head.appendChild(style);
     }
   }, []);
 
