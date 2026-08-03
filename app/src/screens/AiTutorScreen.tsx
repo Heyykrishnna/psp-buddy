@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,31 +9,33 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Platform,
-} from 'react-native';
-import { useAuth } from '../context/AuthContext';
+} from "react-native";
+import { useAuth } from "../context/AuthContext";
 
 interface AiTutorScreenProps {
   onBackToDashboard: () => void;
 }
 
 const QUICK_PROMPTS = [
-  'Explain Two Sum Hash Map',
-  'Master Theorem Complexity',
-  'Array Reversal Algorithm',
-  'How to debug infinite loop',
+  "Explain Two Sum Hash Map",
+  "Master Theorem Complexity",
+  "Array Reversal Algorithm",
+  "How to debug infinite loop",
 ];
 
 export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
   const { apiClient: client, user } = useAuth();
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([
+  const [messages, setMessages] = useState<
+    Array<{ role: "user" | "assistant"; content: string }>
+  >([
     {
-      role: 'assistant',
+      role: "assistant",
       content:
-        'Hello! I am your AI Tutor. Ask me any question about programming logic, data structures, algorithm complexities, or code debugging!',
+        "Hello! I am your AI Tutor. Ask me any question about programming logic, data structures, algorithm complexities, or code debugging!",
     },
   ]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
 
@@ -51,13 +53,20 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
         if (sessions && Array.isArray(sessions) && sessions.length > 0) {
           const latestSession = sessions[0];
           setActiveSessionId(latestSession.id);
-          const historyMsgs = await client.getChatMessages(latestSession.id, studentId);
-          if (historyMsgs && Array.isArray(historyMsgs) && historyMsgs.length > 0) {
+          const historyMsgs = await client.getChatMessages(
+            latestSession.id,
+            studentId,
+          );
+          if (
+            historyMsgs &&
+            Array.isArray(historyMsgs) &&
+            historyMsgs.length > 0
+          ) {
             setMessages(
               historyMsgs.map((m: any) => ({
-                role: m.role === 'user' ? 'user' : 'assistant',
+                role: m.role === "user" ? "user" : "assistant",
                 content: m.content,
-              }))
+              })),
             );
           }
         }
@@ -74,8 +83,8 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
     const query = textToSend || input.trim();
     if (!query || loading) return;
 
-    setInput('');
-    const userMsgObj = { role: 'user' as const, content: query };
+    setInput("");
+    const userMsgObj = { role: "user" as const, content: query };
     setMessages((prev) => [...prev, userMsgObj]);
     setLoading(true);
 
@@ -83,7 +92,10 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
       if (client) {
         let currentSId = activeSessionId;
         if (!currentSId) {
-          const newSession = await client.createChatSession('General CS', studentId);
+          const newSession = await client.createChatSession(
+            "General CS",
+            studentId,
+          );
           if (newSession && newSession.id) {
             currentSId = newSession.id;
             setActiveSessionId(newSession.id);
@@ -102,7 +114,10 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
 
         const reply = res?.reply || res?.message;
         if (reply) {
-          setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: reply },
+          ]);
           return;
         }
       }
@@ -110,17 +125,18 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
       setMessages((prev) => [
         ...prev,
         {
-          role: 'assistant',
+          role: "assistant",
           content:
-            'Here is a hint: use a Hash Map (dictionary) to store seen element indices. As you iterate, check if `target - current_element` exists in the map for O(N) time complexity.',
+            "Here is a hint: use a Hash Map (dictionary) to store seen element indices. As you iterate, check if `target - current_element` exists in the map for O(N) time complexity.",
         },
       ]);
     } catch {
       setMessages((prev) => [
         ...prev,
         {
-          role: 'assistant',
-          content: 'AI Tutor service is momentarily offline. Please try sending your prompt again!',
+          role: "assistant",
+          content:
+            "AI Tutor service is momentarily offline. Please try sending your prompt again!",
         },
       ]);
     } finally {
@@ -140,7 +156,11 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
 
       {/* Suggested Quick Prompts */}
       <View style={styles.promptsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.promptsScroll}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.promptsScroll}
+        >
           {QUICK_PROMPTS.map((prompt, idx) => (
             <TouchableOpacity
               key={idx}
@@ -155,11 +175,14 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
       </View>
 
       {/* Chat Messages List */}
-      <ScrollView style={styles.chatArea} contentContainerStyle={styles.chatPadding}>
+      <ScrollView
+        style={styles.chatArea}
+        contentContainerStyle={styles.chatPadding}
+      >
         {loadingHistory ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color="#5451FF" />
-            <Text style={styles.loadingText}>SYNCING CHAT HISTORY FROM DB...</Text>
+            <Text style={styles.loadingText}>SYNCING CHAT HISTORY...</Text>
           </View>
         ) : (
           messages.map((m, idx) => (
@@ -167,10 +190,12 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
               key={idx}
               style={[
                 styles.bubbleContainer,
-                m.role === 'user' ? styles.userBubbleContainer : styles.aiBubbleContainer,
+                m.role === "user"
+                  ? styles.userBubbleContainer
+                  : styles.aiBubbleContainer,
               ]}
             >
-              {m.role === 'assistant' && (
+              {m.role === "assistant" && (
                 <View style={styles.aiBadge}>
                   <Text style={styles.aiBadgeText}>AI TUTOR</Text>
                 </View>
@@ -178,13 +203,15 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
               <View
                 style={[
                   styles.bubble,
-                  m.role === 'user' ? styles.userBubble : styles.aiBubble,
+                  m.role === "user" ? styles.userBubble : styles.aiBubble,
                 ]}
               >
                 <Text
                   style={[
                     styles.bubbleText,
-                    m.role === 'user' ? styles.userBubbleText : styles.aiBubbleText,
+                    m.role === "user"
+                      ? styles.userBubbleText
+                      : styles.aiBubbleText,
                   ]}
                 >
                   {m.content}
@@ -215,7 +242,10 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
         <TouchableOpacity
           onPress={() => handleSend()}
           disabled={loading || !input.trim()}
-          style={[styles.sendBtn, (!input.trim() || loading) && styles.sendBtnDisabled]}
+          style={[
+            styles.sendBtn,
+            (!input.trim() || loading) && styles.sendBtnDisabled,
+          ]}
           activeOpacity={0.85}
         >
           <Text style={styles.sendBtnText}>Send</Text>
@@ -228,56 +258,61 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#09090b',
+    backgroundColor: "#09090b",
   },
   header: {
     height: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#27272a',
-    backgroundColor: '#121316',
+    borderBottomColor: "#27272a",
+    backgroundColor: "#121316",
   },
   backBtn: {
     paddingRight: 12,
   },
   backBtnText: {
-    color: '#5451FF',
+    color: "#5451FF",
     fontSize: 16,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontWeight: "600",
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
   headerTitle: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#ffffff',
+    fontWeight: "700",
+    color: "#ffffff",
     letterSpacing: 1,
-    fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
+    fontFamily:
+      Platform.OS === "web"
+        ? "'Space Grotesk', sans-serif"
+        : "SpaceGrotesk_600SemiBold",
   },
   promptsContainer: {
-    backgroundColor: '#121316',
+    backgroundColor: "#121316",
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#27272a',
+    borderBottomColor: "#27272a",
   },
   promptsScroll: {
     paddingHorizontal: 12,
     gap: 8,
   },
   promptChip: {
-    backgroundColor: '#1c1c1e',
-    borderColor: '#3f3f46',
+    backgroundColor: "#1c1c1e",
+    borderColor: "#3f3f46",
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
   },
   promptChipText: {
-    color: '#a1a1aa',
+    color: "#a1a1aa",
     fontSize: 11,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
+    fontWeight: "600",
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
   chatArea: {
     flex: 1,
@@ -287,28 +322,28 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   bubbleContainer: {
-    maxWidth: '85%',
+    maxWidth: "85%",
   },
   userBubbleContainer: {
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
   },
   aiBubbleContainer: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   aiBadge: {
-    backgroundColor: 'rgba(84, 81, 255, 0.2)',
-    borderColor: 'rgba(84, 81, 255, 0.4)',
+    backgroundColor: "rgba(84, 81, 255, 0.2)",
+    borderColor: "rgba(84, 81, 255, 0.4)",
     borderWidth: 1,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
     marginBottom: 4,
   },
   aiBadgeText: {
-    color: '#818cf8',
+    color: "#818cf8",
     fontSize: 9,
-    fontWeight: '800',
+    fontWeight: "800",
     letterSpacing: 0.8,
   },
   bubble: {
@@ -316,62 +351,67 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
   userBubble: {
-    backgroundColor: '#5451FF',
+    backgroundColor: "#5451FF",
     borderBottomRightRadius: 4,
   },
   aiBubble: {
-    backgroundColor: '#121316',
-    borderColor: '#27272a',
+    backgroundColor: "#121316",
+    borderColor: "#27272a",
     borderWidth: 1,
     borderBottomLeftRadius: 4,
   },
   bubbleText: {
     fontSize: 13,
     lineHeight: 20,
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_500Medium',
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_500Medium",
   },
   userBubbleText: {
-    color: '#ffffff',
+    color: "#ffffff",
   },
   aiBubbleText: {
-    color: '#e4e4e7',
+    color: "#e4e4e7",
   },
   loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
     padding: 16,
   },
   loadingText: {
     fontSize: 10,
-    color: '#71717a',
+    color: "#71717a",
     letterSpacing: 1,
-    fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
+    fontFamily:
+      Platform.OS === "web"
+        ? "'Space Grotesk', sans-serif"
+        : "SpaceGrotesk_600SemiBold",
   },
   inputBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 12,
-    backgroundColor: '#121316',
+    backgroundColor: "#121316",
     borderTopWidth: 1,
-    borderTopColor: '#27272a',
+    borderTopColor: "#27272a",
     gap: 8,
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#1c1c1e',
-    borderColor: '#27272a',
+    backgroundColor: "#1c1c1e",
+    borderColor: "#27272a",
     borderWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
     fontSize: 13,
-    color: '#ffffff',
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_500Medium',
+    color: "#ffffff",
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_500Medium",
   },
   sendBtn: {
-    backgroundColor: '#5451FF',
+    backgroundColor: "#5451FF",
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 20,
@@ -380,9 +420,10 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   sendBtnText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 13,
-    fontWeight: '700',
-    fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_700Bold',
+    fontWeight: "700",
+    fontFamily:
+      Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_700Bold",
   },
 });
