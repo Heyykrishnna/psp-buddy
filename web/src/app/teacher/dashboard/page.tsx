@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
@@ -507,6 +507,28 @@ export default function TeacherDashboardPage() {
     },
   ];
 
+  // ── Sliding tab pill refs ──
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [pillStyle, setPillStyle] = useState({ left: 0, width: 0 });
+  const isMounted = useRef(false);
+
+  useEffect(() => {
+    const activeIdx = TABS.findIndex((t) => t.id === activeTab);
+    const el = tabRefs.current[activeIdx];
+    if (!el) return;
+    // Snap instantly on mount (no animation), slide on tab changes
+    if (!isMounted.current) {
+      isMounted.current = true;
+      // Use a tiny RAF so refs are laid out before measuring
+      requestAnimationFrame(() => {
+        setPillStyle({ left: el.offsetLeft, width: el.offsetWidth });
+      });
+    } else {
+      setPillStyle({ left: el.offsetLeft, width: el.offsetWidth });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
   return (
     <main className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans px-6 pt-6 pb-24 md:px-12 md:pt-12 selection:bg-[#111111] selection:text-white">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -594,21 +616,41 @@ export default function TeacherDashboardPage() {
         </div>
 
         {/* ── Tabs ── */}
-        <div className="flex items-center gap-1 bg-white border border-zinc-200 rounded-xl p-1.5 shadow-sm w-fit">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                activeTab === tab.id
-                  ? "bg-[#111111] text-white shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100"
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
+        <div className="bg-white border border-zinc-200 rounded-xl p-1.5 shadow-sm w-fit">
+          <div className="relative flex items-center gap-0">
+            {/* Sliding pill background */}
+            <div
+              className="absolute top-0 bottom-0 rounded-lg bg-[#111111] shadow-sm pointer-events-none"
+              style={{
+                left: pillStyle.left,
+                width: pillStyle.width,
+                transition:
+                  pillStyle.width === 0
+                    ? "none"
+                    : "left 320ms cubic-bezier(0.35, 0, 0.25, 1), width 320ms cubic-bezier(0.35, 0, 0.25, 1)",
+              }}
+            />
+
+            {TABS.map((tab, idx) => (
+              <button
+                key={tab.id}
+                ref={(el) => {
+                  tabRefs.current[idx] = el;
+                }}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative z-10 flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer select-none
+                  transition-colors duration-200
+                  ${
+                    activeTab === tab.id
+                      ? "text-white"
+                      : "text-zinc-500 hover:text-zinc-800"
+                  }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {loading ? (
