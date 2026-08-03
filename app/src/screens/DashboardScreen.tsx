@@ -308,56 +308,6 @@ export function DashboardScreen({ onOpenAssessments }: DashboardScreenProps) {
           </View>
         </View>
 
-        {/* TOPIC MASTERY (Purple Card) */}
-        <View style={styles.masteryCard}>
-          <View style={styles.cardTopRow}>
-            <Text style={styles.cardSectionLabel}>TOPIC MASTERY</Text>
-            <View style={styles.cardBadge}>
-              <Text style={styles.cardBadgeText}>this semester</Text>
-            </View>
-          </View>
-
-          <Text style={styles.masteryTitle}>
-            {weakTopics.length > 0
-              ? `${weakTopics.length} topic${weakTopics.length > 1 ? "s" : ""} need focus`
-              : "All topics on track"}
-          </Text>
-
-          <View style={styles.masteryBars}>
-            {topics.map((t, i) => (
-              <MasteryBar
-                key={t.topic}
-                topic={t.topic}
-                score={t.masteryScore}
-                delay={i * 100}
-              />
-            ))}
-          </View>
-        </View>
-
-        {/* XP CHART CARD (Dark) */}
-        <View style={styles.xpCard}>
-          <View style={styles.cardTopRow}>
-            <Text style={[styles.cardSectionLabel, { color: "#a1a1aa" }]}>
-              XP PERFORMANCE
-            </Text>
-            <TouchableOpacity
-              style={styles.xpBtn}
-              onPress={() => setXp((p) => p + 50)}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.xpBtnText}>+50 XP</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.xpValue}>{xp.toLocaleString()} XP</Text>
-          <Text style={styles.xpSub}>
-            +50 from last quiz · streak: {streak} days
-          </Text>
-
-          <XpBarChart xp={xp} />
-        </View>
-
         {/* ACTIVE ASSESSMENTS (Coral Card) */}
         <View style={styles.assessmentSection}>
           <View style={styles.sectionHeaderRow}>
@@ -439,6 +389,56 @@ export function DashboardScreen({ onOpenAssessments }: DashboardScreenProps) {
               <Text style={styles.arrowTextSmall}>↗</Text>
             </View>
           </TouchableOpacity>
+        </View>
+
+        {/* TOPIC MASTERY (Purple Card) */}
+        <View style={styles.masteryCard}>
+          <View style={styles.cardTopRow}>
+            <Text style={styles.cardSectionLabel}>TOPIC MASTERY</Text>
+            <View style={styles.cardBadge}>
+              <Text style={styles.cardBadgeText}>this semester</Text>
+            </View>
+          </View>
+
+          <Text style={styles.masteryTitle}>
+            {weakTopics.length > 0
+              ? `${weakTopics.length} topic${weakTopics.length > 1 ? "s" : ""} need focus`
+              : "All topics on track"}
+          </Text>
+
+          <View style={styles.masteryBars}>
+            {topics.map((t, i) => (
+              <MasteryBar
+                key={t.topic}
+                topic={t.topic}
+                score={t.masteryScore}
+                delay={i * 100}
+              />
+            ))}
+          </View>
+        </View>
+
+        {/* XP CHART CARD (Dark) */}
+        <View style={styles.xpCard}>
+          <View style={styles.cardTopRow}>
+            <Text style={[styles.cardSectionLabel, { color: "#a1a1aa" }]}>
+              XP PERFORMANCE
+            </Text>
+            <TouchableOpacity
+              style={styles.xpBtn}
+              onPress={() => setXp((p) => p + 50)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.xpBtnText}>+50 XP</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.xpValue}>{xp.toLocaleString()} XP</Text>
+          <Text style={styles.xpSub}>
+            +50 from last quiz · streak: {streak} days
+          </Text>
+
+          <XpBarChart xp={xp} />
         </View>
 
         {/* LEADERBOARD (Dark Card) */}
