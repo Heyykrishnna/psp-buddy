@@ -224,7 +224,9 @@ export default function StudentAssessmentRunnerPage({
               {/* Live Autosave Indicator */}
               <div className="flex items-center gap-1.5 text-xs font-mono">
                 {autosaveStatus === "SAVING" && (
-                  <span className="text-amber-600 animate-pulse">Saving...</span>
+                  <span className="text-amber-600 animate-pulse">
+                    Saving...
+                  </span>
                 )}
                 {autosaveStatus === "SAVED" && (
                   <span className="text-emerald-600 font-medium">Saved</span>
@@ -377,9 +379,9 @@ export default function StudentAssessmentRunnerPage({
                   <h3 className="text-base sm:text-lg font-medium text-[#111111] leading-snug">
                     {currentQ.questionText}
                   </h3>
-                  {currentQ.topic && (
+                  {(currentQ as any).topic && (
                     <span className="text-[11px] font-mono text-zinc-400 mt-1 block">
-                      Topic: {currentQ.topic}
+                      Topic: {(currentQ as any).topic}
                     </span>
                   )}
                 </div>

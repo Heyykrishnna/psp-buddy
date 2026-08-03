@@ -227,21 +227,28 @@ export default function DashboardPage() {
 
           <div className="flex items-center gap-3">
             <button
+              onClick={() => router.push("/student/assessments")}
+              className="flex items-center gap-1.5 px-3.5 py-2 border border-zinc-200 text-xs font-medium text-zinc-700 rounded-md hover:bg-zinc-100 transition-all cursor-pointer"
+            >
+              <ReaderIcon className="w-3.5 h-3.5" />
+              Assessments
+            </button>
+            <button
               onClick={() => router.push("/student/ai-tutor")}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-md shadow-sm transition-all"
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-md shadow-sm transition-all cursor-pointer"
             >
               <span>AI Tutor</span>
             </button>
             <button
               onClick={() => router.push("/analytics")}
-              className="flex items-center gap-1.5 px-3.5 py-2 border border-zinc-200 text-xs font-medium text-zinc-700 rounded-md hover:bg-zinc-100 transition-all"
+              className="flex items-center gap-1.5 px-3.5 py-2 border border-zinc-200 text-xs font-medium text-zinc-700 rounded-md hover:bg-zinc-100 transition-all cursor-pointer"
             >
               <BarChartIcon className="w-3.5 h-3.5" />
               Analytics
             </button>
             <button
               onClick={() => logout()}
-              className="flex items-center gap-1.5 px-4 py-2 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-2 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all shadow-sm cursor-pointer"
             >
               <ExitIcon className="w-3.5 h-3.5" />
               Sign Out
@@ -343,14 +350,22 @@ export default function DashboardPage() {
                 Active Assessments
               </h3>
             </div>
-            {(user?.role === "TEACHER" || user?.role === "ADMIN") && (
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => router.push("/teacher/assessments/new")}
-                className="px-4 py-2 border border-zinc-300 hover:bg-zinc-100 text-zinc-800 text-xs font-medium rounded-md"
+                onClick={() => router.push("/student/assessments")}
+                className="px-4 py-2 border border-zinc-200 hover:bg-zinc-50 text-zinc-600 text-xs font-medium rounded-md transition-all cursor-pointer"
               >
-                Configure
+                View All →
               </button>
-            )}
+              {(user?.role === "TEACHER" || user?.role === "ADMIN") && (
+                <button
+                  onClick={() => router.push("/teacher/assessments/new")}
+                  className="px-4 py-2 border border-zinc-300 hover:bg-zinc-100 text-zinc-800 text-xs font-medium rounded-md cursor-pointer"
+                >
+                  Configure
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="space-y-3">

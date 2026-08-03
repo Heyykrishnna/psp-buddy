@@ -13,7 +13,7 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [role, setRole] = useState<UserRole>("STUDENT");
+  const role: UserRole = "STUDENT";
 
   // Email Confirmation Code state
   const [verificationCode, setVerificationCode] = useState("");
@@ -160,68 +160,35 @@ export default function AuthPage() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs text-zinc-600 font-medium mb-1.5">
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="Jane"
-                      className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-[#111111] transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs text-zinc-600 font-medium mb-1.5">
-                      Last Name
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Doe"
-                      className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-[#111111] transition-all"
-                    />
-                  </div>
-                </div>
-
-                {/* Role Selector */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-zinc-600 font-medium mb-1.5">
-                    Account Type (Role)
+                    First Name
                   </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setRole("STUDENT")}
-                      className={`py-2.5 text-xs font-semibold rounded-md border transition-all ${
-                        role === "STUDENT"
-                          ? "bg-[#111111] text-white border-[#111111]"
-                          : "bg-[#F4F4F6] text-zinc-600 border-transparent hover:bg-zinc-200"
-                      }`}
-                    >
-                      🎓 Student
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRole("TEACHER")}
-                      className={`py-2.5 text-xs font-semibold rounded-md border transition-all ${
-                        role === "TEACHER"
-                          ? "bg-[#111111] text-white border-[#111111]"
-                          : "bg-[#F4F4F6] text-zinc-600 border-transparent hover:bg-zinc-200"
-                      }`}
-                    >
-                      👨‍🏫 Teacher
-                    </button>
-                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="Jane"
+                    className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-[#111111] transition-all"
+                  />
                 </div>
-              </>
+
+                <div>
+                  <label className="block text-xs text-zinc-600 font-medium mb-1.5">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Doe"
+                    className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-[#111111] transition-all"
+                  />
+                </div>
+              </div>
             )}
 
             <div>
