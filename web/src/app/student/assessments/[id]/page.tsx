@@ -5,6 +5,15 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
 import { AssessmentDTO, QuestionDTO } from "@/types";
+import {
+  CodeIcon,
+  PlayIcon,
+  CheckIcon,
+  Cross2Icon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ReloadIcon,
+} from "@radix-ui/react-icons";
 
 export default function StudentAssessmentRunnerPage({
   params,
@@ -77,7 +86,7 @@ export default function StudentAssessmentRunnerPage({
     if (id === "demo-asm-coding" || id.includes("coding")) {
       return {
         id,
-        title: "Python & Algorithms Coding Playground Assessment 💻",
+        title: "Python & Algorithms Coding Playground Assessment",
         description:
           "Interactive Coding Playground assessment covering Two Sum, Array Reversal, and Algorithm optimization. Solve in the web IDE and pass test cases.",
         className: "1st Sem",
@@ -178,10 +187,30 @@ export default function StudentAssessmentRunnerPage({
             explanation:
               "Polymorphism (specifically method overriding) enables subclass-specific method implementations.",
             options: [
-              { id: "o1", optionText: "Encapsulation", isCorrect: false, orderIndex: 1 },
-              { id: "o2", optionText: "Polymorphism", isCorrect: true, orderIndex: 2 },
-              { id: "o3", optionText: "Abstraction", isCorrect: false, orderIndex: 3 },
-              { id: "o4", optionText: "Inheritance", isCorrect: false, orderIndex: 4 },
+              {
+                id: "o1",
+                optionText: "Encapsulation",
+                isCorrect: false,
+                orderIndex: 1,
+              },
+              {
+                id: "o2",
+                optionText: "Polymorphism",
+                isCorrect: true,
+                orderIndex: 2,
+              },
+              {
+                id: "o3",
+                optionText: "Abstraction",
+                isCorrect: false,
+                orderIndex: 3,
+              },
+              {
+                id: "o4",
+                optionText: "Inheritance",
+                isCorrect: false,
+                orderIndex: 4,
+              },
             ],
           },
           {
@@ -252,14 +281,24 @@ export default function StudentAssessmentRunnerPage({
             points: 5,
             orderIndex: 1,
             options: [
-              { id: "os-o1", optionText: "Round Robin", isCorrect: false, orderIndex: 1 },
+              {
+                id: "os-o1",
+                optionText: "Round Robin",
+                isCorrect: false,
+                orderIndex: 1,
+              },
               {
                 id: "os-o2",
                 optionText: "Shortest Job First (SJF)",
                 isCorrect: true,
                 orderIndex: 2,
               },
-              { id: "os-o3", optionText: "FIFO", isCorrect: false, orderIndex: 3 },
+              {
+                id: "os-o3",
+                optionText: "FIFO",
+                isCorrect: false,
+                orderIndex: 3,
+              },
             ],
           },
           {
@@ -1030,17 +1069,18 @@ export default function StudentAssessmentRunnerPage({
                   {currentQ.questionType === "CODING" && (
                     <div className="pt-2 space-y-4">
                       {/* Coding Toolbar */}
-                      <div className="flex items-center justify-between bg-zinc-900 px-4 py-3 rounded-t-xl text-white">
+                      <div className="flex items-center justify-between bg-[#F4F4F6] border border-zinc-200 px-4 py-3 rounded-t-xl text-[#111111]">
                         <div className="flex items-center gap-3">
-                          <span className="text-xs font-mono font-bold text-purple-400">
-                            💻 IDE Playground
+                          <span className="text-xs font-mono font-semibold text-zinc-900 flex items-center gap-1.5">
+                            <CodeIcon className="w-3.5 h-3.5 text-zinc-700" />
+                            IDE Playground
                           </span>
                           <select
                             value={selectedLanguage}
                             onChange={(e) =>
                               setSelectedLanguage(e.target.value)
                             }
-                            className="bg-zinc-800 border border-zinc-700 text-xs font-mono rounded px-2.5 py-1 text-zinc-200"
+                            className="bg-white border border-zinc-300 text-xs font-mono rounded px-2.5 py-1 text-zinc-900 focus:outline-none focus:border-[#111111]"
                           >
                             <option value="python">Python 3.10</option>
                             <option value="javascript">
@@ -1063,14 +1103,14 @@ export default function StudentAssessmentRunnerPage({
                               starter,
                             );
                           }}
-                          className="text-[11px] font-mono text-zinc-400 hover:text-white underline cursor-pointer"
+                          className="text-[11px] font-mono text-zinc-600 hover:text-zinc-900 underline cursor-pointer flex items-center gap-1"
                         >
-                          Reset Code
+                          <ReloadIcon className="w-3 h-3" /> Reset Code
                         </button>
                       </div>
 
                       {/* Code Editor */}
-                      <div className="bg-zinc-950 rounded-b-xl border border-zinc-800 overflow-hidden space-y-0">
+                      <div className="bg-white rounded-b-xl border-x border-b border-zinc-200 overflow-hidden space-y-0 shadow-2xs">
                         <textarea
                           rows={9}
                           value={
@@ -1086,25 +1126,33 @@ export default function StudentAssessmentRunnerPage({
                               e.target.value,
                             )
                           }
-                          className="w-full p-4 bg-zinc-950 font-mono text-xs text-emerald-400 focus:outline-none leading-relaxed border-b border-zinc-800"
+                          className="w-full p-4 bg-[#FAFAFA] focus:bg-white font-mono text-xs text-zinc-900 focus:outline-none leading-relaxed border-b border-zinc-200"
                           placeholder="Write your code solution here..."
                         />
 
                         {/* Test Cases Run Panel */}
-                        <div className="p-4 bg-zinc-900/90 space-y-3">
+                        <div className="p-4 bg-[#F9F9FB] space-y-3 border-t border-zinc-200">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-mono text-zinc-400">
+                            <span className="text-xs font-mono font-medium text-zinc-700">
                               Test Cases Evaluation
                             </span>
                             <button
                               type="button"
                               onClick={handleRunTestCases}
                               disabled={runningCode}
-                              className="flex items-center gap-2 px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-md transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                              className="flex items-center gap-1.5 px-4 py-2 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all shadow-xs cursor-pointer disabled:opacity-50"
                             >
-                              {runningCode
-                                ? "Executing Code..."
-                                : "▶ Run Test Cases"}
+                              {runningCode ? (
+                                <>
+                                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                  Executing Code...
+                                </>
+                              ) : (
+                                <>
+                                  <PlayIcon className="w-3.5 h-3.5 text-white" />
+                                  Run Test Cases
+                                </>
+                              )}
                             </button>
                           </div>
 
@@ -1114,24 +1162,29 @@ export default function StudentAssessmentRunnerPage({
                               {testResults.map((tr, idx) => (
                                 <div
                                   key={idx}
-                                  className={`p-2.5 rounded border text-xs font-mono flex items-center justify-between ${
+                                  className={`p-3 rounded-lg border text-xs font-mono flex items-center justify-between shadow-2xs ${
                                     tr.passed
-                                      ? "bg-emerald-950/60 border-emerald-800 text-emerald-300"
-                                      : "bg-red-950/60 border-red-800 text-red-300"
+                                      ? "bg-emerald-50/80 border-emerald-200 text-emerald-900"
+                                      : "bg-red-50/80 border-red-200 text-red-900"
                                   }`}
                                 >
                                   <div className="flex items-center gap-2">
-                                    <span>
-                                      {tr.passed ? "✓ Passed" : "✗ Failed"}
+                                    <span className="font-semibold flex items-center gap-1">
+                                      {tr.passed ? (
+                                        <CheckIcon className="w-3.5 h-3.5 text-emerald-700" />
+                                      ) : (
+                                        <Cross2Icon className="w-3.5 h-3.5 text-red-700" />
+                                      )}
+                                      {tr.passed ? "Passed" : "Failed"}
                                     </span>
-                                    <span className="text-zinc-400">
+                                    <span className="text-zinc-500">
                                       Test Case #{idx + 1}{" "}
                                       {tr.isPublic
                                         ? "(Sample)"
                                         : "(Hidden Evaluation)"}
                                     </span>
                                   </div>
-                                  <span className="text-zinc-400">
+                                  <span className="text-zinc-600">
                                     Input: {tr.input}
                                   </span>
                                 </div>
@@ -1148,9 +1201,10 @@ export default function StudentAssessmentRunnerPage({
                     <button
                       disabled={currentQuestionIdx === 0}
                       onClick={() => setCurrentQuestionIdx((prev) => prev - 1)}
-                      className="px-4 py-2 border border-zinc-200 text-xs font-medium text-zinc-700 rounded-md hover:bg-zinc-100 disabled:opacity-30"
+                      className="px-4 py-2 border border-zinc-200 text-xs font-medium text-zinc-700 rounded-md hover:bg-zinc-100 disabled:opacity-30 flex items-center gap-1.5"
                     >
-                      ← Previous Question
+                      <ArrowLeftIcon className="w-3.5 h-3.5" /> Previous
+                      Question
                     </button>
 
                     {currentQuestionIdx < questions.length - 1 ? (
@@ -1158,19 +1212,19 @@ export default function StudentAssessmentRunnerPage({
                         onClick={() =>
                           setCurrentQuestionIdx((prev) => prev + 1)
                         }
-                        className="px-5 py-2.5 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all cursor-pointer"
+                        className="px-5 py-2.5 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all cursor-pointer flex items-center gap-1.5"
                       >
-                        Next Question →
+                        Next Question <ArrowRightIcon className="w-3.5 h-3.5" />
                       </button>
                     ) : (
                       <button
                         disabled={submitting}
                         onClick={handleSubmitAttempt}
-                        className="px-6 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium rounded-md transition-all cursor-pointer shadow-sm"
+                        className="px-6 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium rounded-md transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
                       >
                         {submitting
                           ? "Submitting..."
-                          : "Submit Final Assessment ✓"}
+                          : "Submit Final Assessment"}
                       </button>
                     )}
                   </div>

@@ -4,6 +4,14 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
+import {
+  MagicWandIcon,
+  PlusIcon,
+  TrashIcon,
+  CodeIcon,
+  CheckIcon,
+  Cross2Icon,
+} from "@radix-ui/react-icons";
 
 interface OptionInput {
   optionText: string;
@@ -1074,24 +1082,24 @@ export default function NewAssessmentPage() {
               )}
 
               {qType === "CODING" && (
-                <div className="space-y-4 p-5 bg-zinc-900 text-white rounded-xl shadow-inner">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
+                <div className="space-y-4 p-5 bg-[#F9F9FB] border border-zinc-200 rounded-xl shadow-2xs">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-zinc-200 pb-3.5">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 bg-purple-600 text-white text-[10px] font-mono font-bold rounded">
+                        <span className="px-2.5 py-1 bg-[#111111] text-white text-[10px] font-mono font-semibold rounded-md flex items-center gap-1.5">
+                          <CodeIcon className="w-3 h-3 text-white" />
                           WEB-ONLY CODING PLAYGROUND
                         </span>
                       </div>
-                      <span className="text-xs text-zinc-400 mt-1 block">
-                        Students must complete this assignment on the website
-                        code editor.
+                      <span className="text-xs text-zinc-500 mt-1 block">
+                        Students must complete this assignment on the website code editor.
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={handleGenerateAiTestCases}
                       disabled={aiGeneratingTestCases}
-                      className="flex items-center gap-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-md shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                      className="flex items-center gap-1.5 px-3.5 py-2 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md shadow-xs transition-all cursor-pointer disabled:opacity-50"
                     >
                       {aiGeneratingTestCases ? (
                         <>
@@ -1099,26 +1107,30 @@ export default function NewAssessmentPage() {
                           Generating Test Cases...
                         </>
                       ) : (
-                        <>🤖 Auto-Generate Test Cases with AI</>
+                        <>
+                          <MagicWandIcon className="w-3.5 h-3.5 text-white" />
+                          Auto-Generate Test Cases with AI
+                        </>
                       )}
                     </button>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono text-zinc-400 mb-1">
+                    <label className="block text-xs font-mono text-zinc-700 font-medium mb-1">
                       Starter Code Template
                     </label>
                     <textarea
                       rows={4}
                       value={qStarterCode}
                       onChange={(e) => setQStarterCode(e.target.value)}
-                      className="w-full p-3 bg-zinc-950 font-mono text-xs text-emerald-400 border border-zinc-800 rounded-md focus:outline-none focus:border-zinc-600"
+                      placeholder="def solve(input_val):\n    # Write your solution here\n    return input_val"
+                      className="w-full p-3 bg-white font-mono text-xs text-zinc-900 border border-zinc-200 rounded-lg focus:outline-none focus:border-[#111111]"
                     />
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-xs font-mono text-zinc-400">
+                      <label className="text-xs font-mono text-zinc-700 font-medium">
                         Test Cases ({qTestCases.length})
                       </label>
                       <button
@@ -1129,24 +1141,24 @@ export default function NewAssessmentPage() {
                             { input: "", expectedOutput: "", isPublic: true },
                           ])
                         }
-                        className="text-xs text-purple-400 font-semibold hover:underline cursor-pointer"
+                        className="text-xs text-[#111111] font-semibold hover:underline cursor-pointer flex items-center gap-1"
                       >
-                        + Add Test Case
+                        <PlusIcon className="w-3 h-3" /> Add Test Case
                       </button>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       {qTestCases.map((tc, tcIdx) => (
                         <div
                           key={tcIdx}
-                          className="p-3 bg-zinc-950 border border-zinc-800 rounded-lg space-y-2"
+                          className="p-3.5 bg-white border border-zinc-200 rounded-lg space-y-2.5 shadow-2xs"
                         >
                           <div className="flex items-center justify-between text-[11px] font-mono">
-                            <span className="text-zinc-400">
+                            <span className="text-zinc-700 font-medium">
                               Test Case #{tcIdx + 1}
                             </span>
                             <div className="flex items-center gap-3">
-                              <label className="flex items-center gap-1.5 cursor-pointer text-zinc-300">
+                              <label className="flex items-center gap-1.5 cursor-pointer text-zinc-700">
                                 <input
                                   type="checkbox"
                                   checked={tc.isPublic}
@@ -1155,7 +1167,7 @@ export default function NewAssessmentPage() {
                                     updated[tcIdx].isPublic = e.target.checked;
                                     setQTestCases(updated);
                                   }}
-                                  className="accent-purple-500 rounded"
+                                  className="accent-[#111111] rounded"
                                 />
                                 <span>Public Sample</span>
                               </label>
@@ -1166,16 +1178,16 @@ export default function NewAssessmentPage() {
                                     qTestCases.filter((_, i) => i !== tcIdx),
                                   )
                                 }
-                                className="text-red-400 hover:underline cursor-pointer"
+                                className="text-red-600 hover:underline cursor-pointer flex items-center gap-0.5"
                               >
-                                Remove
+                                <TrashIcon className="w-3 h-3" /> Remove
                               </button>
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                              <span className="text-[10px] font-mono text-zinc-500 block mb-0.5">
+                              <span className="text-[10px] font-mono text-zinc-500 block mb-1">
                                 Input
                               </span>
                               <input
@@ -1186,12 +1198,12 @@ export default function NewAssessmentPage() {
                                   updated[tcIdx].input = e.target.value;
                                   setQTestCases(updated);
                                 }}
-                                placeholder="e.g. [2, 7, 11, 15], 9"
-                                className="w-full px-2.5 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs font-mono text-zinc-100"
+                                placeholder="e.g. 5"
+                                className="w-full px-3 py-2 bg-[#F4F4F6] border border-transparent focus:bg-white focus:border-zinc-300 rounded text-xs font-mono text-zinc-900"
                               />
                             </div>
                             <div>
-                              <span className="text-[10px] font-mono text-zinc-500 block mb-0.5">
+                              <span className="text-[10px] font-mono text-zinc-500 block mb-1">
                                 Expected Output
                               </span>
                               <input
@@ -1203,8 +1215,8 @@ export default function NewAssessmentPage() {
                                     e.target.value;
                                   setQTestCases(updated);
                                 }}
-                                placeholder="e.g. [0, 1]"
-                                className="w-full px-2.5 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs font-mono text-emerald-400"
+                                placeholder="e.g. 5"
+                                className="w-full px-3 py-2 bg-[#F4F4F6] border border-transparent focus:bg-white focus:border-zinc-300 rounded text-xs font-mono text-zinc-900"
                               />
                             </div>
                           </div>
