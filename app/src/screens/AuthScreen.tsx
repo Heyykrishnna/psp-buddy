@@ -22,7 +22,6 @@ export function AuthScreen() {
   const { login, loginWithGoogle, register, loginAsDemo } = useAuth();
 
   const [isSignUp, setIsSignUp] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<UserRole>("STUDENT");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -59,7 +58,7 @@ export function AuthScreen() {
           setLoading(false);
           return;
         }
-        await register(firstName, lastName, email, password, selectedRole);
+        await register(firstName, lastName, email, password);
       } else {
         await login(email, password);
       }
@@ -168,34 +167,6 @@ export function AuthScreen() {
                       placeholderTextColor="#71717a"
                       autoCapitalize="words"
                     />
-                  </View>
-                </View>
-
-                <View>
-                  <Text style={styles.fieldLabel}>ROLE</Text>
-                  <View style={styles.roleRow}>
-                    {(["STUDENT", "TEACHER", "ADMIN"] as UserRole[]).map(
-                      (r) => (
-                        <TouchableOpacity
-                          key={r}
-                          style={[
-                            styles.roleChip,
-                            selectedRole === r && styles.roleChipActive,
-                          ]}
-                          onPress={() => setSelectedRole(r)}
-                          activeOpacity={0.8}
-                        >
-                          <Text
-                            style={[
-                              styles.roleChipText,
-                              selectedRole === r && styles.roleChipTextActive,
-                            ]}
-                          >
-                            {r}
-                          </Text>
-                        </TouchableOpacity>
-                      ),
-                    )}
                   </View>
                 </View>
               </>

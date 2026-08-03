@@ -8,7 +8,6 @@ export default function AuthPage() {
   const { login, loginWithGoogle, register, loginAsDemo } = useAuth();
 
   const [isSignUp, setIsSignUp] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<UserRole>("STUDENT");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,7 +24,7 @@ export default function AuthPage() {
 
     try {
       if (isSignUp) {
-        await register(firstName, lastName, email, password, selectedRole);
+        await register(firstName, lastName, email, password);
       } else {
         await login(email, password);
       }
@@ -125,30 +124,6 @@ export default function AuthPage() {
                       placeholder="Doe"
                       className="w-full px-3.5 py-3 bg-[#F4F4F6] border border-transparent rounded-md text-sm text-[#111111] placeholder-zinc-400 focus:outline-none focus:bg-white focus:border-[#111111] transition-all"
                     />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs text-zinc-600 font-medium mb-1.5">
-                    Account Role
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(["STUDENT", "TEACHER", "ADMIN"] as UserRole[]).map(
-                      (r) => (
-                        <button
-                          key={r}
-                          type="button"
-                          onClick={() => setSelectedRole(r)}
-                          className={`py-2 px-3 text-xs font-medium rounded-md transition-all border ${
-                            selectedRole === r
-                              ? "bg-[#111111] text-white border-[#111111]"
-                              : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400"
-                          }`}
-                        >
-                          {r}
-                        </button>
-                      ),
-                    )}
                   </div>
                 </div>
               </>

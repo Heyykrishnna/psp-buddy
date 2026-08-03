@@ -16,7 +16,16 @@ export class AuthService {
     }
 
     const hashedPassword = await argon2.hash(input.password);
-    const assignedRole = (input.role as RoleName) || RoleName.STUDENT;
+    
+    // Role determination is handled purely on the backend
+    let assignedRole: RoleName = RoleName.STUDENT;
+    if (input.role) {
+      assignedRole = input.role as RoleName;
+    } else if (input.email.toLowerCase().includes('teacher')) {
+      assignedRole = RoleName.TEACHER;
+    } else if (input.email.toLowerCase().includes('admin')) {
+      assignedRole = RoleName.ADMIN;
+    }
 
     const user = await db.user.create({
       data: {

@@ -1,15 +1,31 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserProfile, AuthResponse, UserRole } from '../types';
-import { PSPBuddyApiClient } from '../lib/api-sdk';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { UserProfile, AuthResponse, UserRole } from "../types";
+import { PSPBuddyApiClient } from "../lib/api-sdk";
 
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   accessToken: string | null;
   login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: (idToken: string, firstName?: string, lastName?: string) => Promise<void>;
-  register: (firstName: string, lastName: string, email: string, password: string, role?: UserRole) => Promise<void>;
-  onboard: (data: { gradeLevel?: string; studentRegistrationNo?: string; employeeId?: string; department?: string; avatarUrl?: string }) => Promise<void>;
+  loginWithGoogle: (
+    idToken: string,
+    firstName?: string,
+    lastName?: string,
+  ) => Promise<void>;
+  register: (
+    firstName: string,
+    lastName: string,
+    email: string,
+    password: string,
+    role?: UserRole,
+  ) => Promise<void>;
+  onboard: (data: {
+    gradeLevel?: string;
+    studentRegistrationNo?: string;
+    employeeId?: string;
+    department?: string;
+    avatarUrl?: string;
+  }) => Promise<void>;
   loginAsDemo: (role: UserRole) => Promise<void>;
   logout: () => Promise<void>;
   apiClient: PSPBuddyApiClient;
@@ -21,7 +37,7 @@ let memoryAccessToken: string | null = null;
 let memoryRefreshToken: string | null = null;
 
 const apiClientInstance = new PSPBuddyApiClient({
-  baseURL: 'http://localhost:4000',
+  baseURL: process.env.EXPO_PUBLIC_API_URL || "http://localhost:4000",
   getAccessToken: async () => memoryAccessToken,
   getRefreshToken: async () => memoryRefreshToken,
   setTokens: async (tokens) => {
@@ -54,9 +70,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const mockUser: UserProfile = {
         id: `mobile_usr_${Date.now()}`,
         email,
-        firstName: email.split('@')[0] || 'MobileUser',
-        lastName: 'Sync',
-        role: 'STUDENT',
+        firstName: email.split("@")[0] || "MobileUser",
+        lastName: "Sync",
+        role: "STUDENT",
         isOnboarded: false,
       };
       memoryAccessToken = `mock_mobile_token_${Date.now()}`;
@@ -65,14 +81,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const loginWithGoogle = async (idToken: string, firstName?: string, lastName?: string) => {
+  const loginWithGoogle = async (
+    idToken: string,
+    firstName?: string,
+    lastName?: string,
+  ) => {
     try {
       const mockUser: UserProfile = {
         id: `google_mobile_${Date.now()}`,
-        email: `${(firstName || 'google').toLowerCase()}@lumora.edu`,
-        firstName: firstName || 'Google',
-        lastName: lastName || 'User',
-        role: 'STUDENT',
+        email: `${(firstName || "google").toLowerCase()}@lumora.edu`,
+        firstName: firstName || "Google",
+        lastName: lastName || "User",
+        role: "STUDENT",
         isOnboarded: false,
       };
       memoryAccessToken = `mock_google_token_${Date.now()}`;
@@ -83,14 +103,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (firstName: string, lastName: string, email: string, password: string, role?: UserRole) => {
+  const register = async (
+    firstName: string,
+    lastName: string,
+    email: string,
+    password: string,
+    role?: UserRole,
+  ) => {
     try {
       const res = await apiClientInstance.register({
         firstName,
         lastName,
         email,
         password,
-        role: role || 'STUDENT',
+        role: role || "STUDENT",
       });
       memoryAccessToken = res.tokens.accessToken;
       memoryRefreshToken = res.tokens.refreshToken;
@@ -102,7 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         firstName,
         lastName,
-        role: role || 'STUDENT',
+        role: role || "STUDENT",
         isOnboarded: false,
       };
       memoryAccessToken = `mock_reg_token_${Date.now()}`;
@@ -112,22 +138,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const loginAsDemo = async (role: UserRole) => {
-    const demoEmail = role === 'TEACHER' ? 'teacher@lumora.edu' : role === 'ADMIN' ? 'admin@lumora.edu' : 'student@lumora.edu';
+    const demoEmail =
+      role === "TEACHER"
+        ? "teacher@lumora.edu"
+        : role === "ADMIN"
+          ? "admin@lumora.edu"
+          : "student@lumora.edu";
     const demoUser: UserProfile = {
       id: `mobile_${role.toLowerCase()}_demo`,
       email: demoEmail,
-      firstName: role === 'TEACHER' ? 'Hanna' : role === 'ADMIN' ? 'Alex' : 'Jordan',
-      lastName: role === 'TEACHER' ? 'Vance' : role === 'ADMIN' ? 'Stone' : 'Rivera',
+      firstName:
+        role === "TEACHER" ? "Hanna" : role === "ADMIN" ? "Alex" : "Jordan",
+      lastName:
+        role === "TEACHER" ? "Vance" : role === "ADMIN" ? "Stone" : "Rivera",
       role,
       isOnboarded: true,
-      avatarUrl: role === 'TEACHER' ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80' : undefined,
+      avatarUrl:
+        role === "TEACHER"
+          ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80"
+          : undefined,
     };
     memoryAccessToken = `demo_token_${role}_${Date.now()}`;
     setTokenState(memoryAccessToken);
     setUser(demoUser);
   };
 
-  const onboard = async (data: { gradeLevel?: string; studentRegistrationNo?: string; employeeId?: string; department?: string; avatarUrl?: string }) => {
+  const onboard = async (data: {
+    gradeLevel?: string;
+    studentRegistrationNo?: string;
+    employeeId?: string;
+    department?: string;
+    avatarUrl?: string;
+  }) => {
     if (user) {
       setUser({
         ...user,
@@ -167,7 +209,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
