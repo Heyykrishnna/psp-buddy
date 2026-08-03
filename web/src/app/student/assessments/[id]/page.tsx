@@ -153,6 +153,129 @@ export default function StudentAssessmentRunnerPage({
       };
     }
 
+    if (id === "demo-asm-4" || id.includes("4")) {
+      return {
+        id,
+        title: "Object Oriented Programming Concepts",
+        description:
+          "Tests understanding of inheritance, polymorphism, encapsulation, and abstraction in object-oriented software engineering.",
+        className: "1st Sem",
+        topic: "Programming",
+        assessmentType: "QUIZ",
+        totalMarks: 20,
+        passingMarks: 12,
+        durationMinutes: 25,
+        isPublished: true,
+        questions: [
+          {
+            id: "oop-q1",
+            questionText:
+              "Which OOP principle allows a subclass to provide a specific implementation of a method declared in its parent class?",
+            questionType: "SINGLE_CHOICE",
+            difficulty: "EASY",
+            points: 5,
+            orderIndex: 1,
+            explanation:
+              "Polymorphism (specifically method overriding) enables subclass-specific method implementations.",
+            options: [
+              { id: "o1", optionText: "Encapsulation", isCorrect: false, orderIndex: 1 },
+              { id: "o2", optionText: "Polymorphism", isCorrect: true, orderIndex: 2 },
+              { id: "o3", optionText: "Abstraction", isCorrect: false, orderIndex: 3 },
+              { id: "o4", optionText: "Inheritance", isCorrect: false, orderIndex: 4 },
+            ],
+          },
+          {
+            id: "oop-q2",
+            questionText:
+              "True or False: Private members of a base class can be accessed directly by derived classes.",
+            questionType: "TRUE_FALSE",
+            difficulty: "EASY",
+            points: 5,
+            orderIndex: 2,
+            trueFalseAnswer: false,
+            explanation:
+              "Private members are strictly encapsulated within the base class; protected or public access specifiers are needed for derived class access.",
+          },
+          {
+            id: "oop-q3",
+            questionText:
+              "Hiding implementation details and showing only essential features is called ___.",
+            questionType: "FILL_IN_BLANKS",
+            difficulty: "MEDIUM",
+            points: 5,
+            orderIndex: 3,
+            blankAnswers: ["abstraction"],
+            explanation:
+              "Data abstraction reduces system complexity by revealing only interface details.",
+          },
+          {
+            id: "oop-q4",
+            questionText:
+              "Define encapsulation and explain why getter and setter methods are used.",
+            questionType: "SHORT_ANSWER",
+            difficulty: "MEDIUM",
+            points: 5,
+            orderIndex: 4,
+            shortAnswerKeywords: [
+              "data hiding",
+              "private",
+              "accessors",
+              "mutators",
+            ],
+            explanation:
+              "Encapsulation bundles data and methods together while restricting direct variable access via getters/setters.",
+          },
+        ],
+      };
+    }
+
+    if (id === "demo-asm-2" || id.includes("2")) {
+      return {
+        id,
+        title: "System Architecture & Operating Systems Exam",
+        description:
+          "Deep dive into process scheduling, memory allocation, page faults, and threads.",
+        className: "Operating Systems",
+        topic: "Computer Science",
+        assessmentType: "EXAM",
+        totalMarks: 25,
+        passingMarks: 15,
+        durationMinutes: 30,
+        isPublished: true,
+        questions: [
+          {
+            id: "os-q1",
+            questionText:
+              "Which process scheduling algorithm can cause starvation for long processes?",
+            questionType: "SINGLE_CHOICE",
+            difficulty: "MEDIUM",
+            points: 5,
+            orderIndex: 1,
+            options: [
+              { id: "os-o1", optionText: "Round Robin", isCorrect: false, orderIndex: 1 },
+              {
+                id: "os-o2",
+                optionText: "Shortest Job First (SJF)",
+                isCorrect: true,
+                orderIndex: 2,
+              },
+              { id: "os-o3", optionText: "FIFO", isCorrect: false, orderIndex: 3 },
+            ],
+          },
+          {
+            id: "os-q2",
+            questionText:
+              "Virtual memory allocation relies on fixed-size blocks called ___.",
+            questionType: "FILL_IN_BLANKS",
+            difficulty: "EASY",
+            points: 5,
+            orderIndex: 2,
+            blankAnswers: ["pages"],
+          },
+        ],
+      };
+    }
+
     return {
       id,
       title: "Algorithm Complexity & Data Structures Quiz",
@@ -245,6 +368,14 @@ export default function StudentAssessmentRunnerPage({
   // Fetch Assessment details on load
   useEffect(() => {
     async function loadAssessment() {
+      if (assessmentId.startsWith("demo-") || assessmentId.includes("demo")) {
+        const mock = getMockAssessment(assessmentId);
+        setAssessment(mock);
+        setTimeLeftSeconds(mock.durationMinutes * 60);
+        setLoading(false);
+        return;
+      }
+
       try {
         const data = await apiFetch<AssessmentDTO>(
           `/assessments/${assessmentId}`,

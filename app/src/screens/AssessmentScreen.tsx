@@ -641,7 +641,7 @@ export function AssessmentScreen({
                             <Text
                               style={[styles.asmTypeText, { color: "#E9D5FF" }]}
                             >
-                              🖥️ WEB ONLY
+                              WEB ONLY
                             </Text>
                           </View>
                         )}
@@ -1211,16 +1211,14 @@ export function AssessmentScreen({
                   backgroundColor: "rgba(255,255,255,0.06)",
                   borderRadius: 12,
                   padding: 14,
-                  borderLeftWidth: 4,
-                  borderLeftColor: "#C084FC",
                   width: "100%",
                 }}
               >
                 <Text
                   style={{ fontSize: 12, color: "#E9D5FF", lineHeight: 18 }}
                 >
-                  💻 Please log into your account on a computer/laptop browser
-                  to solve and execute code for this assignment.
+                  Please log into your account on a computer/laptop browser to
+                  solve and execute code for this assignment.
                 </Text>
               </View>
               <TouchableOpacity
