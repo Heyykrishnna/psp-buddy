@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  server:
+    image: judge0/judge0:1.13.1
+    ports:
+      - "2358:2358"
+    privileged: true
+    environment:
+      - JUDGE0_KEY=
+      - REDIS_HOST=db-redis
+      - POSTGRES_HOST=db-postgres
+      - POSTGRES_USER=judge0
+      - POSTGRES_PASSWORD=judge0
+      - POSTGRES_DB=judge0
+    depends_on:
+      - db-postgres
+      - db-redis
+    restart: always
+
+  workers:
+    image: judge0/judge0:1.13.1
+    command: ["./scripts/workers"]
+    privileged: true
+    environment:
+      - JUDGE0_KEY=
+      - REDIS_HOST=db-redis
+      - POSTGRES_HOST=db-postgres
+      - POSTGRES_USER=judge0
+      - POSTGRES_PASSWORD=judge0
+      - POSTGRES_DB=judge0
+    depends_on:
+      - db-postgres
+      - db-redis
+    restart: always
+
+  db-postgres:
+    image: postgres:13.0
+    environment:
+      - POSTGRES_USER=judge0
+      - POSTGRES_PASSWORD=judge0
+      - POSTGRES_DB=judge0
+    restart: always
+
+  db-redis:
+    image: redis:6.0
+    restart: always
