@@ -599,10 +599,6 @@ export default function StudentPlaygroundPage() {
                 Minimap
               </label>
               <span>UTF-8</span>
-              <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                Monaco Ready
-              </span>
             </div>
           </div>
 
