@@ -212,6 +212,7 @@ model Problem {
   timeLimitMs       Int             @default(2000) @map("time_limit_ms")
   memoryLimitMb     Int             @default(128) @map("memory_limit_mb")
   points            Int             @default(10)
+  isPublished       Boolean         @default(false) @map("is_published")
   createdAt         DateTime        @default(now()) @map("created_at")
   updatedAt         DateTime        @updatedAt @map("updated_at")
 

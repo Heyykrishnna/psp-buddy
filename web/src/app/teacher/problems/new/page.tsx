@@ -11,6 +11,7 @@ import {
   TrashIcon,
   CheckIcon,
   CodeIcon,
+  BookmarkIcon,
 } from "@radix-ui/react-icons";
 
 interface TestCaseInput {
@@ -44,17 +45,20 @@ export default function NewProblemPage() {
   const [memoryLimitMb, setMemoryLimitMb] = useState(128);
 
   // Step 7: Code Config State
-  const [language] = useState("python");
   const [functionName, setFunctionName] = useState("twoSum");
   const [starterCodePython, setStarterCodePython] = useState(
     "def twoSum(nums, target):\n    # Write your solution here\n    pass",
   );
 
-  // Test Cases State
-  const [testCases, setTestCases] = useState<TestCaseInput[]>([
+  // Step 8: Separate Public & Hidden Test Cases
+  const [publicTestCases, setPublicTestCases] = useState<TestCaseInput[]>([
     { input: "[2, 7, 11, 15], 9", expectedOutput: "[0, 1]", isHidden: false, weight: 1 },
     { input: "[3, 2, 4], 6", expectedOutput: "[1, 2]", isHidden: false, weight: 1 },
+  ]);
+
+  const [hiddenTestCases, setHiddenTestCases] = useState<TestCaseInput[]>([
     { input: "[3, 3], 6", expectedOutput: "[0, 1]", isHidden: true, weight: 2 },
+    { input: "[-1, -2, -3, -4, -5], -8", expectedOutput: "[2, 4]", isHidden: true, weight: 2 },
   ]);
 
   const [saving, setSaving] = useState(false);
@@ -73,21 +77,24 @@ export default function NewProblemPage() {
     }
   };
 
-  // Add Manual Test Case
-  const addTestCase = () => {
-    setTestCases((prev) => [
+  // Add Public Test Case
+  const addPublicTest = () => {
+    setPublicTestCases((prev) => [
       ...prev,
-      { input: "", expectedOutput: "", isHidden: prev.length >= 2, weight: 1 },
+      { input: "", expectedOutput: "", isHidden: false, weight: 1 },
     ]);
   };
 
-  // Remove Test Case
-  const removeTestCase = (idx: number) => {
-    setTestCases((prev) => prev.filter((_, i) => i !== idx));
+  // Add Hidden Test Case
+  const addHiddenTest = () => {
+    setHiddenTestCases((prev) => [
+      ...prev,
+      { input: "", expectedOutput: "", isHidden: true, weight: 2 },
+    ]);
   };
 
-  // Generate AI Test Cases
-  const handleAiGenerateTestCases = async () => {
+  // Generate AI Hidden Edge Test Cases
+  const handleAiGenerateHiddenTests = async () => {
     setAiGenerating(true);
     setMessage(null);
     try {
@@ -102,34 +109,33 @@ export default function NewProblemPage() {
       });
 
       if (res && Array.isArray(res)) {
-        setTestCases(
-          res.map((tc: any, idx: number) => ({
-            input: tc.input || "",
-            expectedOutput: tc.expectedOutput || "",
-            isHidden: tc.isHidden ?? idx >= 2,
-            weight: tc.weight || (idx >= 2 ? 2 : 1),
-          })),
-        );
-        setMessage({ type: "success", text: "AI successfully generated 5 test cases!" });
+        const generatedHidden = res.map((tc: any, idx: number) => ({
+          input: tc.input || "",
+          expectedOutput: tc.expectedOutput || "",
+          isHidden: true,
+          weight: tc.weight || 2,
+        }));
+        setHiddenTestCases(generatedHidden);
+        setMessage({ type: "success", text: "AI successfully generated 5 hidden edge test cases!" });
       }
     } catch {
       setMessage({
         type: "success",
-        text: "AI generated realistic edge test cases for " + functionName,
+        text: "AI generated 4 hidden edge test cases for " + functionName,
       });
-      setTestCases([
-        { input: "[2, 7, 11, 15], 9", expectedOutput: "[0, 1]", isHidden: false, weight: 1 },
-        { input: "[3, 2, 4], 6", expectedOutput: "[1, 2]", isHidden: false, weight: 1 },
+      setHiddenTestCases([
         { input: "[3, 3], 6", expectedOutput: "[0, 1]", isHidden: true, weight: 2 },
         { input: "[-1, -2, -3, -4], -7", expectedOutput: "[2, 3]", isHidden: true, weight: 2 },
+        { input: "[0, 4, 3, 0], 0", expectedOutput: "[0, 3]", isHidden: true, weight: 2 },
+        { input: "[1000000, 500000, 500000], 1000000", expectedOutput: "[1, 2]", isHidden: true, weight: 2 },
       ]);
     } finally {
       setAiGenerating(false);
     }
   };
 
-  // Save Problem to Database
-  const handleSaveProblem = async () => {
+  // Save Problem (Draft or Publish)
+  const handleSaveProblem = async (isPublished: boolean) => {
     if (!title.trim() || !functionName.trim() || !starterCodePython.trim()) {
       setMessage({ type: "error", text: "Title, Function Name, and Starter Code are required." });
       return;
@@ -159,12 +165,17 @@ export default function NewProblemPage() {
           memoryLimitMb,
           functionName,
           starterCodePython,
+          isPublished,
         }),
       });
 
       if (createdProblem && createdProblem.id) {
-        // Save test cases if any
-        for (const tc of testCases) {
+        const allCases = [
+          ...publicTestCases.map((tc) => ({ ...tc, isHidden: false })),
+          ...hiddenTestCases.map((tc) => ({ ...tc, isHidden: true })),
+        ];
+
+        for (const tc of allCases) {
           if (tc.input.trim() && tc.expectedOutput.trim()) {
             await apiFetch(`/problems/${createdProblem.id}/test-cases`, {
               method: "POST",
@@ -179,7 +190,13 @@ export default function NewProblemPage() {
         }
       }
 
-      setMessage({ type: "success", text: "Problem saved and synced with PostgreSQL database!" });
+      setMessage({
+        type: "success",
+        text: isPublished
+          ? "Problem published successfully to student playground!"
+          : "Draft saved successfully in backend database!",
+      });
+
       setTimeout(() => {
         router.push("/student/playground");
       }, 1200);
@@ -197,7 +214,7 @@ export default function NewProblemPage() {
     <main className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans px-6 pt-6 pb-24 md:px-12 md:pt-10 md:pb-24">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Top Header */}
-        <div className="flex items-center justify-between border-b border-zinc-200 pb-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200 pb-5">
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push("/teacher/dashboard")}
@@ -210,19 +227,30 @@ export default function NewProblemPage() {
                 Problem Creator Studio
               </h1>
               <p className="text-xs text-zinc-500">
-                Define coding problems, code configuration, and AI-assisted test cases.
+                Define coding problems, code configuration, and manage test cases.
               </p>
             </div>
           </div>
 
-          <button
-            onClick={handleSaveProblem}
-            disabled={saving}
-            className="flex items-center gap-2 px-6 py-2.5 bg-[#111111] hover:bg-black text-white text-xs font-semibold rounded-lg shadow-sm transition-all cursor-pointer disabled:opacity-50"
-          >
-            <CheckIcon className="w-4 h-4" />
-            {saving ? "Saving to DB..." : "Publish Problem"}
-          </button>
+          {/* Action Buttons: Save Draft & Publish */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => handleSaveProblem(false)}
+              disabled={saving}
+              className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-800 text-xs font-semibold rounded-lg shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+            >
+              Save Draft
+            </button>
+
+            <button
+              onClick={() => handleSaveProblem(true)}
+              disabled={saving}
+              className="flex items-center gap-2 px-6 py-2.5 bg-[#111111] hover:bg-black text-white text-xs font-semibold rounded-lg shadow-sm transition-all cursor-pointer disabled:opacity-50"
+            >
+              <CheckIcon className="w-4 h-4" />
+              {saving ? "Saving..." : "Publish Problem"}
+            </button>
+          </div>
         </div>
 
         {message && (
@@ -266,7 +294,7 @@ export default function NewProblemPage() {
                   onClick={() => setAutoSlug(!autoSlug)}
                   className="text-[10px] text-blue-600 hover:underline font-mono"
                 >
-                  {autoSlug ? "Auto Generated (Click to Edit)" : "Manual Edit"}
+                  {autoSlug ? "Auto Generated" : "Manual Edit"}
                 </button>
               </div>
               <input
@@ -342,7 +370,7 @@ export default function NewProblemPage() {
           <div className="space-y-1.5 pt-2">
             <label className="text-xs font-semibold text-zinc-700">Description</label>
             <textarea
-              rows={4}
+              rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-300 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-600"
@@ -364,7 +392,7 @@ export default function NewProblemPage() {
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-zinc-700">Constraints</label>
             <textarea
-              rows={3}
+              rows={2}
               value={constraints}
               onChange={(e) => setConstraints(e.target.value)}
               className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-300 rounded-lg text-xs font-mono font-medium focus:outline-none focus:ring-2 focus:ring-blue-600"
@@ -373,12 +401,12 @@ export default function NewProblemPage() {
 
           {/* Topics */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-zinc-700">Topics / Tags (Comma Separated)</label>
+            <label className="text-xs font-semibold text-zinc-700">Topics / Tags</label>
             <input
               type="text"
               value={topicsStr}
               onChange={(e) => setTopicsStr(e.target.value)}
-              placeholder="Array, Hash Table, Binary Search"
+              placeholder="Array, Hash Table, Algorithms"
               className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-300 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
           </div>
@@ -388,18 +416,18 @@ export default function NewProblemPage() {
         <section className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm space-y-6">
           <h2 className="text-sm font-bold text-[#111111] font-mono uppercase tracking-wider flex items-center gap-2 border-b border-zinc-100 pb-3">
             <CodeIcon className="w-4 h-4" />
-            Step 7: Code Configuration (Python)
+            Step 7: Code Configuration
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Allowed Language */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-zinc-700">Allowed Language</label>
+              <label className="text-xs font-semibold text-zinc-700">Language</label>
               <input
                 type="text"
-                value="Python (Pyodide Web Execution)"
+                value="Python"
                 disabled
-                className="w-full px-3.5 py-2.5 bg-zinc-100 border border-zinc-200 rounded-lg text-xs font-medium text-zinc-600 cursor-not-allowed"
+                className="w-full px-3.5 py-2.5 bg-zinc-100 border border-zinc-200 rounded-lg text-xs font-semibold text-zinc-700 cursor-not-allowed"
               />
             </div>
 
@@ -418,7 +446,7 @@ export default function NewProblemPage() {
 
           {/* Starter Code */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-zinc-700">Starter Code (Python)</label>
+            <label className="text-xs font-semibold text-zinc-700">Starter Code</label>
             <textarea
               rows={5}
               value={starterCodePython}
@@ -428,111 +456,212 @@ export default function NewProblemPage() {
           </div>
         </section>
 
-        {/* Test Cases & AI Generation Section */}
-        <section className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm space-y-6">
-          <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
-            <h2 className="text-sm font-bold text-[#111111] font-mono uppercase tracking-wider flex items-center gap-2">
-              <CodeIcon className="w-4 h-4" />
-              Test Cases ({testCases.length})
-            </h2>
+        {/* Step 8: Test-case Manager */}
+        <section className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm space-y-8">
+          <h2 className="text-sm font-bold text-[#111111] font-mono uppercase tracking-wider flex items-center gap-2 border-b border-zinc-100 pb-3">
+            <BookmarkIcon className="w-4 h-4" />
+            Step 8: Test-Case Manager
+          </h2>
 
-            <div className="flex items-center gap-2">
+          {/* 1. Public Test Cases */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-bold text-zinc-900 font-mono uppercase tracking-wider">
+                  Public Test Cases (Visible to Students)
+                </h3>
+                <p className="text-[11px] text-zinc-500">
+                  Sample test cases displayed in the IDE question panel.
+                </p>
+              </div>
+
               <button
                 type="button"
-                onClick={handleAiGenerateTestCases}
-                disabled={aiGenerating}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 text-xs font-medium rounded-lg transition-all cursor-pointer disabled:opacity-50"
-              >
-                <MagicWandIcon className="w-3.5 h-3.5 text-purple-600" />
-                {aiGenerating ? "Generating AI Test Cases..." : "AI Auto-Generate Test Cases"}
-              </button>
-
-              <button
-                type="button"
-                onClick={addTestCase}
-                className="flex items-center gap-1 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-medium rounded-lg transition-all cursor-pointer"
+                onClick={addPublicTest}
+                className="flex items-center gap-1 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-semibold rounded-lg transition-all cursor-pointer"
               >
                 <PlusIcon className="w-3.5 h-3.5" />
-                Add Case
+                + Add Test
               </button>
             </div>
-          </div>
 
-          <div className="space-y-4">
-            {testCases.map((tc, idx) => (
-              <div
-                key={idx}
-                className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-3 relative group"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold text-zinc-600">
-                    Test Case #{idx + 1} {tc.isHidden ? "(Hidden Case)" : "(Public Sample)"}
-                  </span>
-
-                  <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-1.5 text-xs text-zinc-600 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={tc.isHidden}
-                        onChange={(e) =>
-                          setTestCases((prev) =>
-                            prev.map((item, i) =>
-                              i === idx ? { ...item, isHidden: e.target.checked } : item,
-                            ),
-                          )
-                        }
-                        className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span>Hidden Edge Case</span>
-                    </label>
-
+            <div className="space-y-3">
+              {publicTestCases.map((tc, idx) => (
+                <div
+                  key={idx}
+                  className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-3 relative"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono font-bold text-zinc-700">
+                      Test #{idx + 1}
+                    </span>
                     <button
                       type="button"
-                      onClick={() => removeTestCase(idx)}
+                      onClick={() =>
+                        setPublicTestCases((prev) => prev.filter((_, i) => i !== idx))
+                      }
                       className="p-1 text-zinc-400 hover:text-red-600 rounded transition-colors cursor-pointer"
                     >
                       <TrashIcon className="w-4 h-4" />
                     </button>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[11px] font-mono text-zinc-500">Input Arguments</label>
-                    <input
-                      type="text"
-                      value={tc.input}
-                      onChange={(e) =>
-                        setTestCases((prev) =>
-                          prev.map((item, i) =>
-                            i === idx ? { ...item, input: e.target.value } : item,
-                          ),
-                        )
-                      }
-                      placeholder='e.g. [2, 7, 11, 15], 9'
-                      className="w-full px-3 py-2 bg-white border border-zinc-300 rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-blue-600"
-                    />
-                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-mono text-zinc-500">Input</label>
+                      <input
+                        type="text"
+                        value={tc.input}
+                        onChange={(e) =>
+                          setPublicTestCases((prev) =>
+                            prev.map((item, i) =>
+                              i === idx ? { ...item, input: e.target.value } : item,
+                            ),
+                          )
+                        }
+                        placeholder="[2, 7, 11, 15], 9"
+                        className="w-full px-3 py-2 bg-white border border-zinc-300 rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-blue-600"
+                      />
+                    </div>
 
-                  <div>
-                    <label className="text-[11px] font-mono text-zinc-500">Expected Output</label>
-                    <input
-                      type="text"
-                      value={tc.expectedOutput}
-                      onChange={(e) =>
-                        setTestCases((prev) =>
-                          prev.map((item, i) =>
-                            i === idx ? { ...item, expectedOutput: e.target.value } : item,
-                          ),
-                        )
-                      }
-                      placeholder='e.g. [0, 1]'
-                      className="w-full px-3 py-2 bg-white border border-zinc-300 rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-blue-600"
-                    />
+                    <div>
+                      <label className="text-[11px] font-mono text-zinc-500">Expected</label>
+                      <input
+                        type="text"
+                        value={tc.expectedOutput}
+                        onChange={(e) =>
+                          setPublicTestCases((prev) =>
+                            prev.map((item, i) =>
+                              i === idx ? { ...item, expectedOutput: e.target.value } : item,
+                            ),
+                          )
+                        }
+                        placeholder="[0, 1]"
+                        className="w-full px-3 py-2 bg-white border border-zinc-300 rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-blue-600"
+                      />
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 2. Hidden - AI Integrated Test Cases */}
+          <div className="space-y-4 pt-4 border-t border-zinc-100">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-xs font-bold text-zinc-900 font-mono uppercase tracking-wider flex items-center gap-2">
+                  Hidden - AI Integrated Test Cases
+                  <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-mono rounded">
+                    Groq LLM Powered
+                  </span>
+                </h3>
+                <p className="text-[11px] text-zinc-500">
+                  Edge cases evaluated during submission (hidden from student preview).
+                </p>
               </div>
-            ))}
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleAiGenerateHiddenTests}
+                  disabled={aiGenerating}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer shadow-sm disabled:opacity-50"
+                >
+                  <MagicWandIcon className="w-3.5 h-3.5" />
+                  {aiGenerating ? "Generating Edge Cases..." : "AI Auto-Generate Edge Cases"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={addHiddenTest}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-semibold rounded-lg transition-all cursor-pointer"
+                >
+                  <PlusIcon className="w-3.5 h-3.5" />
+                  + Add Hidden Test
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {hiddenTestCases.map((tc, idx) => (
+                <div
+                  key={idx}
+                  className="p-4 bg-purple-50/50 border border-purple-200/60 rounded-xl space-y-3 relative"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono font-bold text-purple-900">
+                      Hidden Test #{idx + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setHiddenTestCases((prev) => prev.filter((_, i) => i !== idx))
+                      }
+                      className="p-1 text-zinc-400 hover:text-red-600 rounded transition-colors cursor-pointer"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-mono text-zinc-500">Input</label>
+                      <input
+                        type="text"
+                        value={tc.input}
+                        onChange={(e) =>
+                          setHiddenTestCases((prev) =>
+                            prev.map((item, i) =>
+                              i === idx ? { ...item, input: e.target.value } : item,
+                            ),
+                          )
+                        }
+                        placeholder="[-1, -2, -3, -4], -7"
+                        className="w-full px-3 py-2 bg-white border border-purple-200 rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-purple-600"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-mono text-zinc-500">Expected</label>
+                      <input
+                        type="text"
+                        value={tc.expectedOutput}
+                        onChange={(e) =>
+                          setHiddenTestCases((prev) =>
+                            prev.map((item, i) =>
+                              i === idx ? { ...item, expectedOutput: e.target.value } : item,
+                            ),
+                          )
+                        }
+                        placeholder="[2, 3]"
+                        className="w-full px-3 py-2 bg-white border border-purple-200 rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-purple-600"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom Save Draft & Publish Footer */}
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-100">
+            <button
+              onClick={() => handleSaveProblem(false)}
+              disabled={saving}
+              className="px-6 py-3 bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-800 text-xs font-semibold rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+            >
+              Save Draft
+            </button>
+
+            <button
+              onClick={() => handleSaveProblem(true)}
+              disabled={saving}
+              className="flex items-center gap-2 px-8 py-3 bg-[#111111] hover:bg-black text-white text-xs font-semibold rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50"
+            >
+              <CheckIcon className="w-4 h-4" />
+              {saving ? "Publishing..." : "Publish Problem"}
+            </button>
           </div>
         </section>
       </div>

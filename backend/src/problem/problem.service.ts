@@ -38,6 +38,7 @@ export class ProblemService {
         timeLimitMs: dto.timeLimitMs || 2000,
         memoryLimitMb: dto.memoryLimitMb || 128,
         points: dto.points || 10,
+        isPublished: dto.isPublished ?? false,
       },
     });
   }
@@ -104,6 +105,7 @@ export class ProblemService {
         ...(dto.timeLimitMs !== undefined ? { timeLimitMs: dto.timeLimitMs } : {}),
         ...(dto.memoryLimitMb !== undefined ? { memoryLimitMb: dto.memoryLimitMb } : {}),
         ...(dto.points !== undefined ? { points: dto.points } : {}),
+        ...(dto.isPublished !== undefined ? { isPublished: dto.isPublished } : {}),
       },
       include: { testCases: { orderBy: { orderIndex: 'asc' } } },
     });

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum, IsInt, IsArray } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEnum, IsInt, IsArray, IsBoolean } from 'class-validator';
 import { DifficultyLevel } from '@/types';
 
 export class CreateProblemDto {
@@ -49,4 +49,8 @@ export class CreateProblemDto {
   @IsInt()
   @IsOptional()
   points?: number;
+
+  @IsBoolean()
+  @IsOptional()
+  isPublished?: boolean;
 }

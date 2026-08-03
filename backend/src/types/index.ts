@@ -106,6 +106,7 @@ export interface ProblemDTO {
   timeLimitMs: number;
   memoryLimitMb: number;
   points: number;
+  isPublished?: boolean;
   createdAt: string;
   updatedAt: string;
 }
