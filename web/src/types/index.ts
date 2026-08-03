@@ -105,6 +105,9 @@ export interface AssessmentDTO {
   hasNegativeMarking?: boolean;
   negativeMarkValue?: number;
   dueDate?: string;
+  isWorkbook?: boolean;
+  workbookUrl?: string;
+  submissionMode?: 'ONLINE_TEST' | 'WORKBOOK_ONLY' | 'HYBRID' | string;
   startTime?: string;
   endTime?: string;
   isPublished: boolean;
@@ -124,12 +127,13 @@ export interface QuestionDTO {
   assessmentId?: string;
   questionText: string;
   questionType: QuestionType | string;
-  difficulty?: DifficultyLevel;
-  topic?: string;
+  difficulty?: 'EASY' | 'MEDIUM' | 'HARD' | string;
   points: number;
-  negativeMarks?: number;
-  orderIndex: number;
+  orderIndex?: number;
   explanation?: string;
+  requiresWorkbook?: boolean;
+  submissionType?: 'ONLINE_ONLY' | 'WORKBOOK_ONLY' | 'BOTH' | string;
+  workbookInstructions?: string;
   correctOptionId?: string;
   trueFalseAnswer?: boolean;
   shortAnswerKeywords?: string[];

@@ -19,6 +19,9 @@ interface QuestionInput {
   explanation?: string;
   trueFalseAnswer?: boolean;
   shortAnswerKeywords?: string;
+  requiresWorkbook?: boolean;
+  submissionType?: "ONLINE_ONLY" | "WORKBOOK_ONLY" | "BOTH";
+  workbookInstructions?: string;
   options: OptionInput[];
 }
 
@@ -42,6 +45,9 @@ export default function NewAssessmentPage() {
   const [hasNegativeMarking, setHasNegativeMarking] = useState(true);
   const [negativeMarkValue, setNegativeMarkValue] = useState(0.25);
   const [dueDate, setDueDate] = useState("2026-08-05");
+  const [submissionMode, setSubmissionMode] = useState<
+    "ONLINE_TEST" | "WORKBOOK_ONLY" | "HYBRID"
+  >("HYBRID");
   const [isWorkbook, setIsWorkbook] = useState(true);
   const [workbookUrl, setWorkbookUrl] = useState("https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c");
 
@@ -53,6 +59,8 @@ export default function NewAssessmentPage() {
       difficulty: "MEDIUM",
       topic: "Sorting Algorithms",
       points: 10,
+      requiresWorkbook: false,
+      submissionType: "ONLINE_ONLY",
       explanation:
         "Average time complexity is O(N log N) when pivot splits balanced partitions.",
       options: [
@@ -64,25 +72,16 @@ export default function NewAssessmentPage() {
     },
     {
       questionText:
-        "Binary Search requires the array to be sorted before searching.",
-      questionType: "TRUE_FALSE",
-      difficulty: "EASY",
-      topic: "Searching",
-      points: 5,
-      trueFalseAnswer: true,
-      explanation:
-        "Binary Search relies on dividing a sorted array by comparing against the middle element.",
-      options: [],
-    },
-    {
-      questionText:
-        "Name the data structure that operates on a Last-In, First-Out (LIFO) principle.",
+        "Draw the tree structure for HeapSort and write proof in your workbook.",
       questionType: "SHORT_ANSWER",
-      difficulty: "EASY",
-      topic: "Data Structures",
-      points: 10,
-      shortAnswerKeywords: "stack, LIFO stack",
-      explanation: "A Stack is a LIFO data structure.",
+      difficulty: "HARD",
+      topic: "Trees & Heaps",
+      points: 15,
+      requiresWorkbook: true,
+      submissionType: "WORKBOOK_ONLY",
+      workbookInstructions: "Draw step-by-step max heap insertion in physical workbook.",
+      explanation:
+        "Heap tree requires drawing physical node diagrams.",
       options: [],
     },
   ]);
@@ -98,6 +97,11 @@ export default function NewAssessmentPage() {
   const [qExplanation, setQExplanation] = useState("");
   const [qTrueFalse, setQTrueFalse] = useState(true);
   const [qKeywords, setQKeywords] = useState("");
+  const [qRequiresWorkbook, setQRequiresWorkbook] = useState(false);
+  const [qSubmissionType, setQSubmissionType] = useState<
+    "ONLINE_ONLY" | "WORKBOOK_ONLY" | "BOTH"
+  >("ONLINE_ONLY");
+  const [qWorkbookInstructions, setQWorkbookInstructions] = useState("");
   const [qOptions, setQOptions] = useState<OptionInput[]>([
     { optionText: "Option A", isCorrect: true },
     { optionText: "Option B", isCorrect: false },
@@ -165,6 +169,9 @@ export default function NewAssessmentPage() {
       topic: qTopic,
       points: qPoints,
       explanation: qExplanation,
+      requiresWorkbook: qRequiresWorkbook,
+      submissionType: qSubmissionType,
+      workbookInstructions: qWorkbookInstructions,
       trueFalseAnswer: qType === "TRUE_FALSE" ? qTrueFalse : undefined,
       shortAnswerKeywords: qType === "SHORT_ANSWER" ? qKeywords : undefined,
       options: qType === "SINGLE_CHOICE" ? qOptions : [],
@@ -176,6 +183,9 @@ export default function NewAssessmentPage() {
     setQText("");
     setQExplanation("");
     setQKeywords("");
+    setQRequiresWorkbook(false);
+    setQSubmissionType("ONLINE_ONLY");
+    setQWorkbookInstructions("");
     setQOptions([
       { optionText: "Option A", isCorrect: true },
       { optionText: "Option B", isCorrect: false },
@@ -202,13 +212,14 @@ export default function NewAssessmentPage() {
           className,
           topic,
           assessmentType: "QUIZ",
+          submissionMode,
           totalMarks: totalMarks || 100,
           passingMarks,
           durationMinutes,
           hasNegativeMarking,
           negativeMarkValue,
           dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-          isWorkbook,
+          isWorkbook: submissionMode !== "ONLINE_TEST",
           workbookUrl,
           createdById: user?.id || "teacher-1",
           questions: questions.map((q, idx) => ({
@@ -219,6 +230,9 @@ export default function NewAssessmentPage() {
             points: q.points,
             orderIndex: idx + 1,
             explanation: q.explanation,
+            requiresWorkbook: q.requiresWorkbook,
+            submissionType: q.submissionType,
+            workbookInstructions: q.workbookInstructions,
             trueFalseAnswer: q.trueFalseAnswer,
             shortAnswerKeywords: q.shortAnswerKeywords
               ? q.shortAnswerKeywords.split(",").map((s) => s.trim())
@@ -369,18 +383,59 @@ export default function NewAssessmentPage() {
               </div>
             </div>
 
-            <div className="p-4 bg-[#F4F4F6] rounded-xl border border-zinc-200 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-sm font-semibold text-[#111111] block">Enable Solved Workbook Submission</span>
-                  <span className="text-xs text-zinc-500 block">Allows students to upload photos of solved workbooks for automated AI evaluation & grading.</span>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={isWorkbook}
-                  onChange={(e) => setIsWorkbook(e.target.checked)}
-                  className="w-5 h-5 accent-[#5451FF] cursor-pointer"
-                />
+            {/* Assessment Submission Mode Choices for Teacher */}
+            <div className="p-5 bg-[#F4F4F6] rounded-xl border border-zinc-200 space-y-3">
+              <span className="text-sm font-semibold text-[#111111] block">Assessment Submission Mode & Format</span>
+              <span className="text-xs text-zinc-500 block">Select how students should complete and submit this assessment:</span>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+                <label
+                  onClick={() => setSubmissionMode("ONLINE_TEST")}
+                  className={`p-3.5 rounded-lg border flex flex-col gap-1 cursor-pointer transition-all ${
+                    submissionMode === "ONLINE_TEST"
+                      ? "bg-white border-[#5451FF] ring-2 ring-[#5451FF]/20 shadow-xs"
+                      : "bg-white/60 border-zinc-200 hover:border-zinc-300"
+                  }`}
+                >
+                  <span className="text-xs font-bold text-[#111111] flex items-center gap-1.5">
+                    💻 Digital Test Only
+                  </span>
+                  <span className="text-[11px] text-zinc-500">
+                    Online interactive questions only. Answers submitted directly in app.
+                  </span>
+                </label>
+
+                <label
+                  onClick={() => setSubmissionMode("WORKBOOK_ONLY")}
+                  className={`p-3.5 rounded-lg border flex flex-col gap-1 cursor-pointer transition-all ${
+                    submissionMode === "WORKBOOK_ONLY"
+                      ? "bg-white border-[#5451FF] ring-2 ring-[#5451FF]/20 shadow-xs"
+                      : "bg-white/60 border-zinc-200 hover:border-zinc-300"
+                  }`}
+                >
+                  <span className="text-xs font-bold text-[#111111] flex items-center gap-1.5">
+                    📝 Physical Workbook Only
+                  </span>
+                  <span className="text-[11px] text-zinc-500">
+                    Students upload photo/URL of physical solved workbook for AI grading.
+                  </span>
+                </label>
+
+                <label
+                  onClick={() => setSubmissionMode("HYBRID")}
+                  className={`p-3.5 rounded-lg border flex flex-col gap-1 cursor-pointer transition-all ${
+                    submissionMode === "HYBRID"
+                      ? "bg-white border-[#5451FF] ring-2 ring-[#5451FF]/20 shadow-xs"
+                      : "bg-white/60 border-zinc-200 hover:border-zinc-300"
+                  }`}
+                >
+                  <span className="text-xs font-bold text-[#111111] flex items-center gap-1.5">
+                    🔀 Hybrid (Test + Workbook)
+                  </span>
+                  <span className="text-[11px] text-zinc-500">
+                    Both digital test and handwritten workbook submission choices supported.
+                  </span>
+                </label>
               </div>
             </div>
 
@@ -551,6 +606,15 @@ export default function NewAssessmentPage() {
                           <span className="px-2 py-0.5 bg-zinc-200 text-zinc-700 text-[10px] font-mono rounded">
                             {q.difficulty}
                           </span>
+                          {q.requiresWorkbook || q.submissionType === "WORKBOOK_ONLY" ? (
+                            <span className="px-2 py-0.5 bg-amber-100 text-amber-800 border border-amber-300 border-dashed text-[10px] font-mono font-bold rounded flex items-center gap-1">
+                              📝 WORKBOOK REQUIRED
+                            </span>
+                          ) : q.submissionType === "BOTH" ? (
+                            <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-[10px] font-mono font-bold rounded flex items-center gap-1">
+                              🔀 OPTIONAL WORKBOOK
+                            </span>
+                          ) : null}
                           <span className="text-xs font-mono font-semibold text-zinc-600">
                             {q.points} Marks
                           </span>
@@ -625,6 +689,48 @@ export default function NewAssessmentPage() {
                     className="w-full px-3 py-2.5 bg-[#F4F4F6] border border-transparent rounded-md text-xs font-medium text-[#111111]"
                   />
                 </div>
+              </div>
+
+              {/* Per-Question Workbook Option Choice */}
+              <div className="p-4 bg-purple-50/60 rounded-lg border border-purple-100 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-purple-900 block">
+                      📷 Workbook Handwritten Answer Option for this Question
+                    </span>
+                    <span className="text-[11px] text-purple-700 block">
+                      Configure whether students must upload a physical workbook photo for this specific question.
+                    </span>
+                  </div>
+                  <select
+                    value={qSubmissionType}
+                    onChange={(e) => {
+                      const val = e.target.value as any;
+                      setQSubmissionType(val);
+                      setQRequiresWorkbook(val === "WORKBOOK_ONLY" || val === "BOTH");
+                    }}
+                    className="px-3 py-1.5 bg-white border border-purple-300 rounded text-xs font-semibold text-purple-900"
+                  >
+                    <option value="ONLINE_ONLY">💻 Digital Answer Only</option>
+                    <option value="WORKBOOK_ONLY">📝 Physical Workbook Required</option>
+                    <option value="BOTH">🔀 Student Choice (Digital or Workbook)</option>
+                  </select>
+                </div>
+
+                {(qSubmissionType === "WORKBOOK_ONLY" || qSubmissionType === "BOTH") && (
+                  <div>
+                    <label className="block text-[11px] font-semibold text-purple-800 mb-1">
+                      Workbook Instructions for Student
+                    </label>
+                    <input
+                      type="text"
+                      value={qWorkbookInstructions}
+                      onChange={(e) => setQWorkbookInstructions(e.target.value)}
+                      placeholder="e.g. Draw the step-by-step state diagram in physical workbook..."
+                      className="w-full px-3 py-2 bg-white border border-purple-200 rounded text-xs font-medium text-purple-950 placeholder-purple-400/60"
+                    />
+                  </div>
+                )}
               </div>
 
               <div>

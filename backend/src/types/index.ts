@@ -93,6 +93,9 @@ export interface AssessmentDTO {
   passingMarks: number;
   durationMinutes: number;
   dueDate?: string;
+  isWorkbook?: boolean;
+  workbookUrl?: string;
+  submissionMode?: 'ONLINE_TEST' | 'WORKBOOK_ONLY' | 'HYBRID' | string;
   startTime?: string;
   endTime?: string;
   isPublished: boolean;
@@ -107,6 +110,9 @@ export interface QuestionDTO {
   points: number;
   orderIndex: number;
   explanation?: string;
+  requiresWorkbook?: boolean;
+  submissionType?: 'ONLINE_ONLY' | 'WORKBOOK_ONLY' | 'BOTH' | string;
+  workbookInstructions?: string;
   options?: OptionDTO[];
 }
 

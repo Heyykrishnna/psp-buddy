@@ -68,41 +68,24 @@ const DEMO_QUESTIONS: QuestionDTO[] = [
     id: "q-2",
     assessmentId: "demo-asm-1",
     questionText:
-      "Which data structure follows the LIFO (Last In First Out) principle?",
+      "Draw the step-by-step state of a Stack during push(5), push(12), pop(), push(8). Show physical layout.",
     questionType: "SINGLE_CHOICE",
     difficulty: "EASY",
-    points: 1,
+    points: 3,
     orderIndex: 2,
+    requiresWorkbook: true,
+    submissionType: "WORKBOOK_ONLY",
+    workbookInstructions:
+      "Draw the stack diagram in your physical workbook notebook and upload a clear photo or URL below.",
     explanation:
       "Stack operates on LIFO principle where the element inserted last is removed first.",
     options: [
       {
         id: "opt-5",
         questionId: "q-2",
-        optionText: "Queue",
-        isCorrect: false,
-        orderIndex: 1,
-      },
-      {
-        id: "opt-6",
-        questionId: "q-2",
-        optionText: "Stack",
+        optionText: "Completed in Physical Workbook Notebook",
         isCorrect: true,
-        orderIndex: 2,
-      },
-      {
-        id: "opt-7",
-        questionId: "q-2",
-        optionText: "Binary Tree",
-        isCorrect: false,
-        orderIndex: 3,
-      },
-      {
-        id: "opt-8",
-        questionId: "q-2",
-        optionText: "Linked List",
-        isCorrect: false,
-        orderIndex: 4,
+        orderIndex: 1,
       },
     ],
   },
@@ -154,6 +137,9 @@ export function AssessmentScreen({
   // Test Runner State
   const [currentIdx, setCurrentIdx] = useState<number>(0);
   const [selectedAnswers, setSelectedAnswers] = useState<
+    Record<string, string>
+  >({});
+  const [questionWorkbooks, setQuestionWorkbooks] = useState<
     Record<string, string>
   >({});
   const [timeLeftSeconds, setTimeLeftSeconds] = useState<number>(900);
@@ -393,59 +379,116 @@ export function AssessmentScreen({
             <View style={styles.centerContainer}>
               <ActivityIndicator size="large" color="#5451FF" />
             </View>
+          ) : filteredAssessments.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <View style={styles.emptyIconCircle}>
+                <Ionicons
+                  name="folder-open-outline"
+                  size={42}
+                  color="#818CF8"
+                />
+              </View>
+              <View style={styles.notAvailablePill}>
+                <Text style={styles.notAvailablePillText}>NOT AVAILABLE</Text>
+              </View>
+              <Text style={styles.emptyTitle}>
+                No {filterType !== "ALL" ? filterType : ""} Assessments Found
+              </Text>
+              <Text style={styles.emptySubtitle}>
+                {searchQuery
+                  ? `No assessments found matching "${searchQuery}". Try clearing your search.`
+                  : `There are currently no ${
+                      filterType !== "ALL" ? filterType.toLowerCase() + " " : ""
+                    }assessments available in this section. Please check back later or select another tab.`}
+              </Text>
+              {(filterType !== "ALL" || searchQuery !== "") && (
+                <TouchableOpacity
+                  style={styles.resetFilterBtn}
+                  onPress={() => {
+                    setFilterType("ALL");
+                    setSearchQuery("");
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="refresh-outline" size={16} color="#ffffff" />
+                  <Text style={styles.resetFilterText}>
+                    SHOW ALL ASSESSMENTS
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           ) : (
             <View style={styles.cardsGrid}>
-              {filteredAssessments.map((asm) => (
-                <View key={asm.id} style={styles.asmCard}>
-                  <View style={styles.asmTopRow}>
-                    <View style={styles.asmClassChip}>
-                      <Text style={styles.asmClassText}>
-                        {asm.className || "Computer Science"}
-                      </Text>
-                    </View>
-                    <View style={styles.asmTypeBadge}>
-                      <Text style={styles.asmTypeText}>
-                        {asm.assessmentType}
-                      </Text>
-                    </View>
-                  </View>
+              {filteredAssessments.map((asm) => {
+                const isWorkbookOnly =
+                  asm.submissionMode === "WORKBOOK_ONLY" ||
+                  (asm.isWorkbook && asm.assessmentType === "PRACTICE");
+                const isOnlineOnly = asm.submissionMode === "ONLINE_TEST";
 
-                  <Text style={styles.asmTitle}>{asm.title}</Text>
-                  <Text style={styles.asmDesc}>
-                    {asm.description ||
-                      "Test your algorithm skills & topic knowledge."}
-                  </Text>
+                return (
+                  <View key={asm.id} style={styles.asmCard}>
+                    <View style={styles.asmTopRow}>
+                      <View style={styles.asmClassChip}>
+                        <Text style={styles.asmClassText}>
+                          {asm.className || "Computer Science"}
+                        </Text>
+                      </View>
+                      <View style={{ flexDirection: "row", gap: 6 }}>
+                        <View style={styles.asmTypeBadge}>
+                          <Text style={styles.asmTypeText}>
+                            {asm.assessmentType}
+                          </Text>
+                        </View>
+                        {isWorkbookOnly ? (
+                          <View
+                            style={[
+                              styles.asmTypeBadge,
+                              { backgroundColor: "rgba(244,196,99,0.18)" },
+                            ]}
+                          >
+                            <Text
+                              style={[styles.asmTypeText, { color: "#F4C463" }]}
+                            >
+                              WORKBOOK
+                            </Text>
+                          </View>
+                        ) : isOnlineOnly ? (
+                          <View
+                            style={[
+                              styles.asmTypeBadge,
+                              { backgroundColor: "rgba(59,130,246,0.18)" },
+                            ]}
+                          >
+                            <Text
+                              style={[styles.asmTypeText, { color: "#60A5FA" }]}
+                            >
+                              DIGITAL TEST
+                            </Text>
+                          </View>
+                        ) : (
+                          <View
+                            style={[
+                              styles.asmTypeBadge,
+                              { backgroundColor: "rgba(168,85,247,0.18)" },
+                            ]}
+                          >
+                            <Text
+                              style={[styles.asmTypeText, { color: "#C084FC" }]}
+                            >
+                              HYBRID
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
 
-                  <View style={styles.asmMetaRow}>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 4,
-                      }}
-                    >
-                      <Ionicons name="time-outline" size={13} color="#71717a" />
-                      <Text style={styles.asmMetaItem}>
-                        {asm.durationMinutes || 15} mins
-                      </Text>
-                    </View>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 4,
-                      }}
-                    >
-                      <Ionicons
-                        name="trophy-outline"
-                        size={13}
-                        color="#71717a"
-                      />
-                      <Text style={styles.asmMetaItem}>
-                        {asm.totalMarks || 10} Marks
-                      </Text>
-                    </View>
-                    {asm.hasNegativeMarking && (
+                    <Text style={styles.asmTitle}>{asm.title}</Text>
+                    <Text style={styles.asmDesc}>
+                      {asm.description ||
+                        "Test your algorithm skills & topic knowledge."}
+                    </Text>
+
+                    <View style={styles.asmMetaRow}>
                       <View
                         style={{
                           flexDirection: "row",
@@ -454,67 +497,112 @@ export function AssessmentScreen({
                         }}
                       >
                         <Ionicons
-                          name="warning-outline"
+                          name="time-outline"
                           size={13}
-                          color="#f59e0b"
+                          color="#71717a"
                         />
-                        <Text
-                          style={[styles.asmMetaItem, { color: "#f59e0b" }]}
-                        >
-                          Negative Marks
+                        <Text style={styles.asmMetaItem}>
+                          {asm.durationMinutes || 15} mins
                         </Text>
                       </View>
-                    )}
-                  </View>
-
-                  <View style={{ flexDirection: "row", gap: 10, marginTop: 4 }}>
-                    <TouchableOpacity
-                      style={[styles.startBtn, { flex: 1 }]}
-                      onPress={() => startAssessment(asm)}
-                      activeOpacity={0.85}
-                    >
-                      <Text style={styles.startBtnText}>START TEST</Text>
-                      <Feather
-                        name="arrow-up-right"
-                        size={15}
-                        color="#ffffff"
-                        style={{ marginLeft: 4 }}
-                      />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[
-                        styles.startBtn,
-                        {
-                          flex: 1,
-                          backgroundColor: "#22242a",
-                          borderWidth: 1,
-                          borderColor: "rgba(255,255,255,0.12)",
-                        },
-                      ]}
-                      onPress={() => {
-                        setWorkbookModalAsm(asm);
-                        setWorkbookResult(null);
-                      }}
-                      activeOpacity={0.85}
-                    >
-                      <Ionicons
-                        name="camera-outline"
-                        size={16}
-                        color="#4ade80"
-                      />
-                      <Text
-                        style={[
-                          styles.startBtnText,
-                          { color: "#4ade80", marginLeft: 4 },
-                        ]}
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
                       >
-                        WORKBOOK
-                      </Text>
-                    </TouchableOpacity>
+                        <Ionicons
+                          name="trophy-outline"
+                          size={13}
+                          color="#71717a"
+                        />
+                        <Text style={styles.asmMetaItem}>
+                          {asm.totalMarks || 10} Marks
+                        </Text>
+                      </View>
+                      {asm.hasNegativeMarking && (
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
+                        >
+                          <Ionicons
+                            name="warning-outline"
+                            size={13}
+                            color="#f59e0b"
+                          />
+                          <Text
+                            style={[styles.asmMetaItem, { color: "#f59e0b" }]}
+                          >
+                            Negative Marks
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <View
+                      style={{ flexDirection: "row", gap: 10, marginTop: 4 }}
+                    >
+                      {!isWorkbookOnly && (
+                        <TouchableOpacity
+                          style={[styles.startBtn, { flex: 1 }]}
+                          onPress={() => startAssessment(asm)}
+                          activeOpacity={0.85}
+                        >
+                          <Text style={styles.startBtnText}>START TEST</Text>
+                          <Feather
+                            name="arrow-up-right"
+                            size={15}
+                            color="#ffffff"
+                            style={{ marginLeft: 4 }}
+                          />
+                        </TouchableOpacity>
+                      )}
+
+                      {!isOnlineOnly && (
+                        <TouchableOpacity
+                          style={[
+                            styles.startBtn,
+                            {
+                              flex: 1,
+                              backgroundColor: isWorkbookOnly
+                                ? "#5451FF"
+                                : "#22242a",
+                              borderWidth: isWorkbookOnly ? 0 : 1,
+                              borderColor: "rgba(255,255,255,0.12)",
+                            },
+                          ]}
+                          onPress={() => {
+                            setWorkbookModalAsm(asm);
+                            setWorkbookResult(null);
+                          }}
+                          activeOpacity={0.85}
+                        >
+                          <Ionicons
+                            name="camera-outline"
+                            size={16}
+                            color={isWorkbookOnly ? "#ffffff" : "#4ade80"}
+                          />
+                          <Text
+                            style={[
+                              styles.startBtnText,
+                              {
+                                color: isWorkbookOnly ? "#ffffff" : "#4ade80",
+                                marginLeft: 4,
+                              },
+                            ]}
+                          >
+                            WORKBOOK
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   </View>
-                </View>
-              ))}
+                );
+              })}
             </View>
           )}
         </ScrollView>
@@ -714,6 +802,44 @@ export function AssessmentScreen({
                     );
                   })}
                 </View>
+
+                {/* Per-Question Workbook Upload Box if Required or Allowed */}
+                {(questions[currentIdx].requiresWorkbook ||
+                  questions[currentIdx].submissionType === "WORKBOOK_ONLY" ||
+                  questions[currentIdx].submissionType === "BOTH") && (
+                  <View style={styles.qWorkbookBox}>
+                    <View style={styles.qWorkbookHeaderRow}>
+                      <Ionicons
+                        name="camera-outline"
+                        size={18}
+                        color="#F4C463"
+                      />
+                      <Text style={styles.qWorkbookHeaderTitle}>
+                        {questions[currentIdx].submissionType ===
+                          "WORKBOOK_ONLY" ||
+                        questions[currentIdx].requiresWorkbook
+                          ? "WORKBOOK HANDWRITTEN ANSWER REQUIRED"
+                          : "WORKBOOK ANSWER OPTION (CHOICE)"}
+                      </Text>
+                    </View>
+                    <Text style={styles.qWorkbookInstructionText}>
+                      {questions[currentIdx].workbookInstructions ||
+                        "Please write out your working in your physical workbook and paste the image URL or upload reference below:"}
+                    </Text>
+                    <TextInput
+                      style={styles.modalInput}
+                      value={questionWorkbooks[questions[currentIdx].id] || ""}
+                      onChangeText={(val) =>
+                        setQuestionWorkbooks((prev) => ({
+                          ...prev,
+                          [questions[currentIdx].id]: val,
+                        }))
+                      }
+                      placeholder="https://image-host.com/workbook-page.png"
+                      placeholderTextColor="rgba(255,255,255,0.4)"
+                    />
+                  </View>
+                )}
               </View>
             )}
           </ScrollView>
@@ -981,6 +1107,8 @@ const DEFAULT_MOCK_ASSESSMENTS: AssessmentDTO[] = [
       "Evaluates Big-O notation, stacks, queues, hash tables, and sorting algorithms.",
     className: "Data Structures II",
     assessmentType: "QUIZ",
+    submissionMode: "HYBRID",
+    isWorkbook: true,
     totalMarks: 10,
     passingMarks: 6,
     durationMinutes: 15,
@@ -998,11 +1126,52 @@ const DEFAULT_MOCK_ASSESSMENTS: AssessmentDTO[] = [
       "Deep dive into process scheduling, memory allocation, page faults, and threads.",
     className: "Operating Systems",
     assessmentType: "EXAM",
+    submissionMode: "ONLINE_TEST",
+    isWorkbook: false,
     totalMarks: 25,
     passingMarks: 15,
     durationMinutes: 30,
     hasNegativeMarking: false,
     negativeMarkValue: 0,
+    isPublished: true,
+    createdById: "teacher-1",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "demo-asm-3",
+    title: "Discrete Math Proofs & Logic Workbook",
+    description:
+      "Physical workbook assignment requiring step-by-step mathematical proofs and truth tables.",
+    className: "Discrete Math",
+    assessmentType: "PRACTICE",
+    submissionMode: "WORKBOOK_ONLY",
+    isWorkbook: true,
+    totalMarks: 20,
+    passingMarks: 12,
+    durationMinutes: 45,
+    hasNegativeMarking: false,
+    negativeMarkValue: 0,
+    dueDate: "2026-08-10T23:59:59.000Z",
+    isPublished: true,
+    createdById: "teacher-1",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "demo-asm-4",
+    title: "Binary Trees & Graph Traversal Practice",
+    description:
+      "Interactive practice set combining digital quiz questions and handwritten tree drawing.",
+    className: "Data Structures II",
+    assessmentType: "PRACTICE",
+    submissionMode: "HYBRID",
+    isWorkbook: true,
+    totalMarks: 15,
+    passingMarks: 9,
+    durationMinutes: 20,
+    hasNegativeMarking: true,
+    negativeMarkValue: 0.25,
     isPublished: true,
     createdById: "teacher-1",
     createdAt: new Date().toISOString(),
@@ -1783,5 +1952,95 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 13,
     fontWeight: "700",
+  },
+  emptyContainer: {
+    borderWidth: 2,
+    borderColor: "rgba(139, 92, 246, 0.4)",
+    borderStyle: "dashed",
+    borderRadius: 24,
+    padding: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(22, 24, 34, 0.8)",
+    gap: 12,
+    marginVertical: 12,
+  },
+  emptyIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "rgba(139, 92, 246, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  notAvailablePill: {
+    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(239, 68, 68, 0.4)",
+    borderStyle: "dashed",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  notAvailablePillText: {
+    color: "#F87171",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+  emptyTitle: {
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  emptySubtitle: {
+    color: "#9CA3AF",
+    fontSize: 13,
+    textAlign: "center",
+    lineHeight: 20,
+    maxWidth: 320,
+  },
+  resetFilterBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#5451FF",
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 14,
+    marginTop: 8,
+  },
+  resetFilterText: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  qWorkbookBox: {
+    marginTop: 14,
+    backgroundColor: "rgba(244,196,99,0.08)",
+    borderWidth: 1.5,
+    borderColor: "rgba(244,196,99,0.35)",
+    borderStyle: "dashed",
+    borderRadius: 16,
+    padding: 14,
+    gap: 10,
+  },
+  qWorkbookHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  qWorkbookHeaderTitle: {
+    color: "#F4C463",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  qWorkbookInstructionText: {
+    color: "#d1d5db",
+    fontSize: 12,
+    lineHeight: 17,
   },
 });
