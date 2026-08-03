@@ -4,6 +4,7 @@ import React, { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
+import { SlidingTabs } from "@/components/SlidingTabs";
 import {
   BarChartIcon,
   ArrowLeftIcon,
@@ -536,33 +537,22 @@ export default function AssessmentResultsPage({
         </div>
 
         {/* Section Toggle */}
-        <div className="flex items-center gap-1 bg-white border border-zinc-200 rounded-xl p-1.5 shadow-sm w-fit">
-          {[
+        <SlidingTabs<"students" | "questions">
+          tabs={[
             {
-              id: "students" as const,
+              id: "students",
               label: "Student Results",
               icon: <PersonIcon className="w-3.5 h-3.5" />,
             },
             {
-              id: "questions" as const,
+              id: "questions",
               label: "Question Analysis",
               icon: <TargetIcon className="w-3.5 h-3.5" />,
             },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveSection(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                activeSection === tab.id
-                  ? "bg-[#111111] text-white shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100"
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
+          ]}
+          activeId={activeSection}
+          onChange={setActiveSection}
+        />
 
         {/* ── Student Results ── */}
         {activeSection === "students" && (

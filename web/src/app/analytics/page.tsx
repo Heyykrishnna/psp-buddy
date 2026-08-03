@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
+import { SlidingTabs } from '@/components/SlidingTabs';
 import {
   StudentTopicMasteryDTO,
   StudentOverviewDTO,
@@ -135,20 +136,14 @@ export default function AnalyticsPage() {
           </div>
 
           {(user?.role === 'TEACHER' || user?.role === 'ADMIN') && (
-            <div className="flex items-center bg-zinc-100 rounded-lg p-1">
-              <button
-                onClick={() => setActiveTab('student')}
-                className={`px-4 py-2 text-xs font-semibold rounded-md transition-all ${activeTab === 'student' ? 'bg-white text-[#111111] shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
-              >
-                My Stats
-              </button>
-              <button
-                onClick={() => setActiveTab('class')}
-                className={`px-4 py-2 text-xs font-semibold rounded-md transition-all ${activeTab === 'class' ? 'bg-white text-[#111111] shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
-              >
-                Class View
-              </button>
-            </div>
+            <SlidingTabs<'student' | 'class'>
+              tabs={[
+                { id: 'student', label: 'My Stats', icon: <PersonIcon className="w-3.5 h-3.5" /> },
+                { id: 'class', label: 'Class View', icon: <BarChartIcon className="w-3.5 h-3.5" /> },
+              ]}
+              activeId={activeTab}
+              onChange={setActiveTab}
+            />
           )}
         </header>
 

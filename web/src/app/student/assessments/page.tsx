@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
 import { AssessmentDTO } from "@/types";
+import { SlidingTabs } from "@/components/SlidingTabs";
 import {
   ReaderIcon,
   ClockIcon,
@@ -260,21 +261,14 @@ export default function StudentAssessmentsPage() {
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {FILTER_TABS.map((filter) => (
-              <button
-                key={filter}
-                onClick={() => setActiveFilter(filter)}
-                className={`px-4 py-2 rounded-md text-xs font-semibold tracking-wider transition-all cursor-pointer ${
-                  activeFilter === filter
-                    ? "bg-[#111111] text-white shadow-sm"
-                    : "bg-[#F4F4F6] text-zinc-600 hover:bg-zinc-200"
-                }`}
-              >
-                {filter}
-              </button>
-            ))}
-          </div>
+          <SlidingTabs
+            tabs={FILTER_TABS.map((f) => ({
+              id: f,
+              label: f,
+            }))}
+            activeId={activeFilter}
+            onChange={setActiveFilter}
+          />
 
           {/* Count Badge */}
           <div className="ml-auto flex items-center gap-2">

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
+import { SlidingTabs } from "@/components/SlidingTabs";
 import {
   AssessmentDTO,
   ClassStudentRankingDTO,
@@ -391,6 +392,28 @@ export default function TeacherDashboardPage() {
   const [assessments, setAssessments] = useState<AssessmentDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [assessmentFilter, setAssessmentFilter] = useState<
+    "ALL" | "PUBLISHED" | "DRAFT"
+  >("ALL");
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Launch / Publish draft assessment
+  const handleLaunchAssessment = async (assessmentId: string) => {
+    try {
+      await apiFetch(`/assessments/${assessmentId}/publish`, {
+        method: "POST",
+      });
+    } catch {}
+    setAssessments((prev) =>
+      prev.map((asm) =>
+        asm.id === assessmentId ? { ...asm, isPublished: true } : asm,
+      ),
+    );
+    setToastMessage(
+      "Assessment launched successfully! Students can now attempt it.",
+    );
+    setTimeout(() => setToastMessage(null), 4000);
+  };
 
   // Selected student for drill-down history view
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
@@ -507,31 +530,17 @@ export default function TeacherDashboardPage() {
     },
   ];
 
-  // ── Sliding tab pill refs ──
-  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const [pillStyle, setPillStyle] = useState({ left: 0, width: 0 });
-  const isMounted = useRef(false);
-
-  useEffect(() => {
-    const activeIdx = TABS.findIndex((t) => t.id === activeTab);
-    const el = tabRefs.current[activeIdx];
-    if (!el) return;
-    // Snap instantly on mount (no animation), slide on tab changes
-    if (!isMounted.current) {
-      isMounted.current = true;
-      // Use a tiny RAF so refs are laid out before measuring
-      requestAnimationFrame(() => {
-        setPillStyle({ left: el.offsetLeft, width: el.offsetWidth });
-      });
-    } else {
-      setPillStyle({ left: el.offsetLeft, width: el.offsetWidth });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
-
   return (
     <main className="min-h-screen bg-[#F9F9FB] text-[#111111] font-sans px-6 pt-6 pb-24 md:px-12 md:pt-12 selection:bg-[#111111] selection:text-white">
       <div className="max-w-7xl mx-auto space-y-8">
+        {/* Toast Notification Banner */}
+        {toastMessage && (
+          <div className="fixed top-6 right-6 z-50 bg-[#111111] text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-zinc-700 animate-in fade-in slide-in-from-top-3 duration-300">
+            <CheckCircledIcon className="w-5 h-5 text-emerald-400 shrink-0" />
+            <span className="text-xs font-semibold">{toastMessage}</span>
+          </div>
+        )}
+
         {/* ── Top Navbar ── */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-zinc-200">
           <div className="flex items-center gap-3">
@@ -615,43 +624,12 @@ export default function TeacherDashboardPage() {
           </div>
         </div>
 
-        {/* ── Tabs ── */}
-        <div className="bg-white border border-zinc-200 rounded-xl p-1.5 shadow-sm w-fit">
-          <div className="relative flex items-center gap-0">
-            {/* Sliding pill background */}
-            <div
-              className="absolute top-0 bottom-0 rounded-lg bg-[#111111] shadow-sm pointer-events-none"
-              style={{
-                left: pillStyle.left,
-                width: pillStyle.width,
-                transition:
-                  pillStyle.width === 0
-                    ? "none"
-                    : "left 320ms cubic-bezier(0.35, 0, 0.25, 1), width 320ms cubic-bezier(0.35, 0, 0.25, 1)",
-              }}
-            />
-
-            {TABS.map((tab, idx) => (
-              <button
-                key={tab.id}
-                ref={(el) => {
-                  tabRefs.current[idx] = el;
-                }}
-                onClick={() => setActiveTab(tab.id)}
-                className={`relative z-10 flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer select-none
-                  transition-colors duration-200
-                  ${
-                    activeTab === tab.id
-                      ? "text-white"
-                      : "text-zinc-500 hover:text-zinc-800"
-                  }`}
-              >
-                {tab.icon}
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* ── Sliding Tabs ── */}
+        <SlidingTabs<ActiveTab>
+          tabs={TABS}
+          activeId={activeTab}
+          onChange={setActiveTab}
+        />
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
@@ -879,17 +857,28 @@ export default function TeacherDashboardPage() {
                             {asm.totalMarks} marks
                           </p>
                         </div>
-                        <button
-                          onClick={() =>
-                            router.push(
-                              `/teacher/assessments/${asm.id}/results`,
-                            )
-                          }
-                          className="flex items-center gap-2 px-4 py-2 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all shadow-sm whitespace-nowrap cursor-pointer"
-                        >
-                          View Results
-                          <ChevronRightIcon className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {!asm.isPublished && (
+                            <button
+                              onClick={() => handleLaunchAssessment(asm.id)}
+                              className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-md shadow-sm transition-all cursor-pointer whitespace-nowrap"
+                            >
+                              <RocketIcon className="w-3.5 h-3.5" />
+                              Launch Assessment
+                            </button>
+                          )}
+                          <button
+                            onClick={() =>
+                              router.push(
+                                `/teacher/assessments/${asm.id}/results`,
+                              )
+                            }
+                            className="flex items-center gap-2 px-4 py-2 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all shadow-sm whitespace-nowrap cursor-pointer"
+                          >
+                            View Results
+                            <ChevronRightIcon className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -902,9 +891,9 @@ export default function TeacherDashboardPage() {
             ══════════════════════════════════════════ */}
             {activeTab === "students" && (
               <div className="space-y-4">
-                {/* Student History Drawer */}
+                {/* Student History Drawer with smooth entrance animation */}
                 {selectedStudentId && selectedStudent && (
-                  <div className="bg-white border border-[#5451FF] rounded-xl p-6 shadow-md space-y-4">
+                  <div className="bg-white border-2 border-[#5451FF] rounded-xl p-6 shadow-xl space-y-4 animate-in fade-in slide-in-from-top-4 duration-300 transform transition-all">
                     <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
                       <div className="flex items-center gap-3">
                         <button
@@ -1307,10 +1296,23 @@ export default function TeacherDashboardPage() {
             ══════════════════════════════════════════ */}
             {activeTab === "assessments" && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-serif text-xl font-normal text-[#111111]">
-                    All Assessments ({assessments.length})
-                  </h3>
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <h3 className="font-serif text-xl font-normal text-[#111111]">
+                      All Assessments ({assessments.length})
+                    </h3>
+                    <SlidingTabs<"ALL" | "PUBLISHED" | "DRAFT">
+                      tabs={[
+                        { id: "ALL", label: "All" },
+                        { id: "PUBLISHED", label: "Published" },
+                        { id: "DRAFT", label: "Drafts" },
+                      ]}
+                      activeId={assessmentFilter}
+                      onChange={setAssessmentFilter}
+                      size="sm"
+                    />
+                  </div>
+
                   <button
                     onClick={() => router.push("/teacher/assessments/new")}
                     className="flex items-center gap-2 px-4 py-2 bg-[#5451FF] hover:bg-[#4340e0] text-white text-xs font-semibold rounded-md shadow-sm transition-all cursor-pointer"
@@ -1321,79 +1323,97 @@ export default function TeacherDashboardPage() {
                 </div>
 
                 <div className="space-y-3">
-                  {assessments.map((asm) => (
-                    <div
-                      key={asm.id}
-                      className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm hover:border-zinc-300 hover:shadow-md transition-all"
-                    >
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex-1 space-y-2 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="px-2 py-0.5 bg-[#111111] text-white text-[10px] font-mono font-bold rounded">
-                              {asm.className}
-                            </span>
-                            <TypeBadge type={String(asm.assessmentType)} />
+                  {assessments
+                    .filter((asm) => {
+                      if (assessmentFilter === "PUBLISHED")
+                        return asm.isPublished;
+                      if (assessmentFilter === "DRAFT") return !asm.isPublished;
+                      return true;
+                    })
+                    .map((asm) => (
+                      <div
+                        key={asm.id}
+                        className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm hover:border-zinc-300 hover:shadow-md transition-all"
+                      >
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="flex-1 space-y-2 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="px-2 py-0.5 bg-[#111111] text-white text-[10px] font-mono font-bold rounded">
+                                {asm.className}
+                              </span>
+                              <TypeBadge type={String(asm.assessmentType)} />
+                              {!asm.isPublished && (
+                                <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-mono rounded border border-amber-200">
+                                  DRAFT
+                                </span>
+                              )}
+                              {asm.isPublished && (
+                                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-mono rounded border border-emerald-200">
+                                  PUBLISHED
+                                </span>
+                              )}
+                            </div>
+                            <h4 className="text-sm font-semibold text-[#111111] truncate">
+                              {asm.title}
+                            </h4>
+                            <p className="text-xs text-zinc-400 line-clamp-1">
+                              {asm.description}
+                            </p>
+                            <div className="flex items-center gap-4 text-xs font-mono text-zinc-400 flex-wrap pt-0.5">
+                              <span className="flex items-center gap-1">
+                                <ClockIcon className="w-3 h-3" />
+                                {asm.durationMinutes} mins
+                              </span>
+                              <span>
+                                {asm.totalMarks} marks · Pass {asm.passingMarks}
+                              </span>
+                              <span>
+                                {asm._count?.questions || 0} questions
+                              </span>
+                              <span className="font-semibold text-[#111111]">
+                                {asm._count?.attempts || 0} student attempts
+                              </span>
+                              {asm.hasNegativeMarking && (
+                                <span className="text-red-500">
+                                  -{asm.negativeMarkValue} marking
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
                             {!asm.isPublished && (
-                              <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-mono rounded border border-amber-200">
-                                DRAFT
-                              </span>
+                              <button
+                                onClick={() => handleLaunchAssessment(asm.id)}
+                                className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-md shadow-sm transition-all cursor-pointer whitespace-nowrap"
+                              >
+                                <RocketIcon className="w-3.5 h-3.5" />
+                                Launch Assessment
+                              </button>
                             )}
-                            {asm.isPublished && (
-                              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-mono rounded border border-emerald-200">
-                                PUBLISHED
-                              </span>
-                            )}
+                            <button
+                              onClick={() =>
+                                router.push(
+                                  `/teacher/assessments/${asm.id}/results`,
+                                )
+                              }
+                              className="flex items-center gap-2 px-4 py-2 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all shadow-sm cursor-pointer"
+                            >
+                              <BarChartIcon className="w-3.5 h-3.5" />
+                              Results
+                            </button>
+                            <button
+                              onClick={() =>
+                                router.push("/teacher/assessments/new")
+                              }
+                              className="flex items-center gap-2 px-4 py-2 border border-zinc-200 hover:bg-zinc-50 text-zinc-700 text-xs font-medium rounded-md transition-all cursor-pointer"
+                            >
+                              <RocketIcon className="w-3.5 h-3.5" />
+                              Duplicate
+                            </button>
                           </div>
-                          <h4 className="text-sm font-semibold text-[#111111] truncate">
-                            {asm.title}
-                          </h4>
-                          <p className="text-xs text-zinc-400 line-clamp-1">
-                            {asm.description}
-                          </p>
-                          <div className="flex items-center gap-4 text-xs font-mono text-zinc-400 flex-wrap pt-0.5">
-                            <span className="flex items-center gap-1">
-                              <ClockIcon className="w-3 h-3" />
-                              {asm.durationMinutes} mins
-                            </span>
-                            <span>
-                              {asm.totalMarks} marks · Pass {asm.passingMarks}
-                            </span>
-                            <span>{asm._count?.questions || 0} questions</span>
-                            <span className="font-semibold text-[#111111]">
-                              {asm._count?.attempts || 0} student attempts
-                            </span>
-                            {asm.hasNegativeMarking && (
-                              <span className="text-red-500">
-                                -{asm.negativeMarkValue} marking
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            onClick={() =>
-                              router.push(
-                                `/teacher/assessments/${asm.id}/results`,
-                              )
-                            }
-                            className="flex items-center gap-2 px-4 py-2 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all shadow-sm cursor-pointer"
-                          >
-                            <BarChartIcon className="w-3.5 h-3.5" />
-                            Results
-                          </button>
-                          <button
-                            onClick={() =>
-                              router.push("/teacher/assessments/new")
-                            }
-                            className="flex items-center gap-2 px-4 py-2 border border-zinc-200 hover:bg-zinc-50 text-zinc-700 text-xs font-medium rounded-md transition-all cursor-pointer"
-                          >
-                            <RocketIcon className="w-3.5 h-3.5" />
-                            Duplicate
-                          </button>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             )}
