@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -10,38 +10,52 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Animated,
+  Dimensions,
 } from "react-native";
-import { Feather } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
 import { UserRole } from "../types";
+
+const { width } = Dimensions.get("window");
 
 export function AuthScreen() {
   const { login, loginWithGoogle, register, loginAsDemo } = useAuth();
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>("STUDENT");
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Animated underline for tab indicator
+  const tabAnim = useRef(new Animated.Value(0)).current;
+
+  const switchTab = (signUp: boolean) => {
+    setIsSignUp(signUp);
+    setError("");
+    Animated.spring(tabAnim, {
+      toValue: signUp ? 1 : 0,
+      useNativeDriver: true,
+      stiffness: 260,
+      damping: 20,
+    }).start();
+  };
+
   const handleSubmit = async () => {
     if (!email.trim() || !password.trim()) {
-      setError("Please enter your email and password.");
+      setError("Enter your email and password to continue.");
       return;
     }
     setError("");
     setLoading(true);
-
     try {
       if (isSignUp) {
-        if (!firstName.trim() || !lastName.trim()) {
-          setError("First and last name are required.");
+        if (!firstName.trim()) {
+          setError("First name is required.");
           setLoading(false);
           return;
         }
@@ -50,30 +64,16 @@ export function AuthScreen() {
         await login(email, password);
       }
     } catch (err: any) {
-      setError(
-        err.message || "Authentication failed. Please check your credentials.",
-      );
+      setError(err.message || "Authentication failed.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setError("");
-    setLoading(true);
-    try {
-      const devToken = `google_token_${Date.now()}`;
-      await loginWithGoogle(
-        devToken,
-        firstName || "Google",
-        lastName || "User",
-      );
-    } catch (err: any) {
-      setError(err.message || "Google sign-in failed.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const tabTranslateX = tabAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, (width - 40) / 2],
+  });
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -86,152 +86,113 @@ export function AuthScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.logoMark}>
-              <Feather name="layers" size={18} color="#ffffff" />
-            </View>
-            <View style={styles.headerText}>
-              <Text style={styles.brandName}>PSP LUMORA</Text>
-              <Text style={styles.brandTagline}>
-                Academic Intelligence Platform
-              </Text>
-            </View>
-            <View style={styles.liveChip}>
+          {/* Wordmark */}
+          <View style={styles.wordmarkRow}>
+            <Text style={styles.wordmark}>PSP LUMORA</Text>
+            <View style={styles.livePill}>
               <View style={styles.liveDot} />
-              <Text style={styles.liveChipText}>LIVE</Text>
+              <Text style={styles.liveText}>LIVE</Text>
             </View>
           </View>
 
-          {/* Sign In / Sign Up Card */}
-          <View style={styles.authCard}>
-            {/* Tab Switcher */}
-            <View style={styles.tabRow}>
-              <TouchableOpacity
-                style={[styles.tab, !isSignUp && styles.activeTab]}
-                onPress={() => {
-                  setIsSignUp(false);
-                  setError("");
-                }}
-              >
-                <Feather
-                  name="log-in"
-                  size={13}
-                  color={!isSignUp ? "#111111" : "#71717a"}
-                />
-                <Text
-                  style={[styles.tabText, !isSignUp && styles.activeTabText]}
-                >
-                  Sign In
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.tab, isSignUp && styles.activeTab]}
-                onPress={() => {
-                  setIsSignUp(true);
-                  setError("");
-                }}
-              >
-                <Feather
-                  name="user-plus"
-                  size={13}
-                  color={isSignUp ? "#111111" : "#71717a"}
-                />
-                <Text
-                  style={[styles.tabText, isSignUp && styles.activeTabText]}
-                >
-                  Register
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.cardHeading}>
-              {isSignUp ? "Create Account" : "Welcome Back"}
+          {/* Large Heading */}
+          <View style={styles.heroSection}>
+            <Text style={styles.heroHeading}>
+              {isSignUp ? "CREATE\nACCOUNT" : "SIGN IN"}
             </Text>
-            <Text style={styles.cardSubheading}>
+            <Text style={styles.heroSub}>
               {isSignUp
-                ? "Join PSP Lumora as a student, teacher, or admin."
-                : "Sign in to access your personalized dashboard."}
+                ? "Join PSP Lumora and start tracking your academic progress."
+                : "Access your personalised learning dashboard."}
             </Text>
+          </View>
 
-            {/* Error Banner */}
-            {!!error && (
-              <View style={styles.errorBanner}>
-                <Feather name="alert-circle" size={13} color="#ef4444" />
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            )}
+          {/* Tab Switcher */}
+          <View style={styles.tabContainer}>
+            <Animated.View
+              style={[
+                styles.tabIndicator,
+                { transform: [{ translateX: tabTranslateX }] },
+              ]}
+            />
+            <TouchableOpacity
+              style={styles.tabBtn}
+              onPress={() => switchTab(false)}
+              activeOpacity={0.8}
+            >
+              <Text
+                style={[styles.tabLabel, !isSignUp && styles.tabLabelActive]}
+              >
+                SIGN IN
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.tabBtn}
+              onPress={() => switchTab(true)}
+              activeOpacity={0.8}
+            >
+              <Text
+                style={[styles.tabLabel, isSignUp && styles.tabLabelActive]}
+              >
+                REGISTER
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-            {/* Name Fields (Sign Up Only) */}
+          {/* Error */}
+          {!!error && (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+
+          {/* Form Card */}
+          <View style={styles.formCard}>
             {isSignUp && (
               <>
                 <View style={styles.fieldRow}>
-                  <View style={[styles.fieldGroup, { flex: 1 }]}>
-                    <Text style={styles.label}>FIRST NAME</Text>
-                    <View style={styles.inputWrapper}>
-                      <Feather
-                        name="user"
-                        size={14}
-                        color="#71717a"
-                        style={styles.inputIcon}
-                      />
-                      <TextInput
-                        style={styles.input}
-                        value={firstName}
-                        onChangeText={setFirstName}
-                        placeholder="Hanna"
-                        placeholderTextColor="#a1a1aa"
-                      />
-                    </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>FIRST NAME</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={firstName}
+                      onChangeText={setFirstName}
+                      placeholder="Hanna"
+                      placeholderTextColor="#71717a"
+                      autoCapitalize="words"
+                    />
                   </View>
-                  <View style={[styles.fieldGroup, { flex: 1 }]}>
-                    <Text style={styles.label}>LAST NAME</Text>
-                    <View style={styles.inputWrapper}>
-                      <Feather
-                        name="user"
-                        size={14}
-                        color="#71717a"
-                        style={styles.inputIcon}
-                      />
-                      <TextInput
-                        style={styles.input}
-                        value={lastName}
-                        onChangeText={setLastName}
-                        placeholder="Vance"
-                        placeholderTextColor="#a1a1aa"
-                      />
-                    </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>LAST NAME</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={lastName}
+                      onChangeText={setLastName}
+                      placeholder="Vance"
+                      placeholderTextColor="#71717a"
+                      autoCapitalize="words"
+                    />
                   </View>
                 </View>
 
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.label}>PLATFORM ROLE</Text>
+                <View>
+                  <Text style={styles.fieldLabel}>ROLE</Text>
                   <View style={styles.roleRow}>
                     {(["STUDENT", "TEACHER", "ADMIN"] as UserRole[]).map(
                       (r) => (
                         <TouchableOpacity
                           key={r}
                           style={[
-                            styles.roleBtn,
-                            selectedRole === r && styles.roleBtnActive,
+                            styles.roleChip,
+                            selectedRole === r && styles.roleChipActive,
                           ]}
                           onPress={() => setSelectedRole(r)}
+                          activeOpacity={0.8}
                         >
-                          <Feather
-                            name={
-                              r === "STUDENT"
-                                ? "book-open"
-                                : r === "TEACHER"
-                                  ? "briefcase"
-                                  : "shield"
-                            }
-                            size={12}
-                            color={selectedRole === r ? "#ffffff" : "#71717a"}
-                          />
                           <Text
                             style={[
-                              styles.roleBtnText,
-                              selectedRole === r && styles.roleBtnTextActive,
+                              styles.roleChipText,
+                              selectedRole === r && styles.roleChipTextActive,
                             ]}
                           >
                             {r}
@@ -244,141 +205,101 @@ export function AuthScreen() {
               </>
             )}
 
-            {/* Email */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>EMAIL ADDRESS</Text>
-              <View style={styles.inputWrapper}>
-                <Feather
-                  name="mail"
-                  size={14}
-                  color="#71717a"
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={styles.input}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="hanna@lumora.edu"
-                  placeholderTextColor="#a1a1aa"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
+            <View>
+              <Text style={styles.fieldLabel}>EMAIL</Text>
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="hanna@lumora.edu"
+                placeholderTextColor="#71717a"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
             </View>
 
-            {/* Password */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>PASSWORD</Text>
-              <View style={styles.inputWrapper}>
-                <Feather
-                  name="lock"
-                  size={14}
-                  color="#71717a"
-                  style={styles.inputIcon}
-                />
+            <View>
+              <Text style={styles.fieldLabel}>PASSWORD</Text>
+              <View style={styles.passwordRow}>
                 <TextInput
-                  style={[styles.input, { flex: 1 }]}
+                  style={[styles.input, { flex: 1, marginBottom: 0 }]}
                   value={password}
                   onChangeText={setPassword}
                   placeholder="••••••••"
-                  placeholderTextColor="#a1a1aa"
+                  placeholderTextColor="#71717a"
                   secureTextEntry={!showPassword}
                 />
                 <TouchableOpacity
+                  style={styles.showBtn}
                   onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeBtn}
                 >
-                  <Feather
-                    name={showPassword ? "eye-off" : "eye"}
-                    size={14}
-                    color="#71717a"
-                  />
+                  <Text style={styles.showBtnText}>
+                    {showPassword ? "HIDE" : "SHOW"}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
 
-            {/* Submit Button */}
             <TouchableOpacity
               style={styles.submitBtn}
               onPress={handleSubmit}
               disabled={loading}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
             >
               {loading ? (
-                <ActivityIndicator color="#ffffff" size="small" />
+                <ActivityIndicator color="#ffffff" />
               ) : (
-                <>
-                  <Text style={styles.submitBtnText}>
-                    {isSignUp ? "Create Account" : "Sign In to Dashboard"}
-                  </Text>
-                  <Feather name="arrow-right" size={14} color="#ffffff" />
-                </>
+                <Text style={styles.submitBtnText}>
+                  {isSignUp ? "CREATE ACCOUNT" : "SIGN IN"}
+                </Text>
               )}
             </TouchableOpacity>
 
-            {/* Google Button */}
             <TouchableOpacity
               style={styles.googleBtn}
-              onPress={handleGoogleSignIn}
-              disabled={loading}
-              activeOpacity={0.8}
+              onPress={() => loginWithGoogle(`google_${Date.now()}`)}
+              activeOpacity={0.85}
             >
-              <View style={styles.googleIconCircle}>
-                <Text style={styles.googleG}>G</Text>
-              </View>
-              <Text style={styles.googleBtnText}>Continue with Google</Text>
-            </TouchableOpacity>
-
-            {/* Toggle */}
-            <TouchableOpacity
-              style={styles.toggleRow}
-              onPress={() => {
-                setIsSignUp(!isSignUp);
-                setError("");
-              }}
-            >
-              <Text style={styles.toggleText}>
-                {isSignUp
-                  ? "Already registered? Sign in"
-                  : "New to PSP Lumora? Create account"}
-              </Text>
+              <Text style={styles.googleBtnText}>CONTINUE WITH GOOGLE</Text>
             </TouchableOpacity>
           </View>
 
+          {/* Toggle */}
+          <TouchableOpacity
+            onPress={() => switchTab(!isSignUp)}
+            style={styles.toggleRow}
+          >
+            <Text style={styles.toggleText}>
+              {isSignUp
+                ? "Already have an account? Sign in"
+                : "New here? Create an account"}
+            </Text>
+          </TouchableOpacity>
+
           {/* Quick Demo Access */}
           <View style={styles.demoSection}>
-            <View style={styles.dividerRow}>
-              <View style={styles.divider} />
-              <Text style={styles.dividerLabel}>QUICK DEMO ACCESS</Text>
-              <View style={styles.divider} />
-            </View>
-
+            <Text style={styles.demoLabel}>QUICK ACCESS</Text>
             <View style={styles.demoRow}>
               <TouchableOpacity
-                style={styles.demoBtn}
+                style={[styles.demoChip, { backgroundColor: "#5451FF" }]}
                 onPress={() => loginAsDemo("STUDENT")}
-                activeOpacity={0.8}
+                activeOpacity={0.85}
               >
-                <Feather name="book-open" size={14} color="#111111" />
-                <Text style={styles.demoBtnText}>Student</Text>
+                <Text style={styles.demoChipText}>STUDENT</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
-                style={styles.demoBtn}
+                style={[styles.demoChip, { backgroundColor: "#FF5745" }]}
                 onPress={() => loginAsDemo("TEACHER")}
-                activeOpacity={0.8}
+                activeOpacity={0.85}
               >
-                <Feather name="briefcase" size={14} color="#111111" />
-                <Text style={styles.demoBtnText}>Teacher</Text>
+                <Text style={styles.demoChipText}>TEACHER</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
-                style={styles.demoBtn}
+                style={[styles.demoChip, { backgroundColor: "#121316" }]}
                 onPress={() => loginAsDemo("ADMIN")}
-                activeOpacity={0.8}
+                activeOpacity={0.85}
               >
-                <Feather name="shield" size={14} color="#111111" />
-                <Text style={styles.demoBtnText}>Admin</Text>
+                <Text style={styles.demoChipText}>ADMIN</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -391,51 +312,35 @@ export function AuthScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F4F4F6",
+    backgroundColor: "#B8C6B6",
   },
   scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
-    gap: 20,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 48,
+    gap: 18,
   },
 
-  // Header
-  header: {
+  // Wordmark Row
+  wordmarkRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingVertical: 8,
+    justifyContent: "space-between",
+    paddingVertical: 4,
   },
-  logoMark: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "#111111",
-    alignItems: "center",
-    justifyContent: "center",
+  wordmark: {
+    fontSize: 17,
+    fontWeight: "900",
+    color: "#121316",
+    letterSpacing: 1,
   },
-  headerText: {
-    flex: 1,
-  },
-  brandName: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#111111",
-    letterSpacing: 0.5,
-  },
-  brandTagline: {
-    fontSize: 11,
-    color: "#71717a",
-    fontWeight: "500",
-    marginTop: 1,
-  },
-  liveChip: {
+  livePill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "#111111",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    backgroundColor: "#121316",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 20,
   },
   liveDot: {
@@ -444,244 +349,218 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: "#4ade80",
   },
-  liveChipText: {
+  liveText: {
     color: "#ffffff",
     fontSize: 9,
-    fontWeight: "800",
-    letterSpacing: 1,
+    fontWeight: "900",
+    letterSpacing: 1.5,
   },
 
-  // Auth Card
-  authCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 20,
-    padding: 22,
-    gap: 14,
-    borderWidth: 1,
-    borderColor: "#e4e4e7",
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  tabRow: {
-    flexDirection: "row",
-    backgroundColor: "#f4f4f6",
-    borderRadius: 12,
-    padding: 3,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 9,
-    borderRadius: 10,
-  },
-  activeTab: {
-    backgroundColor: "#ffffff",
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
-  },
-  tabText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#71717a",
-  },
-  activeTabText: {
-    color: "#111111",
-    fontWeight: "700",
-  },
-  cardHeading: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#111111",
-    marginTop: 4,
-  },
-  cardSubheading: {
-    fontSize: 12,
-    color: "#71717a",
-    lineHeight: 17,
-    marginTop: -6,
-  },
-  errorBanner: {
-    flexDirection: "row",
-    alignItems: "center",
+  // Hero
+  heroSection: {
+    paddingTop: 8,
     gap: 8,
-    backgroundColor: "#fef2f2",
-    borderWidth: 1,
-    borderColor: "#fecaca",
-    borderRadius: 10,
-    padding: 12,
+  },
+  heroHeading: {
+    fontSize: 54,
+    fontWeight: "900",
+    color: "#121316",
+    lineHeight: 56,
+    letterSpacing: -1,
+  },
+  heroSub: {
+    fontSize: 13,
+    color: "#4A5248",
+    lineHeight: 19,
+    fontWeight: "500",
+    maxWidth: 280,
+  },
+
+  // Tab Switcher
+  tabContainer: {
+    flexDirection: "row",
+    backgroundColor: "#a8b6a5",
+    borderRadius: 14,
+    padding: 4,
+    position: "relative",
+    overflow: "hidden",
+  },
+  tabIndicator: {
+    position: "absolute",
+    top: 4,
+    left: 4,
+    width: "50%",
+    height: "100%",
+    backgroundColor: "#121316",
+    borderRadius: 11,
+  },
+  tabBtn: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 11,
+    zIndex: 1,
+  },
+  tabLabel: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#4A5248",
+    letterSpacing: 0.5,
+  },
+  tabLabelActive: {
+    color: "#ffffff",
+  },
+
+  // Error
+  errorBox: {
+    backgroundColor: "#FF5745",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
   errorText: {
-    color: "#ef4444",
+    color: "#ffffff",
     fontSize: 12,
-    fontWeight: "500",
-    flex: 1,
+    fontWeight: "700",
+  },
+
+  // Form Card
+  formCard: {
+    backgroundColor: "#121316",
+    borderRadius: 28,
+    padding: 22,
+    gap: 16,
   },
   fieldRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: 12,
   },
-  fieldGroup: {
-    gap: 5,
-  },
-  label: {
+  fieldLabel: {
     fontSize: 10,
-    fontWeight: "700",
+    fontWeight: "800",
     color: "#71717a",
-    letterSpacing: 0.5,
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f4f4f6",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e4e4e7",
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-    gap: 8,
-  },
-  inputIcon: {
-    // no extra style needed
+    letterSpacing: 1,
+    marginBottom: 6,
   },
   input: {
-    flex: 1,
+    backgroundColor: "#1f2024",
+    color: "#ffffff",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
     fontSize: 14,
-    color: "#111111",
     fontWeight: "500",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.07)",
+    marginBottom: 0,
   },
-  eyeBtn: {
-    padding: 2,
+  passwordRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  showBtn: {
+    backgroundColor: "#1f2024",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 13,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.07)",
+  },
+  showBtnText: {
+    color: "#71717a",
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 0.5,
   },
   roleRow: {
     flexDirection: "row",
     gap: 8,
+    marginTop: 4,
   },
-  roleBtn: {
+  roleChip: {
     flex: 1,
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 5,
     paddingVertical: 10,
-    backgroundColor: "#f4f4f6",
     borderRadius: 10,
+    backgroundColor: "#1f2024",
     borderWidth: 1,
-    borderColor: "#e4e4e7",
+    borderColor: "rgba(255,255,255,0.07)",
   },
-  roleBtnActive: {
-    backgroundColor: "#111111",
-    borderColor: "#111111",
+  roleChipActive: {
+    backgroundColor: "#5451FF",
+    borderColor: "#5451FF",
   },
-  roleBtnText: {
-    fontSize: 10,
-    fontWeight: "700",
+  roleChipText: {
     color: "#71717a",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.5,
   },
-  roleBtnTextActive: {
+  roleChipTextActive: {
     color: "#ffffff",
   },
   submitBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#111111",
-    paddingVertical: 14,
+    backgroundColor: "#5451FF",
     borderRadius: 14,
+    paddingVertical: 15,
+    alignItems: "center",
     marginTop: 4,
   },
   submitBtnText: {
     color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: 13,
+    fontWeight: "900",
+    letterSpacing: 1,
   },
   googleBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
     backgroundColor: "#ffffff",
-    paddingVertical: 13,
     borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#e4e4e7",
-  },
-  googleIconCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: "#4285F4",
+    paddingVertical: 14,
     alignItems: "center",
-    justifyContent: "center",
-  },
-  googleG: {
-    color: "#ffffff",
-    fontSize: 12,
-    fontWeight: "900",
   },
   googleBtnText: {
-    color: "#111111",
-    fontSize: 13,
-    fontWeight: "600",
+    color: "#121316",
+    fontSize: 12,
+    fontWeight: "900",
+    letterSpacing: 0.5,
   },
+
+  // Toggle
   toggleRow: {
     alignItems: "center",
-    paddingTop: 4,
   },
   toggleText: {
-    color: "#71717a",
+    color: "#4A5248",
     fontSize: 12,
+    fontWeight: "600",
     textDecorationLine: "underline",
   },
 
-  // Demo Section
+  // Demo
   demoSection: {
-    gap: 12,
-  },
-  dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
     gap: 10,
   },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#e4e4e7",
-  },
-  dividerLabel: {
+  demoLabel: {
     fontSize: 9,
-    fontWeight: "700",
-    color: "#a1a1aa",
-    letterSpacing: 0.8,
+    fontWeight: "900",
+    color: "#4A5248",
+    letterSpacing: 1.5,
+    textAlign: "center",
   },
   demoRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: 8,
   },
-  demoBtn: {
+  demoChip: {
     flex: 1,
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
     paddingVertical: 12,
-    backgroundColor: "#ffffff",
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e4e4e7",
   },
-  demoBtnText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#111111",
+  demoChipText: {
+    color: "#ffffff",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 0.8,
   },
 });
