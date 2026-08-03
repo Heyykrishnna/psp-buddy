@@ -3,7 +3,6 @@
     "name": "PSP Buddy",
     "slug": "psp-buddy-mobile",
     "version": "1.0.0",
-    "sdkVersion": "54.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,

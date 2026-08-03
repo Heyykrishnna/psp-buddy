@@ -89,6 +89,7 @@ model User {
   teacher         Teacher?
   notifications   Notification[]
   auditLogs       AuditLog[]
+  chatSessions    ChatSession[]
 
   @@map("users")
 }
@@ -427,5 +428,29 @@ model VerificationCode {
   createdAt DateTime @default(now())
 
   @@map("verification_codes")
+}
+
+model ChatSession {
+  id        String        @id @default(uuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String        @default("New Chat")
+  topic     String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  messages  ChatMessage[]
+
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id        String      @id @default(uuid())
+  sessionId String
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role      String      // 'user' | 'assistant'
+  content   String      @db.Text
+  createdAt DateTime    @default(now())
+
+  @@map("chat_messages")
 }
 

@@ -103,7 +103,7 @@ export default function DashboardPage() {
       <main className="min-h-screen bg-[#F9F9FB] flex flex-col items-center justify-center font-sans">
         <div className="w-8 h-8 border-2 border-[#111111] border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-xs font-mono text-zinc-500 uppercase tracking-wider">
-          Fetching Dashboard Data from Backend...
+          Loading...
         </p>
       </main>
     );

@@ -213,4 +213,31 @@ export class PSPBuddyApiClient {
       this.syncSubscribers.get(event)?.delete(callback);
     };
   }
+
+  // ── Chat Sessions ─────────────────────────────────────────────────────────
+
+  async getChatSessions() {
+    const res = await this.http.get<any[]>('/chat/sessions');
+    return res.data;
+  }
+
+  async createChatSession(topic?: string) {
+    const res = await this.http.post<any>('/chat/sessions', { topic });
+    return res.data;
+  }
+
+  async deleteChatSession(sessionId: string) {
+    const res = await this.http.delete<any>(`/chat/sessions/${sessionId}`);
+    return res.data;
+  }
+
+  async getChatMessages(sessionId: string) {
+    const res = await this.http.get<any[]>(`/chat/sessions/${sessionId}/messages`);
+    return res.data;
+  }
+
+  async sendChatMessage(sessionId: string, message: string, topic?: string) {
+    const res = await this.http.post<any>(`/chat/sessions/${sessionId}/messages`, { message, topic });
+    return res.data;
+  }
 }
