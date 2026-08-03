@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { UserProfile, AuthResponse, UserRole } from "../types";
 import { PSPBuddyApiClient } from "../lib/api-sdk";
 
+declare const process: { env: Record<string, string | undefined> };
+
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;

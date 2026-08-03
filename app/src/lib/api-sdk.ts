@@ -224,9 +224,8 @@ export class PSPBuddyApiClient {
   }
 
 
-  // REALTIME SYNCHRONIZATION
   connectRealtimeSync(wsUrl: string, token: string) {
-    if (typeof window === 'undefined' && typeof global === 'undefined') return;
+    if (typeof window === 'undefined' && typeof globalThis === 'undefined') return;
 
     try {
       this.ws = new WebSocket(`${wsUrl}?token=${token}`);
