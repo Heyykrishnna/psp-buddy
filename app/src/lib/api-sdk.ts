@@ -164,7 +164,7 @@ export class PSPBuddyApiClient {
     return res.data;
   }
 
-  // GROQ AI API
+  // AI API
   async generateAiAssessment(data: { topic: string; questionCount?: number; difficulty?: string }) {
     const res = await this.http.post('/ai/generate-assessment', data);
     return res.data;

@@ -16,7 +16,7 @@ export default function AiTutorPage() {
     {
       role: "assistant",
       content:
-        "Hello! I am **Lumora AI Tutor** powered by Groq AI. 🚀\n\nAsk me anything about your CS concepts, data structures, algorithms, or test preparation!",
+        "Hello! I am **Lumora AI Tutor** powered by AI. 🚀\n\nAsk me anything about your CS concepts, data structures, algorithms, or test preparation!",
     },
   ]);
 
@@ -48,14 +48,14 @@ export default function AiTutorPage() {
         }),
       });
 
-      const aiReply = res?.reply || "No response from Groq AI.";
+      const aiReply = res?.reply || "No response from AI.";
       setMessages([...newHistory, { role: "assistant", content: aiReply }]);
     } catch (err: any) {
       setMessages([
         ...newHistory,
         {
           role: "assistant",
-          content: `⚠️ Error connecting to Groq AI: ${err.message}`,
+          content: `⚠️ Error connecting to AI: ${err.message}`,
         },
       ]);
     } finally {
@@ -70,7 +70,7 @@ export default function AiTutorPage() {
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
             <span className="text-xs font-mono font-bold text-purple-600 uppercase tracking-widest block">
-              GROQ AI SERVICE • INTERACTIVE TUTOR
+              AI SERVICE • INTERACTIVE TUTOR
             </span>
             <h1 className="font-serif text-2xl font-normal text-[#111111] mt-0.5">
               Lumora AI Study Buddy
@@ -126,7 +126,7 @@ export default function AiTutorPage() {
               >
                 {msg.role === "assistant" && (
                   <span className="text-[10px] font-mono font-bold text-purple-700 block mb-1">
-                    ⚡ GROQ AI TUTOR
+                    ⚡ AI TUTOR
                   </span>
                 )}
                 {msg.content}
@@ -137,7 +137,7 @@ export default function AiTutorPage() {
           {loading && (
             <div className="flex items-center gap-2 text-xs font-mono text-purple-600 animate-pulse pt-2">
               <span className="w-2 h-2 bg-purple-600 rounded-full animate-ping" />
-              Groq AI Tutor is thinking...
+              AI Tutor is thinking...
             </div>
           )}
         </div>

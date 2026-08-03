@@ -103,7 +103,7 @@ export default function NewAssessmentPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Groq AI Generator State
+  // AI Generator State
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiCount, setAiCount] = useState(5);
   const [aiDifficulty, setAiDifficulty] = useState<"EASY" | "MEDIUM" | "HARD">(
@@ -146,7 +146,7 @@ export default function NewAssessmentPage() {
         setShowAiModal(false);
       }
     } catch (err: any) {
-      setError(err.message || "Failed to generate questions with Groq AI");
+      setError(err.message || "Failed to generate questions with AI");
     } finally {
       setAiGenerating(false);
     }
@@ -429,17 +429,17 @@ export default function NewAssessmentPage() {
                   onClick={() => setShowAiModal(true)}
                   className="px-4 py-2 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-semibold rounded-md shadow-sm transition-all flex items-center gap-2 cursor-pointer"
                 >
-                  <span>✨ Auto-Generate with Groq AI</span>
+                  <span>✨ Auto-Generate with AI</span>
                 </button>
               </div>
 
-              {/* GROQ AI GENERATOR MODAL */}
+              {/* AI GENERATOR MODAL */}
               {showAiModal && (
                 <div className="mb-6 p-5 bg-linear-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-xl space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="p-1.5 bg-purple-600 text-white rounded-md text-xs">
-                        🚀 Groq AI
+                        🚀 AI Assistant
                       </span>
                       <h4 className="font-semibold text-sm text-purple-950">
                         AI Question Generator
@@ -454,7 +454,7 @@ export default function NewAssessmentPage() {
                   </div>
 
                   <p className="text-xs text-purple-900">
-                    Groq AI will create structured questions, options, and
+                    AI will create structured questions, options, and
                     explanations based on topic:{" "}
                     <strong className="font-mono">{topic}</strong>.
                   </p>
