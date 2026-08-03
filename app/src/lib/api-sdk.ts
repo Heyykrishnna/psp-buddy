@@ -9,6 +9,8 @@ import {
   NotificationDTO,
   SyncEventType,
   SyncEventPayload,
+  StudentTopicMasteryDTO,
+  StudentOverviewDTO,
 } from '../types';
 import { RegisterInput, LoginInput, CodingSubmissionInput, SubmitAnswerInput } from '../validation';
 
@@ -125,6 +127,22 @@ export class PSPBuddyApiClient {
 
   async getAttemptResult(attemptId: string) {
     const res = await this.http.get(`/attempts/${attemptId}/result`);
+    return res.data;
+  }
+
+  // ANALYTICS API
+  async getStudentOverview(): Promise<StudentOverviewDTO> {
+    const res = await this.http.get<StudentOverviewDTO>('/analytics/student/me');
+    return res.data;
+  }
+
+  async getTopicMastery(): Promise<StudentTopicMasteryDTO[]> {
+    const res = await this.http.get<StudentTopicMasteryDTO[]>('/analytics/student/topics');
+    return res.data;
+  }
+
+  async getStudentPerformance() {
+    const res = await this.http.get('/analytics/student/performance');
     return res.data;
   }
 

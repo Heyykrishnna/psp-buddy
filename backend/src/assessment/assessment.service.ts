@@ -410,6 +410,39 @@ export class AssessmentService {
       });
     }
 
+    // Upsert StudentTopicMastery for each topic — powers deterministic weak-topic detection
+    for (const [topicName, stats] of Object.entries(topicStats)) {
+      const accuracy = stats.totalPossible > 0 ? (stats.obtained / stats.totalPossible) * 100 : 0;
+      const masteryScore = Math.min(100, Math.round(accuracy));
+
+      await db.studentTopicMastery.upsert({
+        where: {
+          studentId_topic: {
+            studentId: attempt.studentId,
+            topic: topicName,
+          },
+        },
+        update: {
+          assessmentCount: { increment: 1 },
+          totalAttempts: { increment: stats.count },
+          correctAnswers: { increment: Math.round(stats.obtained / (stats.totalPossible / stats.count || 1)) },
+          accuracy: parseFloat(accuracy.toFixed(2)),
+          masteryScore: parseFloat(masteryScore.toFixed(2)),
+          lastPracticedAt: new Date(),
+        },
+        create: {
+          studentId: attempt.studentId,
+          topic: topicName,
+          assessmentCount: 1,
+          totalAttempts: stats.count,
+          correctAnswers: Math.round(stats.obtained),
+          accuracy: parseFloat(accuracy.toFixed(2)),
+          masteryScore: parseFloat(masteryScore.toFixed(2)),
+          lastPracticedAt: new Date(),
+        },
+      });
+    }
+
     return {
       success: true,
       attemptId: evaluatedAttempt.id,

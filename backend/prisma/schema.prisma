@@ -117,16 +117,16 @@ model Teacher {
 }
 
 model Student {
-  id                    String              @id @default(uuid())
-  userId                String              @unique
-  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  studentRegistrationNo String              @unique
+  id                    String                 @id @default(uuid())
+  userId                String                 @unique
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studentRegistrationNo String                 @unique
   gradeLevel            String?
-  totalXp               Int                 @default(0)
-  coins                 Int                 @default(0)
-  currentStreak         Int                 @default(0)
-  maxStreak             Int                 @default(0)
-  createdAt             DateTime            @default(now())
+  totalXp               Int                    @default(0)
+  coins                 Int                    @default(0)
+  currentStreak         Int                    @default(0)
+  maxStreak             Int                    @default(0)
+  createdAt             DateTime               @default(now())
   answers               Answer[]
   attempts              AssessmentAttempt[]
   workbookUploads       WorkbookUpload[]
@@ -134,8 +134,27 @@ model Student {
   xpTransactions        XpTransaction[]
   unlockedBadges        StudentBadge[]
   leaderboardEntries    LeaderboardEntry[]
+  topicMasteries        StudentTopicMastery[]
 
   @@map("students")
+}
+
+model StudentTopicMastery {
+  id                 String   @id @default(uuid())
+  studentId          String
+  student            Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topic              String
+  assessmentCount    Int      @default(0)
+  totalAttempts      Int      @default(0)
+  correctAnswers     Int      @default(0)
+  accuracy           Float    @default(0)
+  averageTimeSeconds Float    @default(0)
+  masteryScore       Float    @default(0)
+  lastPracticedAt    DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([studentId, topic])
+  @@map("student_topic_mastery")
 }
 
 model Assessment {

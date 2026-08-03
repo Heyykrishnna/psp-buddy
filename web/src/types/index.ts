@@ -229,6 +229,64 @@ export interface NotificationDTO {
   createdAt: string;
 }
 
+// Analytics Engine DTOs
+export interface StudentTopicMasteryDTO {
+  topic: string;
+  masteryScore: number;
+  accuracy: number;
+  totalAttempts: number;
+  correctAnswers: number;
+  assessmentCount: number;
+  lastPracticedAt: string;
+  status: 'Mastered' | 'Proficient' | 'Needs Improvement';
+  isWeak: boolean;
+}
+
+export interface StudentOverviewDTO {
+  studentId: string;
+  totalXp: number;
+  currentStreak: number;
+  maxStreak: number;
+  gradeLevel?: string;
+  totalAssessmentsAttempted: number;
+  averageScorePercentage: number;
+  weakTopicsCount: number;
+  masteredTopicsCount: number;
+  totalTopicsTracked: number;
+}
+
+export interface StudentPerformanceDTO {
+  attemptId: string;
+  assessmentTitle: string;
+  className?: string;
+  topic?: string;
+  assessmentType: string;
+  totalScore: number;
+  maxScore: number;
+  percentage: number;
+  submittedAt: string;
+  startedAt: string;
+}
+
+export interface ClassTopicDTO {
+  topic: string;
+  studentsTracked: number;
+  averageMastery: number;
+  weakStudentsCount: number;
+  masteredStudentsCount: number;
+}
+
+export interface ClassStudentRankingDTO {
+  rank: number;
+  studentId: string;
+  name: string;
+  email: string;
+  totalXp: number;
+  averageScore: number;
+  assessmentsAttempted: number;
+  weakTopics: { topic: string; masteryScore: number }[];
+}
+
 // Realtime WebSocket Synchronization Events
 export enum SyncEventType {
   XP_UPDATED = 'XP_UPDATED',

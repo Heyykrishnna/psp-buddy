@@ -5,6 +5,8 @@ import { AssessmentController } from './assessment/assessment.controller';
 import { AssessmentService } from './assessment/assessment.service';
 import { LeaderboardController } from './leaderboard/leaderboard.controller';
 import { LeaderboardService } from './leaderboard/leaderboard.service';
+import { AnalyticsController } from './analytics/analytics.controller';
+import { AnalyticsService } from './analytics/analytics.service';
 import { SyncGateway } from './gateway/sync.gateway';
 
 @Module({
@@ -17,7 +19,8 @@ import { SyncGateway } from './gateway/sync.gateway';
     ]),
     AuthModule,
   ],
-  controllers: [AssessmentController, LeaderboardController],
-  providers: [SyncGateway, AssessmentService, LeaderboardService],
+  controllers: [AssessmentController, LeaderboardController, AnalyticsController],
+  providers: [SyncGateway, AssessmentService, LeaderboardService, AnalyticsService],
 })
 export class AppModule {}
+

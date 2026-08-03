@@ -1,26 +1,26 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { UserRole } from '@/types';
+import React, { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { UserRole } from "@/types";
 
 export default function AuthPage() {
   const { login, loginWithGoogle, register, loginAsDemo } = useAuth();
 
   const [isSignUp, setIsSignUp] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<UserRole>('STUDENT');
+  const [selectedRole, setSelectedRole] = useState<UserRole>("STUDENT");
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
 
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
@@ -30,20 +30,24 @@ export default function AuthPage() {
         await login(email, password);
       }
     } catch (err: any) {
-      setError(err.message || 'Authentication failed');
+      setError(err.message || "Authentication failed");
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    setError('');
+    setError("");
     setLoading(true);
     try {
       const devGoogleIdToken = `google_token_${Date.now()}`;
-      await loginWithGoogle(devGoogleIdToken, firstName || 'GoogleUser', lastName || 'PSP');
+      await loginWithGoogle(
+        devGoogleIdToken,
+        firstName || "GoogleUser",
+        lastName || "PSP",
+      );
     } catch (err: any) {
-      setError(err.message || 'Google sign-in failed');
+      setError(err.message || "Google sign-in failed");
     } finally {
       setLoading(false);
     }
@@ -51,42 +55,36 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen w-full bg-white text-[#111111] grid grid-cols-1 lg:grid-cols-12 selection:bg-[#111111] selection:text-white font-sans">
-      
       {/* Left Column: Minimal Form Area (7 Columns) */}
       <div className="lg:col-span-7 flex flex-col justify-between p-6 sm:p-12 lg:p-16 max-w-2xl mx-auto w-full">
-        
         {/* Top Brand Header */}
         <div className="flex items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-2.5">
             <span className="text-xl">✳</span>
-            <span className="font-semibold text-lg tracking-tight text-[#111111]">PSP Lumora</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span className="text-xs text-zinc-500 font-mono">PORT 4000 SYNCED</span>
+            <span className="font-semibold text-lg tracking-tight text-[#111111]">
+              PSP Lumora
+            </span>
           </div>
         </div>
 
         {/* Form Body */}
         <div className="my-auto py-6">
-          
           {/* Editorial Serif Header matching reference image */}
           <h1 className="font-serif text-4xl sm:text-5xl font-normal tracking-tight text-[#111111] mb-2">
-            {isSignUp ? 'Create an Account' : 'Welcome Back !'}
+            {isSignUp ? "Create an Account" : "Welcome Back !"}
           </h1>
-          
+
           <p className="text-xs text-zinc-500 mb-8">
-            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+            {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
             <button
               type="button"
               onClick={() => {
                 setIsSignUp(!isSignUp);
-                setError('');
+                setError("");
               }}
               className="text-[#111111] font-semibold underline underline-offset-4 hover:opacity-75 transition-opacity ml-1"
             >
-              {isSignUp ? 'Sign In' : 'Sign Up'}
+              {isSignUp ? "Sign In" : "Sign Up"}
             </button>
           </p>
 
@@ -98,7 +96,6 @@ export default function AuthPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            
             {isSignUp && (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -136,20 +133,22 @@ export default function AuthPage() {
                     Account Role
                   </label>
                   <div className="grid grid-cols-3 gap-2">
-                    {(['STUDENT', 'TEACHER', 'ADMIN'] as UserRole[]).map((r) => (
-                      <button
-                        key={r}
-                        type="button"
-                        onClick={() => setSelectedRole(r)}
-                        className={`py-2 px-3 text-xs font-medium rounded-md transition-all border ${
-                          selectedRole === r
-                            ? 'bg-[#111111] text-white border-[#111111]'
-                            : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400'
-                        }`}
-                      >
-                        {r}
-                      </button>
-                    ))}
+                    {(["STUDENT", "TEACHER", "ADMIN"] as UserRole[]).map(
+                      (r) => (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => setSelectedRole(r)}
+                          className={`py-2 px-3 text-xs font-medium rounded-md transition-all border ${
+                            selectedRole === r
+                              ? "bg-[#111111] text-white border-[#111111]"
+                              : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400"
+                          }`}
+                        >
+                          {r}
+                        </button>
+                      ),
+                    )}
                   </div>
                 </div>
               </>
@@ -190,7 +189,11 @@ export default function AuthPage() {
                 disabled={loading}
                 className="w-full py-3.5 px-6 bg-[#111111] hover:bg-black text-white text-sm font-medium rounded-md transition-all disabled:opacity-50 cursor-pointer shadow-sm"
               >
-                {loading ? 'Processing...' : isSignUp ? 'Create Account' : 'Login'}
+                {loading
+                  ? "Processing..."
+                  : isSignUp
+                    ? "Create Account"
+                    : "Login"}
               </button>
             </div>
           </form>
@@ -244,60 +247,67 @@ export default function AuthPage() {
 
           {/* Quick Demo Roles Bar */}
           <div className="mt-8 pt-6 border-t border-zinc-100 flex items-center justify-between gap-2">
-            <span className="text-[11px] text-zinc-400 font-mono">QUICK DEMO:</span>
+            <span className="text-[11px] text-zinc-400 font-mono">
+              QUICK DEMO:
+            </span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => loginAsDemo('STUDENT')}
+                onClick={() => loginAsDemo("STUDENT")}
                 className="px-2.5 py-1 text-[11px] bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-medium rounded transition-colors"
               >
                 Student
               </button>
               <button
                 type="button"
-                onClick={() => loginAsDemo('TEACHER')}
+                onClick={() => loginAsDemo("TEACHER")}
                 className="px-2.5 py-1 text-[11px] bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-medium rounded transition-colors"
               >
                 Teacher
               </button>
               <button
                 type="button"
-                onClick={() => loginAsDemo('ADMIN')}
+                onClick={() => loginAsDemo("ADMIN")}
                 className="px-2.5 py-1 text-[11px] bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-medium rounded transition-colors"
               >
                 Admin
               </button>
             </div>
           </div>
-
         </div>
 
         {/* Bottom Footer */}
         <div className="text-[11px] text-zinc-400 flex items-center justify-between pt-6">
           <span>© 2026 PSP Lumora. All rights reserved.</span>
           <div className="flex items-center gap-4">
-            <a href="#" className="hover:text-zinc-700">Privacy Policy</a>
-            <a href="#" className="hover:text-zinc-700">Terms of Service</a>
+            <a href="#" className="hover:text-zinc-700">
+              Privacy Policy
+            </a>
+            <a href="#" className="hover:text-zinc-700">
+              Terms of Service
+            </a>
           </div>
         </div>
-
       </div>
 
       {/* Right Column: High-Contrast Editorial Image Panel (5 Columns) */}
       <div className="hidden lg:flex lg:col-span-5 bg-[#111111] text-white p-12 flex-col justify-between relative overflow-hidden">
-        
         {/* Subtle background grid pattern */}
-        <div 
-          className="absolute inset-0 opacity-10 pointer-events-none" 
-          style={{ 
-            backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', 
-            backgroundSize: '24px 24px' 
-          }} 
+        <div
+          className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{
+            backgroundImage: "radial-gradient(#ffffff 1px, transparent 1px)",
+            backgroundSize: "24px 24px",
+          }}
         />
 
         <div className="relative z-10 flex items-center justify-between">
-          <span className="text-xs font-mono text-zinc-400 uppercase tracking-widest">EDITORIAL EDITION</span>
-          <span className="px-2.5 py-1 rounded bg-zinc-800 text-[10px] font-mono text-zinc-300">v0.1.0</span>
+          <span className="text-xs font-mono text-zinc-400 uppercase tracking-widest">
+            EDITORIAL EDITION
+          </span>
+          <span className="px-2.5 py-1 rounded bg-zinc-800 text-[10px] font-mono text-zinc-300">
+            v0.1.0
+          </span>
         </div>
 
         <div className="relative z-10 max-w-md my-auto space-y-6">
@@ -305,15 +315,24 @@ export default function AuthPage() {
             Good things are on the way.
           </h2>
           <p className="text-sm text-zinc-400 leading-relaxed font-sans">
-            We are building a synchronized, minimal learning & assessment platform for modern students, teachers, and admins.
+            We are building a synchronized, minimal learning & assessment
+            platform for modern students, teachers, and admins.
           </p>
           <div className="pt-4 flex items-center gap-3">
             <div className="flex -space-x-2">
-              <div className="w-8 h-8 rounded-full bg-zinc-700 border-2 border-[#111111] flex items-center justify-center text-[10px] font-bold">A</div>
-              <div className="w-8 h-8 rounded-full bg-zinc-600 border-2 border-[#111111] flex items-center justify-center text-[10px] font-bold">H</div>
-              <div className="w-8 h-8 rounded-full bg-zinc-500 border-2 border-[#111111] flex items-center justify-center text-[10px] font-bold">M</div>
+              <div className="w-8 h-8 rounded-full bg-zinc-700 border-2 border-[#111111] flex items-center justify-center text-[10px] font-bold">
+                A
+              </div>
+              <div className="w-8 h-8 rounded-full bg-zinc-600 border-2 border-[#111111] flex items-center justify-center text-[10px] font-bold">
+                H
+              </div>
+              <div className="w-8 h-8 rounded-full bg-zinc-500 border-2 border-[#111111] flex items-center justify-center text-[10px] font-bold">
+                M
+              </div>
             </div>
-            <span className="text-xs text-zinc-400 font-mono">Join 1,200+ synchronized learners</span>
+            <span className="text-xs text-zinc-400 font-mono">
+              Join 1,200+ synchronized learners
+            </span>
           </div>
         </div>
 
@@ -321,9 +340,7 @@ export default function AuthPage() {
           <span>PSP LUMORA ENGINE</span>
           <span>NESTJS + PRISMA</span>
         </div>
-
       </div>
-
     </div>
   );
 }
