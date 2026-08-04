@@ -908,6 +908,38 @@ export class AssessmentService {
       };
     });
 
+    // Query workbook uploads for this assessment
+    const rawWorkbooks = await db.workbookUpload.findMany({
+      where: { assessmentId },
+      include: {
+        student: {
+          include: {
+            user: {
+              select: { firstName: true, lastName: true, email: true, avatarUrl: true, studentRegistrationNo: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const workbookSubmissions = rawWorkbooks.map((wb: any) => ({
+      id: wb.id,
+      studentId: wb.studentId,
+      studentName: wb.student?.user
+        ? `${wb.student.user.firstName} ${wb.student.user.lastName}`.trim()
+        : wb.student?.studentRegistrationNo || 'Student',
+      email: wb.student?.user?.email || 'student@psplumora.edu',
+      avatarUrl: wb.student?.user?.avatarUrl || null,
+      fileName: wb.fileName,
+      fileUrl: wb.fileUrl,
+      status: wb.status,
+      obtainedMarks: wb.obtainedMarks,
+      maxMarks: assessment.totalMarks,
+      feedback: wb.aiFeedback || wb.feedback,
+      submittedAt: wb.createdAt ? wb.createdAt.toISOString() : new Date().toISOString(),
+    }));
+
     return {
       assessmentId: assessment.id,
       assessmentTitle: assessment.title,
@@ -917,6 +949,8 @@ export class AssessmentService {
       totalMarks: assessment.totalMarks,
       passingMarks: assessment.passingMarks,
       durationMinutes: assessment.durationMinutes,
+      isWorkbook: assessment.isWorkbook || Boolean(assessment.workbookUrl),
+      workbookUrl: assessment.workbookUrl,
       totalAttempts,
       avgScore,
       passCount,
@@ -925,6 +959,7 @@ export class AssessmentService {
       lowestScore,
       questionAnalysis,
       studentResults,
+      workbookSubmissions,
     };
   }
 
