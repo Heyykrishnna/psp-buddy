@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { db } from '@/database';
 import { SyncGateway } from '../gateway/sync.gateway';
 import { AiService } from '../ai/ai.service';
@@ -47,6 +47,8 @@ export interface AutosaveAnswerDto {
 
 @Injectable()
 export class AssessmentService {
+  private readonly logger = new Logger(AssessmentService.name);
+
   constructor(
     private syncGateway: SyncGateway,
     private aiService: AiService,
@@ -173,22 +175,37 @@ export class AssessmentService {
       data: { isPublished: true },
     });
 
-    // Create system notification for students
-    await db.notification.create({
-      data: {
-        userId: 'all-students',
-        title: `New Assessment Published: ${published.title}`,
-        message: `Your teacher published a new ${published.assessmentType} in ${published.className || 'your class'}. Duration: ${published.durationMinutes} mins.`,
-        type: 'ASSESSMENT',
-        actionUrl: `/student/assessments/${published.id}`,
-      },
-    });
+    // Create system notification for all student users
+    try {
+      const studentUsers = await db.user.findMany({
+        where: { role: 'STUDENT' },
+        select: { id: true },
+      });
+
+      if (studentUsers.length > 0) {
+        await db.notification.createMany({
+          data: studentUsers.map((student: { id: string }) => ({
+            userId: student.id,
+            title: `New Assessment Published: ${published.title}`,
+            message: `Your teacher published a new ${published.assessmentType} in ${published.className || 'your class'}. Duration: ${published.durationMinutes} mins.`,
+            type: 'ASSESSMENT',
+            actionUrl: `/student/assessments/${published.id}`,
+          })),
+        });
+      }
+    } catch (err: any) {
+      this.logger.error(`Failed to create notifications for published assessment ${id}: ${err?.message || err}`);
+    }
 
     // Broadcast sync event to all web/mobile clients
-    this.syncGateway.broadcastSyncEvent(SyncEventType.NOTIFICATION_RECEIVED, 'all-students', {
-      assessmentId: published.id,
-      title: published.title,
-    });
+    try {
+      this.syncGateway.broadcastSyncEvent(SyncEventType.NOTIFICATION_RECEIVED, 'all-students', {
+        assessmentId: published.id,
+        title: published.title,
+      });
+    } catch (syncErr: any) {
+      this.logger.error(`Failed to broadcast sync event for assessment ${id}: ${syncErr?.message || syncErr}`);
+    }
 
     return published;
   }
@@ -328,7 +345,7 @@ export class AssessmentService {
       let topicAnalysisReport = [];
       try {
         topicAnalysisReport = attempt.topicAnalysis ? JSON.parse(attempt.topicAnalysis) : [];
-      } catch {}
+      } catch { }
       return {
         success: true,
         attemptId: attempt.id,

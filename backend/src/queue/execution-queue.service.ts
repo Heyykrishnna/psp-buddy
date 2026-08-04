@@ -32,13 +32,21 @@ export class ExecutionQueueService implements OnModuleInit, OnModuleDestroy {
     try {
       const redisUrl = process.env.REDIS_URL;
       const connection = redisUrl
-        ? new IORedis(redisUrl, { maxRetriesPerRequest: null })
+        ? new IORedis(redisUrl, {
+            maxRetriesPerRequest: null,
+            retryStrategy: () => 3000,
+          })
         : new IORedis({
             host: process.env.REDIS_HOST || 'localhost',
             port: Number(process.env.REDIS_PORT || 6379),
             password: process.env.REDIS_PASSWORD || undefined,
             maxRetriesPerRequest: null,
+            retryStrategy: () => 3000,
           });
+
+      connection.on('error', (err) => {
+        this.logger.debug(`Redis connection note: ${err.message}`);
+      });
 
       this.redisConnection = connection;
 
