@@ -335,7 +335,7 @@ export function DashboardScreen({
             </TouchableOpacity>
           </View>
 
-          {assessments.map((asm) => (
+          {assessments.slice(0, 3).map((asm) => (
             <TouchableOpacity
               key={asm.id}
               style={styles.asmCard}

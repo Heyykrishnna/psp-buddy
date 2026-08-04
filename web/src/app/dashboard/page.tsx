@@ -293,7 +293,7 @@ export default function DashboardPage() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {assessments.slice(0, 4).map((asm) => (
+                      {assessments.slice(0, 3).map((asm) => (
                         <div
                           key={asm.id}
                           className="flex items-center justify-between p-4 bg-zinc-50 rounded-xl border border-zinc-200 hover:border-zinc-300 transition-all group"
