@@ -18,9 +18,9 @@ export class ExecutionQueueService implements OnModuleInit, OnModuleDestroy {
   readonly isQueueEnabled: boolean;
 
   constructor(private readonly judgeProvider: JudgeProvider) {
-    this.isQueueEnabled = Boolean(
-      process.env.REDIS_URL || (process.env.REDIS_HOST && process.env.REDIS_PORT),
-    );
+    const hasRedisUrl = Boolean(process.env.REDIS_URL && process.env.REDIS_URL.trim() !== '');
+    const isExplicit = process.env.ENABLE_REDIS === 'true' || process.env.USE_REDIS === 'true';
+    this.isQueueEnabled = hasRedisUrl || isExplicit;
   }
 
   async onModuleInit() {
@@ -31,17 +31,25 @@ export class ExecutionQueueService implements OnModuleInit, OnModuleDestroy {
 
     try {
       const redisUrl = process.env.REDIS_URL;
+      const retryStrategy = (times: number) => {
+        if (times > 3) {
+          this.logger.warn('Redis reconnection limit reached. Falling back to direct mode.');
+          return null; // stop retrying
+        }
+        return 2000;
+      };
+
       const connection = redisUrl
         ? new IORedis(redisUrl, {
             maxRetriesPerRequest: null,
-            retryStrategy: () => 3000,
+            retryStrategy,
           })
         : new IORedis({
             host: process.env.REDIS_HOST || 'localhost',
             port: Number(process.env.REDIS_PORT || 6379),
             password: process.env.REDIS_PASSWORD || undefined,
             maxRetriesPerRequest: null,
-            retryStrategy: () => 3000,
+            retryStrategy,
           });
 
       connection.on('error', (err) => {
