@@ -9,6 +9,16 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 let accessTokenMemory: string | null = null;
 let refreshTokenMemory: string | null = null;
 
+// In-memory GET request cache & in-flight request deduplicator
+const getCache = new Map<string, { data: any; timestamp: number }>();
+const inFlightRequests = new Map<string, Promise<any>>();
+const CACHE_TTL_MS = 2500;
+
+export const clearApiCache = () => {
+  getCache.clear();
+  inFlightRequests.clear();
+};
+
 export const setAccessToken = (token: string | null) => {
   accessTokenMemory = token;
   if (typeof window !== 'undefined') {
@@ -59,64 +69,108 @@ export async function apiFetch<T = any>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
+  const method = (options.method || 'GET').toUpperCase();
   const token = getAccessToken();
+  const cacheKey = `${method}:${endpoint}:${token || 'anon'}`;
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string>),
-  };
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  // Serve from cache if GET request is recent (within 2.5s)
+  if (method === 'GET') {
+    const cached = getCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      return cached.data as T;
+    }
+    // Return existing in-flight request if duplicate GET call is fired simultaneously
+    if (inFlightRequests.has(cacheKey)) {
+      return inFlightRequests.get(cacheKey) as Promise<T>;
+    }
+  } else {
+    // Clear cache on mutations (POST, PUT, PATCH, DELETE)
+    getCache.clear();
   }
 
-  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+  const fetchPromise = (async (): Promise<T> => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers as Record<string, string>),
+    };
 
-  let response = await fetch(url, {
-    ...options,
-    headers,
-  });
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
 
-  // Handle Token Refresh on 401
-  if (response.status === 401 && !endpoint.includes('/auth/refresh') && !endpoint.includes('/auth/login')) {
-    const refreshToken = getRefreshToken();
-    if (refreshToken) {
-      try {
-        const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken }),
-        });
+    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
 
-        if (refreshRes.ok) {
-          const refreshData = await refreshRes.json();
-          const newAccessToken = refreshData.tokens?.accessToken || refreshData.accessToken;
-          const newRefreshToken = refreshData.tokens?.refreshToken || refreshData.refreshToken;
+    let response = await fetch(url, {
+      ...options,
+      headers,
+    });
 
-          if (newAccessToken) setAccessToken(newAccessToken);
-          if (newRefreshToken) setRefreshToken(newRefreshToken);
+    // Automatic retry on 429 Too Many Requests (up to 2 retries with backoff)
+    let retries = 0;
+    while (response.status === 429 && retries < 2) {
+      retries++;
+      await new Promise((r) => setTimeout(r, 600 * retries));
+      response = await fetch(url, {
+        ...options,
+        headers,
+      });
+    }
 
-          // Retry original request
-          headers['Authorization'] = `Bearer ${newAccessToken}`;
-          response = await fetch(url, {
-            ...options,
-            headers,
+    // Handle Token Refresh on 401
+    if (response.status === 401 && !endpoint.includes('/auth/refresh') && !endpoint.includes('/auth/login')) {
+      const refreshToken = getRefreshToken();
+      if (refreshToken) {
+        try {
+          const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken }),
           });
-        } else {
+
+          if (refreshRes.ok) {
+            const refreshData = await refreshRes.json();
+            const newAccessToken = refreshData.tokens?.accessToken || refreshData.accessToken;
+            const newRefreshToken = refreshData.tokens?.refreshToken || refreshData.refreshToken;
+
+            if (newAccessToken) setAccessToken(newAccessToken);
+            if (newRefreshToken) setRefreshToken(newRefreshToken);
+
+            headers['Authorization'] = `Bearer ${newAccessToken}`;
+            response = await fetch(url, {
+              ...options,
+              headers,
+            });
+          } else {
+            setAccessToken(null);
+            setRefreshToken(null);
+          }
+        } catch {
           setAccessToken(null);
           setRefreshToken(null);
         }
-      } catch {
-        setAccessToken(null);
-        setRefreshToken(null);
       }
     }
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({ message: 'API request failed' }));
+      throw new Error(errorBody.message || `Request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (method === 'GET') {
+      getCache.set(cacheKey, { data, timestamp: Date.now() });
+    }
+
+    return data;
+  })();
+
+  if (method === 'GET') {
+    inFlightRequests.set(cacheKey, fetchPromise);
+    fetchPromise.finally(() => {
+      inFlightRequests.delete(cacheKey);
+    });
   }
 
-  if (!response.ok) {
-    const errorBody = await response.json().catch(() => ({ message: 'API request failed' }));
-    throw new Error(errorBody.message || `Request failed with status ${response.status}`);
-  }
-
-  return response.json();
+  return fetchPromise;
 }

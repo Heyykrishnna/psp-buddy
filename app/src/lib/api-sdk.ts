@@ -49,6 +49,11 @@ export class PSPBuddyApiClient {
       (res) => res,
       async (error) => {
         const originalRequest = error.config;
+        if (error.response?.status === 429 && (!originalRequest._retryCount || originalRequest._retryCount < 2)) {
+          originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+          await new Promise((r) => setTimeout(r, 600 * originalRequest._retryCount));
+          return this.http(originalRequest);
+        }
         if (error.response?.status === 401 && !originalRequest._retry && config.getRefreshToken && config.setTokens) {
           originalRequest._retry = true;
           try {

@@ -17,9 +17,9 @@ import { SyncGateway } from './gateway/sync.gateway';
 @Module({
   imports: [
     ThrottlerModule.forRoot([
-      { name: 'default', ttl: 60_000, limit: 100 },
-      { name: 'run',     ttl: 60_000, limit: 20 },
-      { name: 'submit',  ttl: 60_000, limit: 10 },
+      { name: 'default', ttl: 60_000, limit: 1000 },
+      { name: 'run', ttl: 60_000, limit: 100 },
+      { name: 'submit', ttl: 60_000, limit: 60 },
     ]),
     AuthModule,
     AiModule,
@@ -36,4 +36,4 @@ import { SyncGateway } from './gateway/sync.gateway';
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
-export class AppModule {}
+export class AppModule { }

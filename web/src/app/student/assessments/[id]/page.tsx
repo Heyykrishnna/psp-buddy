@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect, useRef, use } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/context/AuthContext";
@@ -318,8 +318,11 @@ export default function StudentAssessmentRunnerPage({
     }
   };
 
-  // Save Answer & sync with backend
-  const handleAnswerSelect = async (
+  // Debounced autosave ref for answer sync
+  const autosaveTimersRef = useRef<Record<string, NodeJS.Timeout>>({});
+
+  // Save Answer & sync with backend (debounced to avoid request flooding)
+  const handleAnswerSelect = (
     qId: string,
     answer: { optionId?: string; textAnswer?: string; booleanAnswer?: boolean },
   ) => {
@@ -328,20 +331,26 @@ export default function StudentAssessmentRunnerPage({
       [qId]: answer,
     }));
 
+    if (autosaveTimersRef.current[qId]) {
+      clearTimeout(autosaveTimersRef.current[qId]);
+    }
+
     if (attemptId && !attemptId.startsWith("attempt-")) {
-      try {
-        await apiFetch(`/attempts/${attemptId}/answers`, {
-          method: "PATCH",
-          body: JSON.stringify({
-            questionId: qId,
-            selectedOptionId: answer.optionId,
-            textAnswer: answer.textAnswer,
-            booleanAnswer: answer.booleanAnswer,
-          }),
-        });
-      } catch (err) {
-        console.warn("Autosave warning:", err);
-      }
+      autosaveTimersRef.current[qId] = setTimeout(async () => {
+        try {
+          await apiFetch(`/attempts/${attemptId}/answers`, {
+            method: "PATCH",
+            body: JSON.stringify({
+              questionId: qId,
+              selectedOptionId: answer.optionId,
+              textAnswer: answer.textAnswer,
+              booleanAnswer: answer.booleanAnswer,
+            }),
+          });
+        } catch (err) {
+          console.warn("Autosave warning:", err);
+        }
+      }, 500);
     }
   };
 
