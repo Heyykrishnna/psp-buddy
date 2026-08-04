@@ -31,7 +31,9 @@ export function StudentLayout({ children }: { children: React.ReactNode }) {
       <aside className="fixed top-0 left-0 h-screen w-14 bg-white border-r border-zinc-200 flex flex-col items-center py-4 z-30 shadow-sm">
         {/* Logo Mark */}
         <div className="w-8 h-8 bg-[#111111] rounded-lg flex items-center justify-center mb-6 shrink-0">
-          <span className="text-white font-bold text-[11px] tracking-tight">PS</span>
+          <span className="text-white font-bold text-[11px] tracking-tight">
+            PS
+          </span>
         </div>
 
         {/* Nav Icons */}
@@ -51,7 +53,7 @@ export function StudentLayout({ children }: { children: React.ReactNode }) {
                     : "text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
                 }`}
               >
-                <item.icon className="w-[18px] h-[18px]" />
+                <item.icon className="w-4.5 h-4.5" />
               </button>
             );
           })}
@@ -63,7 +65,7 @@ export function StudentLayout({ children }: { children: React.ReactNode }) {
           title="Sign Out"
           className="w-10 h-10 rounded-xl flex items-center justify-center text-zinc-400 hover:bg-zinc-100 hover:text-red-500 transition-all cursor-pointer shrink-0"
         >
-          <LogOut className="w-[18px] h-[18px]" />
+          <LogOut className="w-4.5 h-4.5" />
         </button>
       </aside>
 
