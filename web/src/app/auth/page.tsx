@@ -265,10 +265,20 @@ export default function AuthPage() {
         <div className="text-[11px] text-zinc-400 flex items-center justify-between pt-6">
           <span>© 2026 PSP Lumora. All rights reserved.</span>
           <div className="flex items-center gap-4">
-            <a href="#" className="hover:text-zinc-700">
+            <a
+              href="https://www.dradix.dev/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-zinc-700"
+            >
               Privacy Policy
             </a>
-            <a href="#" className="hover:text-zinc-700">
+            <a
+              href="https://www.dradix.dev/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-zinc-700"
+            >
               Terms of Service
             </a>
           </div>

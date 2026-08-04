@@ -11,6 +11,7 @@ import {
   Platform,
   Animated,
   Image,
+  Linking,
 } from "react-native";
 import { Loader } from "../components/Loader";
 import { useAuth } from "../context/AuthContext";
@@ -291,7 +292,24 @@ export function AuthScreen() {
             <View style={styles.termsFooter}>
               <Text style={styles.termsText}>
                 By registering your email, you agree to{"\n"}our{" "}
-                <Text style={styles.termsLink}>Terms & Conditions</Text>.
+                <Text
+                  style={styles.termsLink}
+                  onPress={() =>
+                    Linking.openURL("https://www.dradix.dev/terms")
+                  }
+                >
+                  Terms & Conditions
+                </Text>{" "}
+                and{" "}
+                <Text
+                  style={styles.termsLink}
+                  onPress={() =>
+                    Linking.openURL("https://www.dradix.dev/privacy")
+                  }
+                >
+                  Privacy Policy
+                </Text>
+                .
               </Text>
             </View>
           </View>
