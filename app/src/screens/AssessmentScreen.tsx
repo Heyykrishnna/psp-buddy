@@ -6,13 +6,13 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  ActivityIndicator,
   TextInput,
   Platform,
   Animated,
   Modal,
   Image,
 } from "react-native";
+import { Loader } from "../components/Loader";
 import { useAuth } from "../context/AuthContext";
 import { AssessmentDTO, QuestionDTO, SyncEventType } from "../types";
 import { Ionicons, Feather } from "@expo/vector-icons";
@@ -570,7 +570,7 @@ export function AssessmentScreen({
           {/* Assessments Grid */}
           {loading ? (
             <View style={styles.centerContainer}>
-              <ActivityIndicator size="large" color="#5451FF" />
+              <Loader size="large" color="#5451FF" />
             </View>
           ) : filteredAssessments.length === 0 ? (
             <View style={styles.emptyContainer}>
@@ -939,7 +939,7 @@ export function AssessmentScreen({
                   activeOpacity={0.85}
                 >
                   {uploadingWorkbook ? (
-                    <ActivityIndicator color="#ffffff" />
+                    <Loader size="small" color="#ffffff" />
                   ) : (
                     <>
                       <Ionicons
@@ -1603,7 +1603,7 @@ export function AssessmentScreen({
                 disabled={submitting}
               >
                 {submitting ? (
-                  <ActivityIndicator color="#ffffff" />
+                  <Loader size="small" color="#ffffff" />
                 ) : (
                   <View
                     style={{

@@ -7,12 +7,12 @@ import {
   TextInput,
   ScrollView,
   SafeAreaView,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Animated,
   Image,
 } from "react-native";
+import { Loader } from "../components/Loader";
 import { useAuth } from "../context/AuthContext";
 
 export function AuthScreen() {
@@ -255,7 +255,7 @@ export function AuthScreen() {
                 activeOpacity={0.85}
               >
                 {loading ? (
-                  <ActivityIndicator color="#ffffff" />
+                  <Loader size="small" color="#ffffff" />
                 ) : (
                   <Text style={styles.primaryPillBtnText}>
                     {isSignUp ? "Sign Up" : "Sign In"}

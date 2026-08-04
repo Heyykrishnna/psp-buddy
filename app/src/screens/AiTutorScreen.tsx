@@ -7,9 +7,9 @@ import {
   ScrollView,
   TextInput,
   SafeAreaView,
-  ActivityIndicator,
   Platform,
 } from "react-native";
+import { Loader } from "../components/Loader";
 import { useAuth } from "../context/AuthContext";
 
 interface AiTutorScreenProps {
@@ -181,7 +181,7 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
       >
         {loadingHistory ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color="#5451FF" />
+            <Loader size="small" color="#5451FF" />
             <Text style={styles.loadingText}>SYNCING CHAT HISTORY...</Text>
           </View>
         ) : (
@@ -223,7 +223,7 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
 
         {loading && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color="#5451FF" />
+            <Loader size="small" color="#5451FF" />
             <Text style={styles.loadingText}>AI TUTOR IS THINKING...</Text>
           </View>
         )}

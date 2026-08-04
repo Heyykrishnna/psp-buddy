@@ -6,10 +6,10 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  ActivityIndicator,
   Platform,
   Image,
 } from "react-native";
+import { Loader } from "../components/Loader";
 import { Ionicons, Feather, FontAwesome5 } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
 import { SlidingSegmentedControl } from "../components/SlidingSegmentedControl";
@@ -113,7 +113,7 @@ export function LeaderboardScreen({
 
         {loading ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator size="large" color="#5451FF" />
+            <Loader size="large" color="#5451FF" />
             <Text style={styles.loadingLabel}>FETCHING RANKINGS...</Text>
           </View>
         ) : (

@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  ActivityIndicator,
   Platform,
   Animated,
   Easing,
   Dimensions,
 } from 'react-native';
+import { Loader } from '../components/Loader';
 import { useAuth } from '../context/AuthContext';
 
 const { width } = Dimensions.get('window');
@@ -97,7 +97,7 @@ export function AnalyticsScreen({ onBackToDashboard }: AnalyticsScreenProps) {
 
       {loading ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#5451FF" />
+          <Loader size="large" color="#5451FF" />
           <Text style={styles.loadingText}>LOADING ANALYTICS...</Text>
         </View>
       ) : (

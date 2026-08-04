@@ -10,9 +10,9 @@ import {
   Easing,
   Dimensions,
   Platform,
-  ActivityIndicator,
   Image,
 } from "react-native";
+import { Loader } from "../components/Loader";
 import { useAuth } from "../context/AuthContext";
 import {
   AssessmentDTO,
@@ -213,7 +213,7 @@ export function DashboardScreen({
           { justifyContent: "center", alignItems: "center" },
         ]}
       >
-        <ActivityIndicator size="large" color="#111111" />
+        <Loader size="large" color="#5451FF" />
         <Text
           style={{
             marginTop: 14,

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet, Text, Platform } from 'react-native';
+import { View, StyleSheet, Text, Platform } from 'react-native';
+import { Loader } from './src/components/Loader';
 import { StatusBar } from 'expo-status-bar';
 import {
   useFonts,
@@ -38,7 +39,7 @@ function MainNavigator() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#5451FF" />
+        <Loader size="large" color="#5451FF" />
         <Text style={styles.loadingText}>SYNCHRONIZING PSP LUMORA MOBILE...</Text>
       </View>
     );
@@ -150,7 +151,7 @@ export default function App() {
   if (!fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#5451FF" />
+        <Loader size="large" color="#5451FF" />
         <Text style={styles.loadingText}>LOADING POPPINS FONTS...</Text>
       </View>
     );

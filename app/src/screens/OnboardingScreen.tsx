@@ -7,9 +7,9 @@ import {
   TextInput,
   ScrollView,
   SafeAreaView,
-  ActivityIndicator,
   Platform,
 } from "react-native";
+import { Loader } from "../components/Loader";
 import { useAuth } from "../context/AuthContext";
 
 export function OnboardingScreen() {
@@ -120,7 +120,7 @@ export function OnboardingScreen() {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#ffffff" />
+              <Loader size="small" color="#ffffff" />
             ) : (
               <>
                 <Text style={styles.submitButtonText}>

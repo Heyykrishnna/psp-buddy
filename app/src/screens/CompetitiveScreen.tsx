@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  ActivityIndicator,
 } from 'react-native';
+import { Loader } from '../components/Loader';
 import { useAuth } from '../context/AuthContext';
 
 type Tab = 'overview' | 'leaderboard' | 'contests' | 'achievements';
@@ -104,7 +104,7 @@ export function CompetitiveScreen({ onBackToDashboard }: CompetitiveScreenProps)
 
       {loading ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#0066FF" />
+          <Loader size="large" color="#0066FF" />
         </View>
       ) : (
         <ScrollView style={styles.flex1} contentContainerStyle={styles.contentPadding}>
