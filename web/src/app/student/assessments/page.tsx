@@ -273,6 +273,11 @@ export default function StudentAssessmentsPage() {
                           {asm.topic}
                         </span>
                       )}
+                      {(asm.isWorkbook || Boolean(asm.workbookUrl) || asm.submissionMode === "WORKBOOK_ONLY") && (
+                        <span className="px-2 py-0.5 bg-amber-100 text-amber-900 text-[10px] font-mono font-bold rounded">
+                          WORKBOOK
+                        </span>
+                      )}
                       {completedAttempts[asm.id] && (
                         <span className="px-2 py-0.5 bg-emerald-100 text-emerald-900 text-[10px] font-mono font-bold rounded">
                           ✓ COMPLETED
@@ -334,10 +339,16 @@ export default function StudentAssessmentsPage() {
                         onClick={() =>
                           router.push(`/student/assessments/${asm.id}`)
                         }
-                        className="flex items-center gap-2 px-5 py-2.5 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all shadow-sm cursor-pointer whitespace-nowrap"
+                        className={`flex items-center gap-2 px-5 py-2.5 text-white text-xs font-semibold rounded-md transition-all shadow-sm cursor-pointer whitespace-nowrap ${
+                          asm.isWorkbook || Boolean(asm.workbookUrl) || asm.submissionMode === "WORKBOOK_ONLY"
+                            ? "bg-indigo-600 hover:bg-indigo-700"
+                            : "bg-[#111111] hover:bg-black"
+                        }`}
                       >
                         <RocketIcon className="w-3.5 h-3.5" />
-                        Start Attempt
+                        {asm.isWorkbook || Boolean(asm.workbookUrl) || asm.submissionMode === "WORKBOOK_ONLY"
+                          ? "Submit Workbook"
+                          : "Start Attempt"}
                         <ChevronRightIcon className="w-3.5 h-3.5" />
                       </button>
                     )}

@@ -210,6 +210,16 @@ export function AssessmentScreen({
       return;
     }
 
+    if (
+      asm.isWorkbook ||
+      Boolean(asm.workbookUrl) ||
+      asm.submissionMode === "WORKBOOK_ONLY"
+    ) {
+      setWorkbookModalAsm(asm);
+      setWorkbookResult(null);
+      return;
+    }
+
     if (asm.containsCoding || asm.isWebOnly) {
       setCodingWarningAsm(asm);
       return;
@@ -614,8 +624,9 @@ export function AssessmentScreen({
             <View style={styles.cardsGrid}>
               {filteredAssessments.map((asm) => {
                 const isWorkbookOnly =
-                  asm.submissionMode === "WORKBOOK_ONLY" ||
-                  (asm.isWorkbook && asm.assessmentType === "PRACTICE");
+                  asm.isWorkbook === true ||
+                  Boolean(asm.workbookUrl) ||
+                  asm.submissionMode === "WORKBOOK_ONLY";
                 const isOnlineOnly = asm.submissionMode === "ONLINE_TEST";
 
                 return (
@@ -816,7 +827,7 @@ export function AssessmentScreen({
                               },
                             ]}
                           >
-                            WORKBOOK
+                            {isWorkbookOnly ? "SUBMIT WORKBOOK" : "WORKBOOK"}
                           </Text>
                         </TouchableOpacity>
                       )}

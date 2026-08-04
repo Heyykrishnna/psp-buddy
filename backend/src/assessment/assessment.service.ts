@@ -68,6 +68,8 @@ export class AssessmentService {
         durationMinutes: dto.durationMinutes || 30,
         hasNegativeMarking: dto.hasNegativeMarking || false,
         negativeMarkValue: dto.negativeMarkValue || 0,
+        isWorkbook: dto.isWorkbook !== undefined ? dto.isWorkbook : Boolean(dto.workbookUrl),
+        workbookUrl: dto.workbookUrl || null,
         createdById: dto.createdById || 'teacher-default',
         isPublished: false,
         questions: dto.questions
@@ -161,6 +163,8 @@ export class AssessmentService {
         durationMinutes: updates.durationMinutes,
         hasNegativeMarking: updates.hasNegativeMarking,
         negativeMarkValue: updates.negativeMarkValue,
+        isWorkbook: updates.isWorkbook,
+        workbookUrl: updates.workbookUrl,
       },
     });
   }
@@ -226,6 +230,12 @@ export class AssessmentService {
   async startAttempt(assessmentId: string, studentId: string) {
     const assessment = await db.assessment.findUnique({ where: { id: assessmentId } });
     if (!assessment) throw new NotFoundException('Assessment not found');
+
+    if (assessment.isWorkbook || Boolean(assessment.workbookUrl)) {
+      throw new BadRequestException(
+        'This is a Workbook Assessment. Please upload and submit your solved workbook solution instead of taking an online test.',
+      );
+    }
 
     // Find student
     let student = await db.student.findFirst({

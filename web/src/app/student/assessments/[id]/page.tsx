@@ -130,6 +130,39 @@ export default function StudentAssessmentRunnerPage({
     {},
   );
 
+  // Workbook Upload State
+  const [workbookFileUrl, setWorkbookFileUrl] = useState("");
+  const [uploadingWorkbook, setUploadingWorkbook] = useState(false);
+  const [workbookSuccessMsg, setWorkbookSuccessMsg] = useState("");
+
+  const isWorkbookAssessment =
+    assessment?.isWorkbook ||
+    Boolean(assessment?.workbookUrl) ||
+    assessment?.submissionMode === "WORKBOOK_ONLY";
+
+  const handleUploadWorkbookWeb = async () => {
+    if (!workbookFileUrl.trim()) return;
+    setUploadingWorkbook(true);
+    try {
+      await apiFetch(`/assessments/${assessmentId}/workbook/upload`, {
+        method: "POST",
+        body: JSON.stringify({
+          studentId: user?.id || "demo-student-id",
+          fileUrl: workbookFileUrl.trim(),
+          fileName: "Solved_Workbook_Page.png",
+        }),
+      });
+      setWorkbookSuccessMsg(
+        "Workbook solution uploaded successfully! Pending teacher evaluation.",
+      );
+      setWorkbookFileUrl("");
+    } catch (err: any) {
+      alert(err?.message || "Failed to upload workbook solution.");
+    } finally {
+      setUploadingWorkbook(false);
+    }
+  };
+
   // Resizer Dragging Handler
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -520,6 +553,60 @@ export default function StudentAssessmentRunnerPage({
                 </div>
               </div>
             )}
+            {/* Workbook Assessment Card */}
+            {isWorkbookAssessment && (
+              <div className="p-6 bg-amber-50/80 border border-amber-200 rounded-2xl space-y-4 font-sans text-amber-950 text-left">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-amber-700" />
+                    <h3 className="text-sm font-bold font-mono">
+                      WORKBOOK SOLUTION & SUBMISSION
+                    </h3>
+                  </div>
+                  {assessment?.workbookUrl && (
+                    <a
+                      href={assessment.workbookUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-700 hover:bg-amber-800 text-white text-xs font-semibold rounded-lg transition-all shadow-xs"
+                    >
+                      View Teacher's Workbook File
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+                <p className="text-xs text-amber-900 leading-relaxed">
+                  This is a physical / paper workbook assessment. Download or
+                  view the teacher's problem sheet above, solve the questions on
+                  your paper workbook, and upload image links or URLs of your
+                  completed pages below.
+                </p>
+
+                {workbookSuccessMsg ? (
+                  <div className="p-3 bg-emerald-100 border border-emerald-300 text-emerald-900 text-xs font-semibold rounded-xl flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                    {workbookSuccessMsg}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="url"
+                      value={workbookFileUrl}
+                      onChange={(e) => setWorkbookFileUrl(e.target.value)}
+                      placeholder="Paste URL of your solved workbook image/page (e.g. https://...)"
+                      className="flex-1 px-4 py-2.5 bg-white border border-amber-300 text-xs font-medium rounded-xl text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                    <button
+                      onClick={handleUploadWorkbookWeb}
+                      disabled={uploadingWorkbook || !workbookFileUrl.trim()}
+                      className="px-5 py-2.5 bg-amber-800 hover:bg-amber-900 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-sm transition-all cursor-pointer whitespace-nowrap"
+                    >
+                      {uploadingWorkbook ? "Uploading..." : "Submit Solution"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
@@ -537,7 +624,7 @@ export default function StudentAssessmentRunnerPage({
                   View Submission Result
                   <ChevronRight className="w-4 h-4" />
                 </button>
-              ) : (
+              ) : !isWorkbookAssessment ? (
                 <button
                   onClick={handleStartAttempt}
                   className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-[#0066FF] hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-md transition-all cursor-pointer"
@@ -546,7 +633,7 @@ export default function StudentAssessmentRunnerPage({
                   Start Assessment IDE
                   <ChevronRight className="w-4 h-4" />
                 </button>
-              )}
+              ) : null}
 
               <button
                 onClick={() => router.push("/student/assessments")}
