@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { AssessmentService, CreateAssessmentDto, AutosaveAnswerDto } from './assessment.service';
 
 @Controller()
@@ -27,8 +27,9 @@ export class AssessmentController {
     return this.assessmentService.getAssessmentById(id);
   }
 
-  // 4. PATCH /assessments/:id - Update Assessment Config
+  // 4. PATCH & PUT /assessments/:id - Update Assessment Config & Questions
   @Patch('assessments/:id')
+  @Put('assessments/:id')
   async updateAssessment(@Param('id') id: string, @Body() body: Partial<CreateAssessmentDto>) {
     return this.assessmentService.updateAssessment(id, body);
   }

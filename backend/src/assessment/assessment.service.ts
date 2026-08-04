@@ -145,10 +145,14 @@ export class AssessmentService {
     return assessment;
   }
 
-  // 4. Update Assessment Details
+  // 4. Update Assessment Details & Questions
   async updateAssessment(id: string, updates: Partial<CreateAssessmentDto>) {
     const existing = await db.assessment.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Assessment not found');
+
+    if (updates.questions && Array.isArray(updates.questions)) {
+      await db.question.deleteMany({ where: { assessmentId: id } });
+    }
 
     return db.assessment.update({
       where: { id },
@@ -165,6 +169,42 @@ export class AssessmentService {
         negativeMarkValue: updates.negativeMarkValue,
         isWorkbook: updates.isWorkbook,
         workbookUrl: updates.workbookUrl,
+        questions: updates.questions
+          ? {
+              create: updates.questions.map((q, qIdx) => ({
+                questionText: q.questionText,
+                questionType: q.questionType || 'SINGLE_CHOICE',
+                difficulty: q.difficulty || 'MEDIUM',
+                topic: q.topic || updates.topic || 'General',
+                points: q.points || 1,
+                negativeMarks: q.negativeMarks || (updates.hasNegativeMarking ? updates.negativeMarkValue || 0.25 : 0),
+                orderIndex: q.orderIndex || qIdx + 1,
+                explanation: q.explanation,
+                trueFalseAnswer: q.trueFalseAnswer,
+                shortAnswerKeywords: q.shortAnswerKeywords || [],
+                options: q.options
+                  ? {
+                      create: q.options.map((opt, oIdx) => ({
+                        optionText: opt.optionText,
+                        isCorrect: opt.isCorrect,
+                        orderIndex: opt.orderIndex || oIdx + 1,
+                      })),
+                    }
+                  : undefined,
+              })),
+            }
+          : undefined,
+      },
+      include: {
+        questions: {
+          include: {
+            options: true,
+          },
+          orderBy: { orderIndex: 'asc' },
+        },
+        _count: {
+          select: { questions: true, attempts: true },
+        },
       },
     });
   }
