@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F9F9FB;
+  --background: #F5F5F7;
   --foreground: #111111;
   --font-serif: var(--font-serif), Georgia, serif;
 }
@@ -14,15 +14,15 @@
   --font-serif: var(--font-serif);
 }
 
-/* Make sure background covers full scrollable document, not just viewport */
+/* Full-page background */
 html {
-  background-color: #F9F9FB;
+  background-color: #F5F5F7;
   min-height: 100%;
   height: auto;
 }
 
 body {
-  background-color: #F9F9FB;
+  background-color: #F5F5F7;
   min-height: 100%;
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
