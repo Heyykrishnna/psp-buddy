@@ -631,7 +631,7 @@ export default function AssessmentResultsPage({
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-xs font-mono text-zinc-500">
                         <span className="truncate max-w-50 font-semibold text-zinc-700">
-                          📁 {wb.fileName || "Workbook_Page.png"}
+                          {wb.fileName || "Workbook_Page.png"}
                         </span>
                         <span>
                           {new Date(wb.submittedAt).toLocaleDateString()}{" "}
