@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   ClipboardList,
+  Smartphone,
 } from "lucide-react";
 
 const FILTER_TABS = ["ALL", "QUIZ", "EXAM", "PRACTICE"];
@@ -281,11 +282,12 @@ export default function StudentAssessmentsPage() {
                             {asm.topic}
                           </span>
                         )}
-                        {(asm.isWorkbook ||
+                        {(asm.assessmentType === "QUIZ" ||
+                          asm.isWorkbook ||
                           Boolean(asm.workbookUrl) ||
                           asm.submissionMode === "WORKBOOK_ONLY") && (
-                          <span className="px-2 py-0.5 bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-bold rounded-lg">
-                            WORKBOOK
+                          <span className="px-2 py-0.5 bg-orange-100 text-orange-800 border border-orange-200 text-[10px] font-bold rounded-lg flex items-center gap-1">
+                            <Smartphone className="w-3 h-3" /> MOBILE ONLY
                           </span>
                         )}
                         {completedAttempts[asm.id] && (
@@ -344,25 +346,29 @@ export default function StudentAssessmentsPage() {
                           View Result
                           <ChevronRight className="w-3.5 h-3.5" />
                         </button>
+                      ) : asm.assessmentType === "QUIZ" ||
+                        asm.isWorkbook ||
+                        Boolean(asm.workbookUrl) ||
+                        asm.submissionMode === "WORKBOOK_ONLY" ? (
+                        <button
+                          onClick={() =>
+                            router.push(`/student/assessments/${asm.id}`)
+                          }
+                          className="flex items-center gap-2 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl transition-all cursor-pointer whitespace-nowrap"
+                        >
+                          <Smartphone className="w-3.5 h-3.5" />
+                          Mobile App Required
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
                       ) : (
                         <button
                           onClick={() =>
                             router.push(`/student/assessments/${asm.id}`)
                           }
-                          className={`flex items-center gap-2 px-5 py-2.5 text-white text-xs font-bold rounded-xl transition-all cursor-pointer whitespace-nowrap ${
-                            asm.isWorkbook ||
-                            Boolean(asm.workbookUrl) ||
-                            asm.submissionMode === "WORKBOOK_ONLY"
-                              ? "bg-indigo-600 hover:bg-indigo-700"
-                              : "bg-[#111111] hover:bg-black"
-                          }`}
+                          className="flex items-center gap-2 px-5 py-2.5 bg-[#111111] hover:bg-black text-white text-xs font-bold rounded-xl transition-all cursor-pointer whitespace-nowrap"
                         >
                           <Rocket className="w-3.5 h-3.5" />
-                          {asm.isWorkbook ||
-                          Boolean(asm.workbookUrl) ||
-                          asm.submissionMode === "WORKBOOK_ONLY"
-                            ? "Submit Workbook"
-                            : "Start Attempt"}
+                          Start Attempt
                           <ChevronRight className="w-3.5 h-3.5" />
                         </button>
                       )}

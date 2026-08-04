@@ -220,7 +220,14 @@ export function AssessmentScreen({
       return;
     }
 
-    if (asm.containsCoding || asm.isWebOnly) {
+    if (
+      asm.containsCoding ||
+      asm.isWebOnly ||
+      (asm.assessmentType !== "QUIZ" &&
+        !asm.isWorkbook &&
+        !Boolean(asm.workbookUrl) &&
+        asm.submissionMode !== "WORKBOOK_ONLY")
+    ) {
       setCodingWarningAsm(asm);
       return;
     }
@@ -232,7 +239,11 @@ export function AssessmentScreen({
       if (
         details.questions?.some(
           (q) => q.questionType === "CODING" || q.isWebOnly,
-        )
+        ) ||
+        (details.assessmentType !== "QUIZ" &&
+          !details.isWorkbook &&
+          !Boolean(details.workbookUrl) &&
+          details.submissionMode !== "WORKBOOK_ONLY")
       ) {
         setCodingWarningAsm(asm);
         setLoading(false);

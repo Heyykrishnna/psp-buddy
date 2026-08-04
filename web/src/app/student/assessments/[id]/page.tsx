@@ -33,6 +33,8 @@ import {
   Sliders,
   Eye,
   EyeOff,
+  Smartphone,
+  Rocket,
 } from "lucide-react";
 
 // Dynamically import Monaco Editor to prevent SSR issues
@@ -459,13 +461,69 @@ export default function StudentAssessmentRunnerPage({
     );
   }
 
+  const isMobileExclusive =
+    assessment?.assessmentType === "QUIZ" ||
+    assessment?.isWorkbook ||
+    Boolean(assessment?.workbookUrl) ||
+    assessment?.submissionMode === "WORKBOOK_ONLY";
+
   const currentQ = questions[currentIdx];
   const answeredCount = Object.keys(selectedAnswers).length;
 
   return (
     <main className="h-screen w-screen overflow-hidden bg-[#F8F9FA] text-[#111111] font-sans flex flex-col selection:bg-blue-600 selection:text-white">
-      {/* ── OVERVIEW MODE LANDING SCREEN ───────────────────────────────────────── */}
-      {mode === "OVERVIEW" && (
+      {/* ── MOBILE APP EXCLUSIVE BLOCK SCREEN FOR QUIZZES & WORKBOOKS ──────────────── */}
+      {isMobileExclusive ? (
+        <div className="flex-1 max-w-2xl w-full mx-auto px-6 py-16 flex flex-col items-center justify-center">
+          <div className="w-full bg-white border border-zinc-200 rounded-2xl p-8 md:p-12 shadow-sm text-center space-y-6">
+            <div className="w-16 h-16 bg-orange-50 border border-orange-200 rounded-2xl flex items-center justify-center mx-auto text-orange-500">
+              <Smartphone className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-2">
+              <span className="px-3 py-1 bg-orange-100 text-orange-800 border border-orange-200 text-[10px] font-bold uppercase rounded-full tracking-wider">
+                Mobile App Exclusive
+              </span>
+              <h1 className="text-2xl font-bold text-zinc-900 mt-2">
+                Mobile App Required
+              </h1>
+              <p className="text-xs text-zinc-500 max-w-md mx-auto leading-relaxed">
+                {assessment?.assessmentType === "QUIZ"
+                  ? "Quizzes are exclusively accessible and submitted from the PSP Lumora Mobile App on your smartphone."
+                  : "Workbooks are exclusively accessible and submitted from the PSP Lumora Mobile App on your smartphone."}
+              </p>
+            </div>
+
+            <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-200 text-left text-xs text-zinc-600 space-y-2">
+              <div className="flex items-center gap-2 font-semibold text-zinc-800">
+                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>Device Compatibility Notice</span>
+              </div>
+              <p className="text-[11px] text-zinc-500 leading-relaxed">
+                {assessment?.assessmentType === "QUIZ"
+                  ? "Quiz assessments require touch-optimized interactions and smartphone submission validation. Please open the PSP Lumora Mobile App on your smartphone to complete and submit your quiz."
+                  : "Workbook solutions require capturing and uploading camera solution photos directly via the mobile app."}
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <button
+                onClick={() => router.push("/student/assessments")}
+                className="w-full sm:w-auto px-5 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-bold rounded-xl transition-all cursor-pointer"
+              >
+                Back to Assessments
+              </button>
+              <button
+                onClick={() => router.push("/student/playground")}
+                className="w-full sm:w-auto px-5 py-2.5 bg-[#111111] hover:bg-black text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Rocket className="w-4 h-4" />
+                Open Code Playground
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : mode === "OVERVIEW" ? (
         <div className="flex-1 max-w-4xl w-full mx-auto px-6 py-12 flex flex-col items-center justify-center">
           <div className="w-full bg-white border border-zinc-200 rounded-2xl p-8 md:p-12 shadow-sm space-y-8 relative overflow-hidden">
             <div className="space-y-3 text-center max-w-2xl mx-auto">
@@ -644,7 +702,7 @@ export default function StudentAssessmentRunnerPage({
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* ── RUNNER MODE IDE WORKSPACE (Image 2 style with Resizer Slider) ─────── */}
       {mode === "RUNNER" && currentQ && (
