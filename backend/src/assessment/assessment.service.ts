@@ -165,6 +165,18 @@ export class AssessmentService {
     });
   }
 
+  // 4.5 Delete Assessment
+  async deleteAssessment(id: string) {
+    const assessment = await db.assessment.findUnique({ where: { id } });
+    if (!assessment) throw new NotFoundException('Assessment not found');
+
+    await db.assessment.delete({
+      where: { id },
+    });
+
+    return { success: true, message: 'Assessment deleted successfully' };
+  }
+
   // 5. Publish Assessment & Notify Students
   async publishAssessment(id: string) {
     const assessment = await db.assessment.findUnique({ where: { id } });

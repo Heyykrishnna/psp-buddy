@@ -27,6 +27,8 @@ import {
   PlusCircledIcon,
   ClockIcon,
   ArrowLeftIcon,
+  TrashIcon,
+  EyeOpenIcon,
 } from "@radix-ui/react-icons";
 
 // ------------- Mock Data -------------
@@ -415,6 +417,51 @@ export default function TeacherDashboardPage() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
+  // Delete assessment state & handler
+  const [deleteConfirmAsm, setDeleteConfirmAsm] =
+    useState<AssessmentDTO | null>(null);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+
+  const handleDeleteAssessment = async (assessmentId: string) => {
+    setIsDeleting(true);
+    try {
+      await apiFetch(`/assessments/${assessmentId}`, {
+        method: "DELETE",
+      });
+      setAssessments((prev) => prev.filter((asm) => asm.id !== assessmentId));
+      setToastMessage("Assessment deleted successfully.");
+      setTimeout(() => setToastMessage(null), 4000);
+    } catch (err: any) {
+      alert(err?.message || "Failed to delete assessment");
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirmAsm(null);
+    }
+  };
+
+  // Preview assessment state & handler
+  const [previewAsmId, setPreviewAsmId] = useState<string | null>(null);
+  const [previewAsmData, setPreviewAsmData] = useState<AssessmentDTO | null>(
+    null,
+  );
+  const [previewLoading, setPreviewLoading] = useState<boolean>(false);
+
+  const handlePreviewAssessment = async (assessmentId: string) => {
+    setPreviewAsmId(assessmentId);
+    setPreviewLoading(true);
+    try {
+      const data = await apiFetch<AssessmentDTO>(
+        `/assessments/${assessmentId}`,
+      );
+      setPreviewAsmData(data);
+    } catch (err: any) {
+      alert("Failed to load assessment preview details.");
+      setPreviewAsmId(null);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
   // Selected student for drill-down history view
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
     null,
@@ -441,7 +488,9 @@ export default function TeacherDashboardPage() {
           topicsRes.status === "fulfilled" ? topicsRes.value || [] : [],
         );
         setAssessments(
-          assessmentsRes.status === "fulfilled" ? assessmentsRes.value || [] : [],
+          assessmentsRes.status === "fulfilled"
+            ? assessmentsRes.value || []
+            : [],
         );
       } catch {
         setStudents([]);
@@ -848,14 +897,22 @@ export default function TeacherDashboardPage() {
                             {asm.totalMarks} marks
                           </p>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                          <button
+                            onClick={() => handlePreviewAssessment(asm.id)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 border border-zinc-200 hover:bg-zinc-100 text-zinc-700 text-xs font-medium rounded-md transition-all cursor-pointer"
+                            title="Preview questions and correct options"
+                          >
+                            <EyeOpenIcon className="w-3.5 h-3.5 text-zinc-600" />
+                            Preview
+                          </button>
                           {!asm.isPublished && (
                             <button
                               onClick={() => handleLaunchAssessment(asm.id)}
-                              className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-md shadow-sm transition-all cursor-pointer whitespace-nowrap"
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-md shadow-sm transition-all cursor-pointer whitespace-nowrap"
                             >
                               <RocketIcon className="w-3.5 h-3.5" />
-                              Launch Assessment
+                              Launch
                             </button>
                           )}
                           <button
@@ -864,10 +921,18 @@ export default function TeacherDashboardPage() {
                                 `/teacher/assessments/${asm.id}/results`,
                               )
                             }
-                            className="flex items-center gap-2 px-4 py-2 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all shadow-sm whitespace-nowrap cursor-pointer"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all shadow-sm whitespace-nowrap cursor-pointer"
                           >
-                            View Results
+                            Results
                             <ChevronRightIcon className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirmAsm(asm)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 border border-red-200 bg-red-50/50 hover:bg-red-100 text-red-600 text-xs font-medium rounded-md transition-all cursor-pointer"
+                            title="Delete assessment"
+                          >
+                            <TrashIcon className="w-3.5 h-3.5 text-red-500" />
+                            Delete
                           </button>
                         </div>
                       </div>
@@ -1371,7 +1436,15 @@ export default function TeacherDashboardPage() {
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                            <button
+                              onClick={() => handlePreviewAssessment(asm.id)}
+                              className="flex items-center gap-1.5 px-3 py-2 border border-zinc-200 hover:bg-zinc-100 text-zinc-700 text-xs font-medium rounded-md transition-all cursor-pointer"
+                              title="Preview questions and correct options"
+                            >
+                              <EyeOpenIcon className="w-3.5 h-3.5 text-zinc-600" />
+                              Preview
+                            </button>
                             {!asm.isPublished && (
                               <button
                                 onClick={() => handleLaunchAssessment(asm.id)}
@@ -1387,19 +1460,18 @@ export default function TeacherDashboardPage() {
                                   `/teacher/assessments/${asm.id}/results`,
                                 )
                               }
-                              className="flex items-center gap-2 px-4 py-2 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all shadow-sm cursor-pointer"
+                              className="flex items-center gap-2 px-3.5 py-2 bg-[#111111] hover:bg-black text-white text-xs font-medium rounded-md transition-all shadow-sm cursor-pointer"
                             >
                               <BarChartIcon className="w-3.5 h-3.5" />
                               Results
                             </button>
                             <button
-                              onClick={() =>
-                                router.push("/teacher/assessments/new")
-                              }
-                              className="flex items-center gap-2 px-4 py-2 border border-zinc-200 hover:bg-zinc-50 text-zinc-700 text-xs font-medium rounded-md transition-all cursor-pointer"
+                              onClick={() => setDeleteConfirmAsm(asm)}
+                              className="flex items-center gap-1.5 px-3 py-2 border border-red-200 bg-red-50/50 hover:bg-red-100 text-red-600 text-xs font-medium rounded-md transition-all cursor-pointer"
+                              title="Delete assessment"
                             >
-                              <RocketIcon className="w-3.5 h-3.5" />
-                              Duplicate
+                              <TrashIcon className="w-3.5 h-3.5 text-red-500" />
+                              Delete
                             </button>
                           </div>
                         </div>
@@ -1411,6 +1483,280 @@ export default function TeacherDashboardPage() {
           </>
         )}
       </div>
+
+      {/* ── Delete Confirmation Modal ── */}
+      {deleteConfirmAsm && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-zinc-200 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                <TrashIcon className="w-5 h-5" />
+              </div>
+              <button
+                onClick={() => setDeleteConfirmAsm(null)}
+                className="text-zinc-400 hover:text-zinc-600 p-1 rounded-md transition-all cursor-pointer"
+              >
+                <Cross2Icon className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-bold text-[#111111]">
+                Delete Assessment?
+              </h3>
+              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+                Are you sure you want to delete{" "}
+                <span className="font-semibold text-zinc-800">
+                  "{deleteConfirmAsm.title}"
+                </span>
+                ? This will permanently remove the assessment, all associated
+                questions, and student attempts. This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setDeleteConfirmAsm(null)}
+                disabled={isDeleting}
+                className="px-4 py-2 text-xs font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteAssessment(deleteConfirmAsm.id)}
+                disabled={isDeleting}
+                className="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+              >
+                {isDeleting ? "Deleting..." : "Delete Assessment"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Assessment Preview Modal ── */}
+      {previewAsmId && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-200 overflow-y-auto">
+          <div className="bg-white border border-zinc-200 rounded-2xl max-w-3xl w-full shadow-2xl my-auto overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="p-6 border-b border-zinc-100 flex items-start justify-between bg-zinc-50/50">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                  <span className="px-2 py-0.5 bg-[#111111] text-white text-[10px] font-mono font-bold rounded">
+                    {previewAsmData?.className || "Assessment"}
+                  </span>
+                  <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-mono font-semibold rounded border border-blue-200">
+                    {previewAsmData?.assessmentType || "QUIZ"}
+                  </span>
+                  {previewAsmData?.isPublished ? (
+                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-mono rounded border border-emerald-200">
+                      PUBLISHED
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-mono rounded border border-amber-200">
+                      DRAFT
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-xl font-bold text-[#111111]">
+                  {previewAsmData?.title || "Assessment Preview"}
+                </h3>
+                {previewAsmData?.description && (
+                  <p className="text-xs text-zinc-500 mt-1">
+                    {previewAsmData.description}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  setPreviewAsmId(null);
+                  setPreviewAsmData(null);
+                }}
+                className="text-zinc-400 hover:text-zinc-600 p-1.5 rounded-lg hover:bg-zinc-100 transition-all cursor-pointer"
+              >
+                <Cross2Icon className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1">
+              {previewLoading ? (
+                <div className="py-12 text-center text-zinc-400 text-xs font-mono">
+                  Loading assessment questions & details...
+                </div>
+              ) : !previewAsmData?.questions ||
+                previewAsmData.questions.length === 0 ? (
+                <div className="py-12 text-center text-zinc-500 text-xs">
+                  No questions found in this assessment.
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Summary bar */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-zinc-50 p-4 rounded-xl border border-zinc-200/80 text-xs font-mono text-zinc-600">
+                    <div>
+                      <span className="text-zinc-400 block text-[10px]">
+                        DURATION
+                      </span>
+                      <span className="font-bold text-[#111111]">
+                        {previewAsmData.durationMinutes} mins
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-zinc-400 block text-[10px]">
+                        TOTAL MARKS
+                      </span>
+                      <span className="font-bold text-[#111111]">
+                        {previewAsmData.totalMarks} Marks
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-zinc-400 block text-[10px]">
+                        PASSING MARKS
+                      </span>
+                      <span className="font-bold text-[#111111]">
+                        {previewAsmData.passingMarks} Marks
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-zinc-400 block text-[10px]">
+                        QUESTIONS
+                      </span>
+                      <span className="font-bold text-[#111111]">
+                        {previewAsmData.questions.length} Questions
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Questions */}
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-mono uppercase tracking-wider font-semibold text-zinc-400">
+                      Questions & Correct Options (
+                      {previewAsmData.questions.length})
+                    </h4>
+                    {previewAsmData.questions.map((q, idx) => (
+                      <div
+                        key={q.id || idx}
+                        className="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm space-y-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-[#5451FF]/10 text-[#5451FF] font-bold text-xs flex items-center justify-center font-mono">
+                              {idx + 1}
+                            </span>
+                            <span className="text-xs font-mono font-semibold px-2 py-0.5 bg-zinc-100 text-zinc-700 rounded">
+                              {q.questionType}
+                            </span>
+                          </div>
+                          <span className="text-xs font-mono font-bold text-zinc-700 bg-zinc-100 px-2 py-0.5 rounded">
+                            {q.points || 1} mark
+                            {(q.points || 1) !== 1 ? "s" : ""}
+                          </span>
+                        </div>
+
+                        <p className="text-sm font-medium text-[#111111] whitespace-pre-wrap leading-relaxed">
+                          {q.questionText}
+                        </p>
+
+                        {/* Options */}
+                        {q.options && q.options.length > 0 && (
+                          <div className="space-y-2 pt-1">
+                            {q.options.map((opt, optIdx) => (
+                              <div
+                                key={opt.id || optIdx}
+                                className={`p-3 rounded-lg border text-xs flex items-center justify-between transition-all ${
+                                  opt.isCorrect
+                                    ? "bg-emerald-50/80 border-emerald-300 text-emerald-950 font-medium"
+                                    : "bg-zinc-50/50 border-zinc-200 text-zinc-700"
+                                }`}
+                              >
+                                <span className="flex items-center gap-2">
+                                  <span className="font-mono text-zinc-400 font-semibold">
+                                    {String.fromCharCode(65 + optIdx)}.
+                                  </span>
+                                  {opt.optionText}
+                                </span>
+                                {opt.isCorrect && (
+                                  <span className="flex items-center gap-1 text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-200">
+                                    <CheckCircledIcon className="w-3 h-3 text-emerald-600" />
+                                    CORRECT OPTION
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* True / False */}
+                        {q.questionType === "TRUE_FALSE" &&
+                          q.trueFalseAnswer !== undefined && (
+                            <div className="p-3 bg-emerald-50/80 border border-emerald-300 rounded-lg text-xs flex items-center justify-between text-emerald-950">
+                              <span>
+                                Correct Answer:{" "}
+                                <strong className="font-mono">
+                                  {q.trueFalseAnswer ? "TRUE" : "FALSE"}
+                                </strong>
+                              </span>
+                              <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-200">
+                                CORRECT
+                              </span>
+                            </div>
+                          )}
+
+                        {/* Short Answer keywords */}
+                        {q.questionType === "SHORT_ANSWER" &&
+                          q.shortAnswerKeywords &&
+                          q.shortAnswerKeywords.length > 0 && (
+                            <div className="p-3 bg-emerald-50/80 border border-emerald-300 rounded-lg text-xs text-emerald-950 space-y-1">
+                              <span className="font-semibold block text-[10px] text-emerald-800">
+                                ACCEPTED KEYWORDS:
+                              </span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {q.shortAnswerKeywords.map((kw, kwIdx) => (
+                                  <span
+                                    key={kwIdx}
+                                    className="px-2 py-0.5 bg-emerald-200/60 text-emerald-900 rounded font-mono text-[11px]"
+                                  >
+                                    {kw}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                        {/* Explanation */}
+                        {q.explanation && (
+                          <div className="p-3 bg-blue-50/50 border border-blue-100 rounded-lg text-xs text-blue-900 mt-2">
+                            <span className="font-bold text-[10px] uppercase text-blue-700 block mb-0.5">
+                              EXPLANATION:
+                            </span>
+                            {q.explanation}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-zinc-100 bg-zinc-50 flex items-center justify-between">
+              <span className="text-xs text-zinc-400 font-mono">
+                Previewing {previewAsmData?.title}
+              </span>
+              <button
+                onClick={() => {
+                  setPreviewAsmId(null);
+                  setPreviewAsmData(null);
+                }}
+                className="px-4 py-2 bg-[#111111] hover:bg-black text-white text-xs font-semibold rounded-lg transition-all cursor-pointer shadow-sm"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

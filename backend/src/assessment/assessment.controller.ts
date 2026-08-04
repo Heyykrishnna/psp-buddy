@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Patch, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
 import { AssessmentService, CreateAssessmentDto, AutosaveAnswerDto } from './assessment.service';
 
 @Controller()
 export class AssessmentController {
-  constructor(private readonly assessmentService: AssessmentService) {}
+  constructor(private readonly assessmentService: AssessmentService) { }
 
   // 1. POST /assessments - Create Assessment
   @Post('assessments')
@@ -31,6 +31,12 @@ export class AssessmentController {
   @Patch('assessments/:id')
   async updateAssessment(@Param('id') id: string, @Body() body: Partial<CreateAssessmentDto>) {
     return this.assessmentService.updateAssessment(id, body);
+  }
+
+  // 5. DELETE /assessments/:id - Delete Assessment
+  @Delete('assessments/:id')
+  async deleteAssessment(@Param('id') id: string) {
+    return this.assessmentService.deleteAssessment(id);
   }
 
   // 5. POST /assessments/:id/publish - Publish Assessment & Notify
