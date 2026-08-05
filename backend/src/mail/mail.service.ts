@@ -7,13 +7,13 @@ export class MailService {
   private transporter: nodemailer.Transporter;
 
   constructor() {
-    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const host = process.env.SMTP_HOST;
     const port = parseInt(process.env.SMTP_PORT || '587', 10);
-    const user = process.env.SMTP_USER || 'khandelwalyatharth39@gmail.com';
-    const rawPass = process.env.SMTP_PASS || 'xvpx ykrc acys khqa';
-    const pass = rawPass.replace(/\s+/g, '');
+    const user = process.env.SMTP_USER;
+    const rawPass = process.env.SMTP_PASS;
+    const pass = rawPass ? rawPass.replace(/\s+/g, '') : '';
 
-    if (user && pass) {
+    if (user && pass && host) {
       if (host.includes('gmail')) {
         this.transporter = nodemailer.createTransport({
           service: 'gmail',

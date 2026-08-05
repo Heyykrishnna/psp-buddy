@@ -1,22 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Newsreader } from "next/font/google";
+import { Montserrat, Poppins } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
-});
-
-const newsreader = Newsreader({
-  variable: "--font-serif",
-  subsets: ["latin"],
-  style: ["normal", "italic"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -32,7 +29,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} min-h-full bg-[#F5F5F7] antialiased`}
+      className={`${montserrat.variable} ${poppins.variable} min-h-full bg-[#F5F5F7] antialiased`}
     >
       <body className="min-h-full bg-[#F5F5F7] text-zinc-900 font-sans selection:bg-zinc-900 selection:text-white">
         <AuthProvider>{children}</AuthProvider>
