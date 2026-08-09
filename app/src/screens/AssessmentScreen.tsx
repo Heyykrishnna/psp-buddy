@@ -149,9 +149,28 @@ export function AssessmentScreen({
     return () => unsub();
   }, [apiClient]);
 
-  // Handle Auto-open if selectedAssessmentId passed
+  // Direct launch: if selectedAssessmentId is provided, fetch + start immediately without waiting for the full list
   useEffect(() => {
-    if (selectedAssessmentId && assessments.length > 0) {
+    if (!selectedAssessmentId) return;
+    let cancelled = false;
+    async function directLaunch() {
+      try {
+        const details = await apiClient.getAssessmentById(selectedAssessmentId!);
+        if (!cancelled && details) {
+          startAssessment(details);
+        }
+      } catch {
+        // fall back to list auto-open below
+      }
+    }
+    directLaunch();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAssessmentId]);
+
+  // Fallback: auto-open once list has loaded (for cases where directLaunch fails)
+  useEffect(() => {
+    if (selectedAssessmentId && assessments.length > 0 && mode === 'LIST') {
       const found = assessments.find((a) => a.id === selectedAssessmentId);
       if (found) {
         startAssessment(found);
@@ -2263,7 +2282,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: 14,
-    backgroundColor: "#F2F5F9",
+    backgroundColor: "#55B9EE",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
