@@ -248,7 +248,7 @@ export function LeaderboardScreen({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#121316",
+    backgroundColor: "#F1F5FB",
   },
   topNav: {
     flexDirection: "row",
@@ -256,9 +256,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: "rgba(25, 26, 30, 0.75)",
+    backgroundColor: "rgba(255, 255, 255, 0.92)",
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.08)",
+    borderBottomColor: "#E3EAF4",
     ...(Platform.OS === "web"
       ? ({
           backdropFilter: "blur(16px)",
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   navTitle: {
-    color: "#ffffff",
+    color: "#20253D",
     fontSize: 14,
     fontWeight: "700",
     letterSpacing: 1.5,
@@ -286,11 +286,11 @@ const styles = StyleSheet.create({
   },
   tabsContainer: {
     flexDirection: "row",
-    backgroundColor: "#191a1e",
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 4,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: "#E3EAF4",
   },
   tabBtn: {
     flex: 1,
@@ -299,10 +299,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   activeTabBtn: {
-    backgroundColor: "#5451FF",
+    backgroundColor: "#7366E8",
   },
   tabText: {
-    color: "#71717a",
+    color: "#7D879F",
     fontSize: 11,
     fontWeight: "600",
     fontFamily:
@@ -312,20 +312,20 @@ const styles = StyleSheet.create({
     color: "#ffffff",
   },
   myRankCard: {
-    backgroundColor: "#191a1e",
+    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     padding: 18,
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
     borderWidth: 1.5,
-    borderColor: "#5451FF",
+    borderColor: "#7366E8",
   },
   myRankBadge: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#5451FF",
+    backgroundColor: "#7366E8",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   myRankName: {
-    color: "#ffffff",
+    color: "#20253D",
     fontSize: 16,
     fontWeight: "700",
     fontFamily:
@@ -378,13 +378,13 @@ const styles = StyleSheet.create({
   },
   podiumCol: {
     flex: 1,
-    backgroundColor: "#191a1e",
+    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 14,
     alignItems: "center",
     gap: 6,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: "#E3EAF4",
   },
   podium1st: {
     backgroundColor: "rgba(84,81,255,0.15)",
@@ -492,15 +492,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   listContainer: {
-    backgroundColor: "#191a1e",
+    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     padding: 20,
     gap: 12,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: "#E3EAF4",
   },
   listTitle: {
-    color: "#71717a",
+    color: "#7D879F",
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 1,
@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: "#22242a",
+    backgroundColor: "#F2F5F9",
     padding: 14,
     borderRadius: 16,
   },

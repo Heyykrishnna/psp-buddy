@@ -1677,7 +1677,7 @@ export function AssessmentScreen({
                 opacity: xpPopAnim,
               }}
             >
-              <Text style={{ fontSize: 13 }}>🎉</Text>
+              <Ionicons name="trophy-outline" size={16} color="#F7C95E" />
               <Text
                 style={{
                   color: "#818cf8",
@@ -1892,7 +1892,7 @@ export function AssessmentScreen({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#121316",
+    backgroundColor: "#F1F5FB",
   },
   scrollContent: {
     padding: 20,
@@ -1904,9 +1904,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: "rgba(25, 26, 30, 0.75)",
+    backgroundColor: "rgba(255, 255, 255, 0.92)",
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.08)",
+    borderBottomColor: "#E3EAF4",
     ...(Platform.OS === "web"
       ? ({
           backdropFilter: "blur(16px)",
@@ -1919,14 +1919,14 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   backBtnText: {
-    color: "#4ade80",
+    color: "#7366E8",
     fontSize: 13,
     fontWeight: "600",
     fontFamily:
       Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
   navTitle: {
-    color: "#ffffff",
+    color: "#20253D",
     fontSize: 13,
     fontWeight: "700",
     letterSpacing: 1.2,
@@ -1938,8 +1938,8 @@ const styles = StyleSheet.create({
         : "SpaceGrotesk_600SemiBold",
   },
   headerBanner: {
-    backgroundColor: "#5451FF",
-    borderRadius: 24,
+    backgroundColor: "#7366E8",
+    borderRadius: 28,
     padding: 22,
     gap: 8,
   },
@@ -1971,14 +1971,14 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   searchInput: {
-    backgroundColor: "#191a1e",
-    color: "#ffffff",
-    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    color: "#20253D",
+    borderRadius: 16,
     paddingHorizontal: 16,
     height: 48,
     fontSize: 13,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    borderColor: "#E3EAF4",
     fontFamily:
       Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_500Medium",
   },
@@ -1986,19 +1986,19 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chip: {
-    backgroundColor: "#191a1e",
+    backgroundColor: "#FFFFFF",
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    borderColor: "#E3EAF4",
   },
   activeChip: {
-    backgroundColor: "#5451FF",
-    borderColor: "#5451FF",
+    backgroundColor: "#20253D",
+    borderColor: "#20253D",
   },
   chipText: {
-    color: "#71717a",
+    color: "#7D879F",
     fontSize: 11,
     fontWeight: "600",
     fontFamily:
@@ -2011,12 +2011,12 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   asmCard: {
-    backgroundColor: "#191a1e",
-    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
     padding: 20,
     gap: 12,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: "#E3EAF4",
   },
   asmTopRow: {
     flexDirection: "row",
@@ -2024,33 +2024,33 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   asmClassChip: {
-    backgroundColor: "rgba(84,81,255,0.2)",
+    backgroundColor: "#EEEAFE",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
   },
   asmClassText: {
-    color: "#5451FF",
+    color: "#7366E8",
     fontSize: 10,
     fontWeight: "600",
     fontFamily:
       Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
   asmTypeBadge: {
-    backgroundColor: "rgba(255,87,69,0.2)",
+    backgroundColor: "#FFF0E7",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
   },
   asmTypeText: {
-    color: "#FF5745",
+    color: "#E77742",
     fontSize: 10,
     fontWeight: "600",
     fontFamily:
       Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
   asmTitle: {
-    color: "#ffffff",
+    color: "#20253D",
     fontSize: 18,
     fontWeight: "700",
     lineHeight: 24,
@@ -2060,7 +2060,7 @@ const styles = StyleSheet.create({
         : "SpaceGrotesk_600SemiBold",
   },
   asmDesc: {
-    color: "#9ca3af",
+    color: "#7D879F",
     fontSize: 12,
     lineHeight: 18,
     fontFamily:
@@ -2072,16 +2072,16 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.06)",
+    borderTopColor: "#E8EEF6",
   },
   asmMetaItem: {
-    color: "#71717a",
+    color: "#7D879F",
     fontSize: 11,
     fontFamily:
       Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_500Medium",
   },
   startBtn: {
-    backgroundColor: "#3B82F6",
+    backgroundColor: "#20253D",
     height: 48,
     borderRadius: 14,
     flexDirection: "row",
@@ -2098,8 +2098,8 @@ const styles = StyleSheet.create({
       Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
   completedBtn: {
-    backgroundColor: "#1c1c1e",
-    borderColor: "#27272a",
+    backgroundColor: "#F2F5F9",
+    borderColor: "#DCE4EF",
     borderWidth: 1,
     height: 48,
     borderRadius: 14,
@@ -2110,7 +2110,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   completedBtnText: {
-    color: "#a1a1aa",
+    color: "#7D879F",
     fontSize: 12,
     fontWeight: "700",
     letterSpacing: 0.8,
@@ -2127,22 +2127,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 14,
+    backgroundColor: "#FFFFFF",
   },
   progressPill: {
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "#E9EFF7",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
   },
   progressText: {
-    color: "#ffffff",
+    color: "#20253D",
     fontSize: 11,
     fontWeight: "600",
     fontFamily:
       Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_600SemiBold",
   },
   timerPill: {
-    backgroundColor: "rgba(59,130,246,0.2)",
+    backgroundColor: "#E5F6FF",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
@@ -2154,7 +2155,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(239,68,68,0.2)",
   },
   timerText: {
-    color: "#ffffff",
+    color: "#20253D",
     fontSize: 12,
     fontWeight: "700",
     fontFamily:
@@ -2165,12 +2166,12 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   questionCard: {
-    backgroundColor: "#191a1e",
+    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     padding: 22,
     gap: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: "#E3EAF4",
   },
   qMetaRow: {
     flexDirection: "row",
@@ -2178,23 +2179,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   difficultyBadge: {
-    backgroundColor: "rgba(74,222,128,0.2)",
+    backgroundColor: "#E2F7EC",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
   },
   difficultyText: {
-    color: "#4ade80",
+    color: "#2EAD71",
     fontSize: 10,
     fontWeight: "600",
   },
   pointsText: {
-    color: "#F4C463",
+    color: "#E77742",
     fontSize: 12,
     fontWeight: "600",
   },
   questionText: {
-    color: "#ffffff",
+    color: "#20253D",
     fontSize: 18,
     fontWeight: "700",
     lineHeight: 26,
@@ -2211,58 +2212,58 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: "#22242a",
+    backgroundColor: "#F5F7FA",
     padding: 16,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
+    borderColor: "#E3EAF4",
   },
   selectedOption: {
-    backgroundColor: "rgba(59,130,246,0.15)",
-    borderColor: "#3B82F6",
+    backgroundColor: "#E8F6FF",
+    borderColor: "#55B9EE",
   },
   radioCircle: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#71717a",
+    borderColor: "#A8B4C5",
     alignItems: "center",
     justifyContent: "center",
   },
   radioCircleActive: {
-    borderColor: "#3B82F6",
+    borderColor: "#55B9EE",
   },
   radioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: "#3B82F6",
+    backgroundColor: "#55B9EE",
   },
   optionText: {
-    color: "#d1d5db",
+    color: "#4B5872",
     fontSize: 14,
     flex: 1,
     fontFamily:
       Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_500Medium",
   },
   selectedOptionText: {
-    color: "#ffffff",
+    color: "#20253D",
     fontWeight: "600",
   },
   runnerFooter: {
     flexDirection: "row",
     gap: 12,
     padding: 20,
-    backgroundColor: "#191a1e",
+    backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.08)",
+    borderTopColor: "#E3EAF4",
   },
   navStepBtn: {
     flex: 1,
     height: 48,
     borderRadius: 14,
-    backgroundColor: "#22242a",
+    backgroundColor: "#F2F5F9",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -2279,7 +2280,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: 14,
-    backgroundColor: "#3B82F6",
+    backgroundColor: "#55B9EE",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -2293,13 +2294,13 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: 14,
-    backgroundColor: "#4ade80",
+    backgroundColor: "#55C98C",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
   },
   submitTestText: {
-    color: "#121316",
+    color: "#20253D",
     fontSize: 12,
     fontWeight: "700",
   },
@@ -2309,13 +2310,13 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   resultCard: {
-    backgroundColor: "#191a1e",
+    backgroundColor: "#FFFFFF",
     borderRadius: 28,
     padding: 24,
     alignItems: "center",
     gap: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: "#E3EAF4",
   },
   statusPillRow: {
     flexDirection: "row",
@@ -2357,7 +2358,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
   },
   resultScoreBig: {
-    color: "#ffffff",
+    color: "#20253D",
     fontSize: 52,
     fontWeight: "800",
     fontFamily:
@@ -2366,7 +2367,7 @@ const styles = StyleSheet.create({
         : "SpaceGrotesk_600SemiBold",
   },
   resultScoreMax: {
-    color: "#71717a",
+    color: "#A4AEC0",
     fontSize: 24,
   },
   accuracyHeaderRow: {
@@ -2375,20 +2376,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   accuracyTitle: {
-    color: "#71717a",
+    color: "#7D879F",
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1,
   },
   accuracyValueText: {
-    color: "#ffffff",
+    color: "#20253D",
     fontSize: 12,
     fontWeight: "700",
   },
   accuracyBarContainer: {
     width: "100%",
     height: 8,
-    backgroundColor: "#22242a",
+    backgroundColor: "#E9EFF7",
     borderRadius: 4,
     overflow: "hidden",
   },
@@ -2404,7 +2405,7 @@ const styles = StyleSheet.create({
   },
   resStatBox: {
     flex: 1,
-    backgroundColor: "#22242a",
+    backgroundColor: "#F2F5F9",
     paddingVertical: 14,
     paddingHorizontal: 8,
     borderRadius: 16,
@@ -2412,12 +2413,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   resStatVal: {
-    color: "#ffffff",
+    color: "#20253D",
     fontSize: 16,
     fontWeight: "700",
   },
   resStatLabel: {
-    color: "#71717a",
+    color: "#7D879F",
     fontSize: 10,
     textAlign: "center",
   },
@@ -2432,12 +2433,12 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   reviewCard: {
-    backgroundColor: "#191a1e",
+    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 18,
     gap: 12,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: "#E3EAF4",
   },
   reviewHeaderRow: {
     flexDirection: "row",
@@ -2445,7 +2446,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   reviewQNum: {
-    color: "#5451FF",
+    color: "#7366E8",
     fontSize: 12,
     fontWeight: "800",
     letterSpacing: 1,
@@ -2469,13 +2470,13 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   reviewQText: {
-    color: "#ffffff",
+    color: "#20253D",
     fontSize: 14,
     fontWeight: "600",
     lineHeight: 20,
   },
   answersBox: {
-    backgroundColor: "#22242a",
+    backgroundColor: "#F2F5F9",
     borderRadius: 14,
     padding: 12,
     gap: 6,
@@ -2485,7 +2486,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   ansLabel: {
-    color: "#71717a",
+    color: "#7D879F",
     fontSize: 12,
     fontWeight: "600",
   },
@@ -2495,21 +2496,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   explanationBox: {
-    backgroundColor: "rgba(84,81,255,0.08)",
+    backgroundColor: "#F0EEFF",
     borderRadius: 14,
     padding: 12,
     gap: 6,
     borderWidth: 1,
-    borderColor: "rgba(84,81,255,0.2)",
+    borderColor: "#D9D3FF",
   },
   explanationTitle: {
-    color: "#5451FF",
+    color: "#7366E8",
     fontSize: 10,
     fontWeight: "800",
     letterSpacing: 1,
   },
   explanationText: {
-    color: "#9ca3af",
+    color: "#59657C",
     fontSize: 12,
     lineHeight: 18,
   },
@@ -2520,23 +2521,23 @@ const styles = StyleSheet.create({
   },
   retryBtn: {
     flex: 1,
-    backgroundColor: "#22242a",
+    backgroundColor: "#F2F5F9",
     height: 52,
     borderRadius: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    borderColor: "#DCE4EF",
   },
   retryBtnText: {
-    color: "#ffffff",
+    color: "#20253D",
     fontSize: 13,
     fontWeight: "700",
   },
   finishBtn: {
     flex: 1,
-    backgroundColor: "#5451FF",
+    backgroundColor: "#7366E8",
     height: 52,
     borderRadius: 16,
     flexDirection: "row",
@@ -2554,19 +2555,19 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.8)",
+    backgroundColor: "rgba(32,37,61,0.58)",
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
   },
   modalContent: {
-    backgroundColor: "#191a1e",
+    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     padding: 24,
     width: "100%",
     maxWidth: 480,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
+    borderColor: "#E3EAF4",
     gap: 16,
   },
   modalHeader: {
@@ -2575,13 +2576,13 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   modalSubTitle: {
-    color: "#5451FF",
+    color: "#7366E8",
     fontSize: 10,
     fontWeight: "800",
     letterSpacing: 1,
   },
   modalTitle: {
-    color: "#ffffff",
+    color: "#20253D",
     fontSize: 16,
     fontWeight: "700",
     marginTop: 2,
@@ -2612,16 +2613,16 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   modalInput: {
-    backgroundColor: "#22242a",
+    backgroundColor: "#F2F5F9",
     borderRadius: 14,
     padding: 14,
-    color: "#ffffff",
+    color: "#20253D",
     fontSize: 13,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    borderColor: "#DCE4EF",
   },
   uploadSubmitBtn: {
-    backgroundColor: "#5451FF",
+    backgroundColor: "#7366E8",
     height: 50,
     borderRadius: 14,
     flexDirection: "row",

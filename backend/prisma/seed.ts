@@ -49,12 +49,19 @@ async function main() {
     include: { student: true },
   });
 
-  // 3. Clear existing assessments for clean re-seeding
-  await prisma.attemptAnswer.deleteMany({});
-  await prisma.assessmentAttempt.deleteMany({});
-  await prisma.option.deleteMany({});
-  await prisma.question.deleteMany({});
-  await prisma.assessment.deleteMany({});
+  // 3. Replace only the demo content owned by this seed.
+  // Assessment relations cascade to their questions, options, attempts, and map activities;
+  // unrelated teacher/student content remains untouched.
+  const demoAssessmentIds = [
+    'demo-asm-coding',
+    'demo-asm-1',
+    'demo-asm-2',
+    'demo-asm-4',
+    'demo-asm-5',
+    'demo-asm-6',
+    'demo-asm-7',
+  ];
+  await prisma.assessment.deleteMany({ where: { id: { in: demoAssessmentIds } } });
 
   // 4. Seed Assessment 1: Python & Algorithms Coding Playground
   const codingAsm = await prisma.assessment.create({
@@ -264,7 +271,168 @@ async function main() {
     },
   });
 
-  // Seed Standalone Problems
+  // 8. Seed Assessment 5: Recursion & Problem Solving Sprint
+  await prisma.assessment.create({
+    data: {
+      id: 'demo-asm-5',
+      title: 'Recursion & Problem Solving Sprint',
+      description: 'Practice recursive thinking, base cases, and tracing a solution from the inside out.',
+      className: '1st Sem',
+      topic: 'Algorithms',
+      assessmentType: AssessmentType.QUIZ,
+      totalMarks: 25,
+      passingMarks: 15,
+      durationMinutes: 20,
+      hasNegativeMarking: false,
+      isPublished: true,
+      createdById: teacherUser.id,
+      questions: {
+        create: [
+          {
+            id: 'recursion-1',
+            questionText: 'Which two parts must every correct recursive function include?',
+            questionType: QuestionType.MULTIPLE_CHOICE,
+            difficulty: DifficultyLevel.EASY,
+            points: 10,
+            orderIndex: 1,
+            options: {
+              create: [
+                { optionText: 'A base case', isCorrect: true, orderIndex: 1 },
+                { optionText: 'A recursive case', isCorrect: true, orderIndex: 2 },
+                { optionText: 'A global variable', isCorrect: false, orderIndex: 3 },
+                { optionText: 'A sorted array', isCorrect: false, orderIndex: 4 },
+              ],
+            },
+            explanation: 'The base case stops the recursion and the recursive case reduces the problem.',
+          },
+          {
+            id: 'recursion-2',
+            questionText: 'True or False: A recursive function without a reachable base case can keep calling itself until the call stack is exhausted.',
+            questionType: QuestionType.TRUE_FALSE,
+            difficulty: DifficultyLevel.EASY,
+            points: 5,
+            orderIndex: 2,
+            trueFalseAnswer: true,
+          },
+          {
+            id: 'recursion-3',
+            questionText: 'What is the time complexity of a recursive binary search on a sorted array?',
+            questionType: QuestionType.SINGLE_CHOICE,
+            difficulty: DifficultyLevel.MEDIUM,
+            points: 10,
+            orderIndex: 3,
+            options: {
+              create: [
+                { optionText: 'O(1)', isCorrect: false, orderIndex: 1 },
+                { optionText: 'O(log n)', isCorrect: true, orderIndex: 2 },
+                { optionText: 'O(n)', isCorrect: false, orderIndex: 3 },
+                { optionText: 'O(n²)', isCorrect: false, orderIndex: 4 },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  });
+
+  // 9. Seed Assessment 6: Data Structures Field Guide
+  await prisma.assessment.create({
+    data: {
+      id: 'demo-asm-6',
+      title: 'Data Structures Field Guide',
+      description: 'Choose the right structure for queues, stacks, maps, and priority-based work.',
+      className: '1st Sem',
+      topic: 'Data Structures',
+      assessmentType: AssessmentType.QUIZ,
+      totalMarks: 30,
+      passingMarks: 18,
+      durationMinutes: 25,
+      hasNegativeMarking: false,
+      isPublished: true,
+      createdById: teacherUser.id,
+      questions: {
+        create: [
+          {
+            id: 'structures-1',
+            questionText: 'Which data structure follows First-In-First-Out order?',
+            questionType: QuestionType.SINGLE_CHOICE,
+            difficulty: DifficultyLevel.EASY,
+            points: 10,
+            orderIndex: 1,
+            options: {
+              create: [
+                { optionText: 'Stack', isCorrect: false, orderIndex: 1 },
+                { optionText: 'Queue', isCorrect: true, orderIndex: 2 },
+                { optionText: 'Tree', isCorrect: false, orderIndex: 3 },
+                { optionText: 'Graph', isCorrect: false, orderIndex: 4 },
+              ],
+            },
+          },
+          {
+            id: 'structures-2',
+            questionText: 'Name the structure that stores key-value pairs for fast average lookup.',
+            questionType: QuestionType.SHORT_ANSWER,
+            difficulty: DifficultyLevel.EASY,
+            points: 10,
+            orderIndex: 2,
+            shortAnswerKeywords: ['hash map', 'hash table', 'dictionary', 'map'],
+          },
+          {
+            id: 'structures-3',
+            questionText: 'A priority queue is commonly implemented with a ___.',
+            questionType: QuestionType.FILL_IN_BLANKS,
+            difficulty: DifficultyLevel.MEDIUM,
+            points: 10,
+            orderIndex: 3,
+            shortAnswerKeywords: ['heap', 'binary heap'],
+          },
+        ],
+      },
+    },
+  });
+
+  // 10. Seed Assessment 7: Debugging Dojo Assignment
+  await prisma.assessment.create({
+    data: {
+      id: 'demo-asm-7',
+      title: 'Debugging Dojo Assignment',
+      description: 'Read a small algorithm, find the bug, and explain the fix in a short written submission.',
+      className: '1st Sem',
+      topic: 'Problem Solving',
+      assessmentType: AssessmentType.PRACTICE,
+      totalMarks: 20,
+      passingMarks: 12,
+      durationMinutes: 30,
+      hasNegativeMarking: false,
+      isPublished: true,
+      createdById: teacherUser.id,
+      questions: {
+        create: [
+          {
+            id: 'debug-1',
+            questionText: 'A loop skips the last item because it uses range(0, len(items) - 1). Explain the boundary fix.',
+            questionType: QuestionType.SHORT_ANSWER,
+            difficulty: DifficultyLevel.EASY,
+            points: 10,
+            orderIndex: 1,
+            shortAnswerKeywords: ['len(items)', 'range', 'last item', 'off by one'],
+            explanation: 'Use range(0, len(items)) or range(len(items)) so the last valid index is included.',
+          },
+          {
+            id: 'debug-2',
+            questionText: 'True or False: Logging the input, output, and a useful intermediate value is a practical first debugging step.',
+            questionType: QuestionType.TRUE_FALSE,
+            difficulty: DifficultyLevel.EASY,
+            points: 10,
+            orderIndex: 2,
+            trueFalseAnswer: true,
+          },
+        ],
+      },
+    },
+  });
+
+  // Build the synced learning map after all assessment content exists.
   await seedLearningPath(prisma);
 
   // Seed Standalone Problems

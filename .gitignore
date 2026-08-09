@@ -26,6 +26,8 @@ dist/
 *.pem
 .turbo/
 .expo/
+.prisma-seed/
+backend/prisma/.seed-build/
 
 # debug
 npm-debug.log*

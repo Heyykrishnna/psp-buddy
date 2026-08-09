@@ -77,7 +77,7 @@ export function PlaygroundScreen({ onBackToDashboard }: PlaygroundScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#09090b",
+    backgroundColor: "#F1F5FB",
   },
   header: {
     height: 52,
@@ -85,21 +85,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#27272a",
-    backgroundColor: "#18181b",
+    borderBottomColor: "#E3EAF4",
+    backgroundColor: "#FFFFFF",
   },
   backBtn: {
     paddingRight: 12,
   },
   backBtnText: {
-    color: "#5451FF",
+    color: "#7366E8",
     fontSize: 16,
     fontWeight: "600",
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#ffffff",
+    color: "#20253D",
   },
   content: {
     flex: 1,
@@ -109,8 +109,8 @@ const styles = StyleSheet.create({
   },
   card: {
     width: "100%",
-    backgroundColor: "#18181b",
-    borderColor: "#27272a",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E3EAF4",
     borderWidth: 1,
     borderRadius: 24,
     padding: 28,
@@ -121,16 +121,16 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "rgba(84, 81, 255, 0.15)",
+    backgroundColor: "#F0EEFF",
     borderWidth: 1,
-    borderColor: "rgba(84, 81, 255, 0.3)",
+    borderColor: "#D9D3FF",
     justifyContent: "center",
     alignItems: "center",
   },
   iconText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#5451FF',
+    color: '#7366E8',
   },
   badge: {
     backgroundColor: "rgba(239, 68, 68, 0.15)",
@@ -149,18 +149,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: "800",
-    color: "#ffffff",
+    color: "#20253D",
     textAlign: "center",
   },
   description: {
     fontSize: 13,
-    color: "#a1a1aa",
+    color: "#59657C",
     textAlign: "center",
     lineHeight: 20,
   },
   subDescription: {
     fontSize: 12,
-    color: "#71717a",
+    color: "#7D879F",
     textAlign: "center",
     lineHeight: 18,
   },
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   },
   primaryBtn: {
     width: "100%",
-    backgroundColor: "#5451FF",
+    backgroundColor: "#7366E8",
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: "center",
@@ -183,13 +183,13 @@ const styles = StyleSheet.create({
   },
   secondaryBtn: {
     width: "100%",
-    backgroundColor: "#27272a",
+    backgroundColor: "#E9EFF7",
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: "center",
   },
   secondaryBtnText: {
-    color: "#a1a1aa",
+    color: "#59657C",
     fontSize: 13,
     fontWeight: "600",
   },

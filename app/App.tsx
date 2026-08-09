@@ -21,6 +21,7 @@ import { PlaygroundScreen } from './src/screens/PlaygroundScreen';
 import { CompetitiveScreen } from './src/screens/CompetitiveScreen';
 import { AiTutorScreen } from './src/screens/AiTutorScreen';
 import { AnalyticsScreen } from './src/screens/AnalyticsScreen';
+import { AppBottomNav, AppNavKey } from './src/components/AppBottomNav';
 
 type ScreenType =
   | 'DASHBOARD'
@@ -53,77 +54,84 @@ function MainNavigator() {
     return <OnboardingScreen />;
   }
 
+  const openScreen = (screen: ScreenType) => {
+    setCurrentScreen(screen);
+  };
+
+  const handleBottomNav = (next: AppNavKey) => {
+    if (next === 'MAP') openScreen('DASHBOARD');
+    if (next === 'MISSIONS') openScreen('ASSESSMENTS');
+    if (next === 'RANK') openScreen('LEADERBOARD');
+    if (next === 'PROFILE') openScreen('ANALYTICS');
+  };
+
+  const activeNav: AppNavKey = currentScreen === 'ASSESSMENTS'
+    ? 'MISSIONS'
+    : currentScreen === 'LEADERBOARD'
+      ? 'RANK'
+      : currentScreen === 'ANALYTICS'
+        ? 'PROFILE'
+        : 'MAP';
+
+  let screen: React.ReactNode;
   if (currentScreen === 'ASSESSMENTS') {
-    return (
+    screen = (
       <AssessmentScreen
         onBackToDashboard={() => setCurrentScreen('DASHBOARD')}
         selectedAssessmentId={selectedAsmId}
       />
     );
-  }
-
-  if (currentScreen === 'LEADERBOARD') {
-    return (
+  } else if (currentScreen === 'LEADERBOARD') {
+    screen = (
       <LeaderboardScreen
         onBackToDashboard={() => setCurrentScreen('DASHBOARD')}
       />
     );
-  }
-
-  if (currentScreen === 'PLAYGROUND') {
-    return (
+  } else if (currentScreen === 'PLAYGROUND') {
+    screen = (
       <PlaygroundScreen
         onBackToDashboard={() => setCurrentScreen('DASHBOARD')}
       />
     );
-  }
-
-  if (currentScreen === 'COMPETITIVE') {
-    return (
+  } else if (currentScreen === 'COMPETITIVE') {
+    screen = (
       <CompetitiveScreen
         onBackToDashboard={() => setCurrentScreen('DASHBOARD')}
       />
     );
-  }
-
-  if (currentScreen === 'AITUTOR') {
-    return (
+  } else if (currentScreen === 'AITUTOR') {
+    screen = (
       <AiTutorScreen
         onBackToDashboard={() => setCurrentScreen('DASHBOARD')}
       />
     );
-  }
-
-  if (currentScreen === 'ANALYTICS') {
-    return (
+  } else if (currentScreen === 'ANALYTICS') {
+    screen = (
       <AnalyticsScreen
         onBackToDashboard={() => setCurrentScreen('DASHBOARD')}
+      />
+    );
+  } else {
+    screen = (
+      <GameHomeScreen
+        onOpenAssessments={(asmId) => {
+          setSelectedAsmId(asmId || null);
+          openScreen('ASSESSMENTS');
+        }}
+        onOpenLeaderboard={() => openScreen('LEADERBOARD')}
+        onOpenPlayground={() => openScreen('PLAYGROUND')}
+        onOpenCompetitive={() => openScreen('COMPETITIVE')}
+        onOpenAiTutor={() => openScreen('AITUTOR')}
+        onOpenAnalytics={() => openScreen('ANALYTICS')}
       />
     );
   }
 
   return (
-    <GameHomeScreen
-      onOpenAssessments={(asmId) => {
-        setSelectedAsmId(asmId || null);
-        setCurrentScreen('ASSESSMENTS');
-      }}
-      onOpenLeaderboard={() => {
-        setCurrentScreen('LEADERBOARD');
-      }}
-      onOpenPlayground={() => {
-        setCurrentScreen('PLAYGROUND');
-      }}
-      onOpenCompetitive={() => {
-        setCurrentScreen('COMPETITIVE');
-      }}
-      onOpenAiTutor={() => {
-        setCurrentScreen('AITUTOR');
-      }}
-      onOpenAnalytics={() => {
-        setCurrentScreen('ANALYTICS');
-      }}
-    />
+    <View style={styles.appShell}>
+      {screen}
+      <AppBottomNav active={activeNav} onChange={handleBottomNav} />
+    </View>
   );
 }
 
@@ -166,6 +174,10 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  appShell: {
+    flex: 1,
+    backgroundColor: '#F1F5FB',
+  },
   loadingContainer: {
     flex: 1,
     backgroundColor: '#09090b',

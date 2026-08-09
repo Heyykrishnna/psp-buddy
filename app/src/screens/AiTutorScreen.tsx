@@ -258,7 +258,7 @@ export function AiTutorScreen({ onBackToDashboard }: AiTutorScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#09090b",
+    backgroundColor: "#F1F5FB",
   },
   header: {
     height: 52,
@@ -266,14 +266,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#27272a",
-    backgroundColor: "#121316",
+    borderBottomColor: "#E3EAF4",
+    backgroundColor: "#FFFFFF",
   },
   backBtn: {
     paddingRight: 12,
   },
   backBtnText: {
-    color: "#5451FF",
+    color: "#7366E8",
     fontSize: 16,
     fontWeight: "600",
     fontFamily:
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#ffffff",
+    color: "#20253D",
     letterSpacing: 1,
     fontFamily:
       Platform.OS === "web"
@@ -290,25 +290,25 @@ const styles = StyleSheet.create({
         : "SpaceGrotesk_600SemiBold",
   },
   promptsContainer: {
-    backgroundColor: "#121316",
+    backgroundColor: "#FFFFFF",
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#27272a",
+    borderBottomColor: "#E3EAF4",
   },
   promptsScroll: {
     paddingHorizontal: 12,
     gap: 8,
   },
   promptChip: {
-    backgroundColor: "#1c1c1e",
-    borderColor: "#3f3f46",
+    backgroundColor: "#F2F5F9",
+    borderColor: "#DCE4EF",
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
   },
   promptChipText: {
-    color: "#a1a1aa",
+    color: "#59657C",
     fontSize: 11,
     fontWeight: "600",
     fontFamily:
@@ -331,8 +331,8 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   aiBadge: {
-    backgroundColor: "rgba(84, 81, 255, 0.2)",
-    borderColor: "rgba(84, 81, 255, 0.4)",
+    backgroundColor: "#F0EEFF",
+    borderColor: "#D9D3FF",
     borderWidth: 1,
     alignSelf: "flex-start",
     paddingHorizontal: 8,
@@ -351,12 +351,12 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
   userBubble: {
-    backgroundColor: "#5451FF",
+    backgroundColor: "#7366E8",
     borderBottomRightRadius: 4,
   },
   aiBubble: {
-    backgroundColor: "#121316",
-    borderColor: "#27272a",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E3EAF4",
     borderWidth: 1,
     borderBottomLeftRadius: 4,
   },
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
     color: "#ffffff",
   },
   aiBubbleText: {
-    color: "#e4e4e7",
+    color: "#4B5872",
   },
   loadingContainer: {
     flexDirection: "row",
@@ -392,26 +392,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 12,
-    backgroundColor: "#121316",
+    backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
-    borderTopColor: "#27272a",
+    borderTopColor: "#E3EAF4",
     gap: 8,
   },
   textInput: {
     flex: 1,
-    backgroundColor: "#1c1c1e",
-    borderColor: "#27272a",
+    backgroundColor: "#F2F5F9",
+    borderColor: "#DCE4EF",
     borderWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
     fontSize: 13,
-    color: "#ffffff",
+    color: "#20253D",
     fontFamily:
       Platform.OS === "web" ? "Poppins, sans-serif" : "Poppins_500Medium",
   },
   sendBtn: {
-    backgroundColor: "#5451FF",
+    backgroundColor: "#7366E8",
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 20,

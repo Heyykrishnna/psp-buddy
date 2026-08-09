@@ -207,7 +207,7 @@ export function AnalyticsScreen({ onBackToDashboard }: AnalyticsScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#09090b',
+    backgroundColor: '#F1F5FB',
   },
   flex1: { flex: 1 },
   centerContainer: {
@@ -229,11 +229,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#27272a',
-    backgroundColor: '#121316',
+    backgroundColor: '#FFFFFF',
   },
   backBtn: { paddingRight: 12 },
   backBtnText: {
-    color: '#5451FF',
+    color: '#7366E8',
     fontSize: 16,
     fontWeight: '600',
     fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_600SemiBold',
