@@ -38,6 +38,41 @@ const COLORS = {
   softOrange: "#FFF1E9",
 };
 
+type NatureTheme = {
+  sky: string;
+  meadow: string;
+  hill: string;
+  hillBack: string;
+  water: string;
+  sun: string;
+  border: string;
+};
+
+const NATURE_THEMES: NatureTheme[] = [
+  { sky: "#EFFAFF", meadow: "#E4F5D9", hill: "#B9DFA6", hillBack: "#D1EBC3", water: "#B8E7F0", sun: "#FFE39B", border: "#D5EADC" },
+  { sky: "#F7F0FF", meadow: "#E9DDF4", hill: "#C7A7D9", hillBack: "#E0CDEB", water: "#C4D9F3", sun: "#FFD6A0", border: "#E4D8EF" },
+  { sky: "#FFF7EA", meadow: "#F3E6C4", hill: "#D6C07D", hillBack: "#E9D9A6", water: "#B9DFE8", sun: "#FFD27A", border: "#EDE0BE" },
+  { sky: "#EAF9F7", meadow: "#D3EEE6", hill: "#8FCBB7", hillBack: "#B8E2D5", water: "#A6DDEC", sun: "#FFE19C", border: "#CBE9DF" },
+];
+
+function natureTheme(index: number) {
+  return NATURE_THEMES[index % NATURE_THEMES.length];
+}
+
+function NatureBackdrop({ theme }: { theme: NatureTheme }) {
+  return (
+    <View pointerEvents="none" style={styles.natureBackdrop}>
+      <View style={[styles.natureSun, { backgroundColor: theme.sun }]} />
+      <View style={[styles.natureCloud, styles.natureCloudOne]} />
+      <View style={[styles.natureCloud, styles.natureCloudTwo]} />
+      <View style={[styles.natureHillBack, { backgroundColor: theme.hillBack }]} />
+      <View style={[styles.natureHill, { backgroundColor: theme.hill }]} />
+      <View style={[styles.natureWater, { backgroundColor: theme.water }]} />
+      <View style={[styles.natureMeadow, { backgroundColor: theme.meadow }]} />
+    </View>
+  );
+}
+
 const ICONS: Record<string, any> = {
   compass: "compass-outline",
   rocket: "rocket-outline",
@@ -205,23 +240,6 @@ function ProgressBar({ percent, color, height = 8 }: { percent: number; color: s
   );
 }
 
-function FloatingSpark({ color, delay = 0 }: { color: string; delay?: number }) {
-  const float = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(float, { toValue: 1, duration: 1500, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-          Animated.timing(float, { toValue: 0, duration: 1500, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-        ]),
-      ).start();
-    }, delay);
-    return () => clearTimeout(timer);
-  }, [delay]);
-  const translateY = float.interpolate({ inputRange: [0, 1], outputRange: [0, -8] });
-  return <Animated.View style={[styles.spark, { backgroundColor: color, transform: [{ translateY }] }]} />;
-}
-
 function MissionNode({
   level,
   isNext,
@@ -255,7 +273,6 @@ function MissionNode({
       </Animated.View>
       {!locked && (
         <View style={[styles.xpBadge, { backgroundColor: nodeColor }]}>
-          <Icon name="flash" size={10} color={COLORS.white} />
           <Text style={styles.xpBadgeText}>{level.xpReward} XP</Text>
         </View>
       )}
@@ -276,10 +293,7 @@ function LevelInfo({ level, isNext, chapterColor }: { level: LearningLevelDTO; i
       </View>
       <Text style={[styles.levelTitle, locked && styles.levelTitleLocked]} numberOfLines={1}>{level.title}</Text>
       <Text style={styles.levelSubtitle} numberOfLines={1}>{level.subtitle}</Text>
-      <View style={styles.levelMeta}>
-        <Icon name={locked ? "lock" : "flash"} size={11} color={locked ? COLORS.muted : COLORS.orange} />
-        <Text style={styles.levelMetaText}>{locked ? "Clear the previous checkpoint" : `${level.xpReward} XP reward`}</Text>
-      </View>
+      <Text style={styles.levelMetaText}>{locked ? "Locked" : `${level.xpReward} XP`}</Text>
     </View>
   );
 }
@@ -297,9 +311,10 @@ function JourneyChapter({
 }) {
   const completed = chapter.levels.filter((level) => level.status === "COMPLETED").length;
   const percent = chapter.levels.length ? Math.round((completed / chapter.levels.length) * 100) : 0;
+  const theme = natureTheme(index);
   return (
-    <View style={styles.chapterCard}>
-      <View style={[styles.chapterAccent, { backgroundColor: chapter.color }]} />
+    <View style={[styles.chapterCard, { backgroundColor: theme.sky, borderColor: theme.border }]}>
+      <NatureBackdrop theme={theme} />
       <View style={styles.chapterHeader}>
         <View style={[styles.chapterIcon, { backgroundColor: `${chapter.color}18` }]}>
           <Icon name={chapter.icon} size={22} color={chapter.color} />
@@ -314,11 +329,10 @@ function JourneyChapter({
           <Text style={styles.chapterPercentLabel}>done</Text>
         </View>
       </View>
-      <Text style={styles.chapterDescription}>{chapter.description}</Text>
       <ProgressBar percent={percent} color={chapter.color} height={7} />
       <View style={styles.chapterProgressMeta}>
-        <Text style={styles.chapterProgressText}>{completed} of {chapter.levels.length} checkpoints cleared</Text>
-        <Text style={styles.chapterProgressText}>{index === 0 ? "Start here" : "Keep exploring"}</Text>
+        <Text style={styles.chapterProgressText}>{completed}/{chapter.levels.length} cleared</Text>
+        <Text style={styles.chapterProgressText}>{index === 0 ? "Begin here" : "Next area"}</Text>
       </View>
 
       <View style={styles.journeyRail}>
@@ -479,39 +493,17 @@ export function MissionsScreen({ onOpenAssessment }: MissionsScreenProps) {
       >
         <View style={styles.topbar}>
           <View style={styles.avatar}><Text style={styles.avatarText}>{(user?.firstName?.[0] || "L").toUpperCase()}</Text></View>
-          <View style={styles.topbarCopy}><Text style={styles.topbarKicker}>MISSION CONTROL</Text><Text style={styles.topbarTitle}>Your learning journey</Text></View>
+          <View style={styles.topbarCopy}><Text style={styles.topbarKicker}>MISSIONS</Text><Text style={styles.topbarTitle}>Learning journey</Text></View>
           <View style={styles.xpPill}><Icon name="flash" size={14} color={COLORS.orange} /><Text style={styles.xpText}>{completedLevels} cleared</Text></View>
         </View>
 
-        <View style={styles.heroCard}>
-          <View style={styles.heroCopy}>
-            <View style={styles.heroLabel}><Icon name="map" size={13} color={COLORS.purple} /><Text style={styles.heroLabelText}>YOUR ADVENTURE MAP</Text></View>
-            <Text style={styles.heroTitle}>Every checkpoint gets you closer.</Text>
-            <Text style={styles.heroBody}>{nextLevel ? `Your next mission is ${nextLevel.title}. Keep your streak moving.` : "You have explored every available checkpoint. More missions are on the way."}</Text>
-            {nextLevel && <TouchableOpacity style={styles.heroButton} onPress={() => setSelectedLevelId(nextLevel.id)} activeOpacity={0.84}><Text style={styles.heroButtonText}>Continue journey</Text><Icon name="arrow-forward" size={16} color={COLORS.white} /></TouchableOpacity>}
-          </View>
-          <View style={styles.heroArt}>
-            <View style={styles.heroOrbitLarge} />
-            <View style={styles.heroPlanet}><Icon name="rocket" size={35} color={COLORS.purple} /></View>
-            <View style={styles.heroStarOne}><Icon name="sparkles" size={16} color={COLORS.orange} /></View>
-            <View style={styles.heroStarTwo}><Icon name="star" size={12} color={COLORS.yellow} /></View>
-            <FloatingSpark color={COLORS.pink} delay={150} />
-          </View>
-        </View>
-
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}><View style={[styles.statIcon, { backgroundColor: COLORS.softPurple }]}><Icon name="trophy" size={16} color={COLORS.purple} /></View><Text style={styles.statValue}>{completedLevels}/{Math.max(levels.length, 1)}</Text><Text style={styles.statLabel}>CLEARED</Text></View>
-          <View style={styles.statCard}><View style={[styles.statIcon, { backgroundColor: COLORS.softOrange }]}><Icon name="flash" size={16} color={COLORS.orange} /></View><Text style={[styles.statValue, { color: COLORS.orange }]}>{percent}%</Text><Text style={styles.statLabel}>PROGRESS</Text></View>
-          <View style={styles.statCard}><View style={[styles.statIcon, { backgroundColor: COLORS.softBlue }]}><Icon name="gift" size={16} color={COLORS.blue} /></View><Text style={[styles.statValue, { color: COLORS.blue }]}>{path.chapters.length}</Text><Text style={styles.statLabel}>CHAPTERS</Text></View>
-        </View>
-
-        <View style={styles.overallCard}>
-          <View style={styles.overallHeader}><View><Text style={styles.sectionKicker}>JOURNEY PROGRESS</Text><Text style={styles.overallTitle}>{percent === 0 ? "Your first step starts here" : `${percent}% of your map explored`}</Text></View><Icon name="compass" size={26} color={COLORS.purple} /></View>
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryHeader}><View><Text style={styles.sectionKicker}>JOURNEY PROGRESS</Text><Text style={styles.summaryTitle}>{percent}% explored</Text></View><Text style={styles.summaryCount}>{completedLevels}/{Math.max(levels.length, 1)}</Text></View>
           <ProgressBar percent={percent} color={COLORS.purple} height={9} />
-          <View style={styles.overallFooter}><Text style={styles.overallFooterText}>{completedLevels} checkpoints cleared</Text><Text style={styles.overallFooterText}>{levels.length - completedLevels} ahead</Text></View>
+          <View style={styles.summaryFooter}><Text style={styles.summaryFooterText}>{completedLevels} cleared</Text><Text style={styles.summaryFooterText}>{levels.length - completedLevels} ahead</Text></View>
         </View>
 
-        <View style={styles.sectionHeading}><View><Text style={styles.sectionKicker}>THE WORLD AHEAD</Text><Text style={styles.sectionTitle}>Follow your trail</Text></View><View style={styles.liveChip}><View style={styles.liveDot} /><Text style={styles.liveText}>SYNCED</Text></View></View>
+        <View style={styles.sectionHeading}><View><Text style={styles.sectionKicker}>JOURNEY MAP</Text><Text style={styles.sectionTitle}>Follow your trail</Text></View><View style={styles.liveChip}><View style={styles.liveDot} /><Text style={styles.liveText}>SYNCED</Text></View></View>
 
         {loading ? (
           <View style={styles.loadingCard}><ActivityIndicator color={COLORS.purple} /><Text style={styles.loadingText}>Syncing your journey...</Text></View>
@@ -536,38 +528,28 @@ const styles = StyleSheet.create({
   topbarTitle: { color: COLORS.ink, fontSize: 17, fontWeight: "900", marginTop: 2 },
   xpPill: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: COLORS.white, paddingHorizontal: 11, paddingVertical: 9, borderRadius: 16, shadowColor: "#C7D2E5", shadowOpacity: 0.36, shadowRadius: 7, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
   xpText: { color: COLORS.ink, fontSize: 11, fontWeight: "900" },
-  heroCard: { minHeight: 215, borderRadius: 28, backgroundColor: COLORS.softPurple, padding: 20, overflow: "hidden", flexDirection: "row", borderWidth: 1, borderColor: "#E3DEFF" },
-  heroCopy: { flex: 1, zIndex: 2 },
-  heroLabel: { flexDirection: "row", alignItems: "center", gap: 6 },
-  heroLabelText: { color: COLORS.purple, fontSize: 9, fontWeight: "900", letterSpacing: 1.1 },
-  heroTitle: { color: COLORS.ink, fontSize: 24, lineHeight: 30, fontWeight: "900", marginTop: 10, maxWidth: 245 },
-  heroBody: { color: COLORS.muted, fontSize: 12, lineHeight: 18, fontWeight: "600", marginTop: 8, maxWidth: 245 },
-  heroButton: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: COLORS.ink, paddingHorizontal: 14, paddingVertical: 11, borderRadius: 15, marginTop: 15 },
-  heroButtonText: { color: COLORS.white, fontSize: 11, fontWeight: "900" },
-  heroArt: { width: 105, alignItems: "center", justifyContent: "center", position: "relative" },
-  heroOrbitLarge: { position: "absolute", width: 128, height: 128, borderRadius: 64, borderWidth: 1, borderColor: "rgba(115,102,232,0.2)", transform: [{ rotate: "28deg" }] },
-  heroPlanet: { width: 72, height: 72, borderRadius: 27, backgroundColor: COLORS.white, alignItems: "center", justifyContent: "center", shadowColor: COLORS.purple, shadowOpacity: 0.24, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 4 },
-  heroStarOne: { position: "absolute", top: 26, right: 2, width: 30, height: 30, borderRadius: 11, backgroundColor: COLORS.white, alignItems: "center", justifyContent: "center" },
-  heroStarTwo: { position: "absolute", bottom: 26, left: 2, width: 26, height: 26, borderRadius: 10, backgroundColor: COLORS.white, alignItems: "center", justifyContent: "center" },
-  spark: { position: "absolute", top: 8, left: 12, width: 7, height: 7, borderRadius: 4 },
-  statsRow: { flexDirection: "row", gap: 9 },
-  statCard: { flex: 1, minHeight: 102, backgroundColor: COLORS.white, borderRadius: 20, padding: 12, borderWidth: 1, borderColor: COLORS.line, shadowColor: "#C7D2E5", shadowOpacity: 0.22, shadowRadius: 9, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
-  statIcon: { width: 30, height: 30, borderRadius: 11, alignItems: "center", justifyContent: "center", marginBottom: 7 },
-  statValue: { color: COLORS.purple, fontSize: 21, fontWeight: "900" },
-  statLabel: { color: COLORS.muted, fontSize: 8, fontWeight: "900", letterSpacing: 0.8, marginTop: 2 },
-  overallCard: { backgroundColor: COLORS.white, borderRadius: 22, padding: 16, borderWidth: 1, borderColor: COLORS.line },
-  overallHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 13 },
-  overallTitle: { color: COLORS.ink, fontSize: 15, fontWeight: "900", marginTop: 3 },
-  overallFooter: { flexDirection: "row", justifyContent: "space-between", marginTop: 7 },
-  overallFooterText: { color: COLORS.muted, fontSize: 10, fontWeight: "700" },
+  summaryCard: { backgroundColor: COLORS.white, borderRadius: 21, padding: 15, borderWidth: 1, borderColor: COLORS.line },
+  summaryHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 11 },
+  summaryTitle: { color: COLORS.ink, fontSize: 15, fontWeight: "900", marginTop: 3 },
+  summaryCount: { color: COLORS.purple, fontSize: 20, fontWeight: "900" },
+  summaryFooter: { flexDirection: "row", justifyContent: "space-between", marginTop: 7 },
+  summaryFooterText: { color: COLORS.muted, fontSize: 9, fontWeight: "700" },
   sectionHeading: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", marginTop: 4 },
   sectionKicker: { color: COLORS.muted, fontSize: 9, fontWeight: "900", letterSpacing: 1.3 },
   sectionTitle: { color: COLORS.ink, fontSize: 21, fontWeight: "900", marginTop: 3 },
   liveChip: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.line, borderRadius: 12, paddingHorizontal: 9, paddingVertical: 6 },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.green },
   liveText: { color: COLORS.muted, fontSize: 8, fontWeight: "900", letterSpacing: 0.8 },
-  chapterCard: { backgroundColor: COLORS.white, borderRadius: 26, padding: 16, borderWidth: 1, borderColor: COLORS.line, overflow: "hidden", shadowColor: "#C7D2E5", shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
-  chapterAccent: { position: "absolute", left: 0, top: 0, bottom: 0, width: 5 },
+  chapterCard: { borderRadius: 26, padding: 16, borderWidth: 1, overflow: "hidden", shadowColor: "#C7D2E5", shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  natureBackdrop: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, overflow: "hidden" },
+  natureSun: { position: "absolute", width: 72, height: 72, borderRadius: 36, top: 13, right: 24, opacity: 0.55 },
+  natureCloud: { position: "absolute", width: 62, height: 15, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.72)" },
+  natureCloudOne: { top: 24, left: 40 },
+  natureCloudTwo: { top: 50, right: 86, transform: [{ scale: 0.72 }] },
+  natureHillBack: { position: "absolute", width: 260, height: 120, borderRadius: 130, bottom: -61, left: -28, opacity: 0.58 },
+  natureHill: { position: "absolute", width: 230, height: 105, borderRadius: 120, bottom: -56, right: -34, opacity: 0.78 },
+  natureWater: { position: "absolute", width: 150, height: 35, borderRadius: 75, bottom: 9, left: 10, opacity: 0.6, transform: [{ rotate: "-7deg" }] },
+  natureMeadow: { position: "absolute", width: 170, height: 54, borderRadius: 85, bottom: -24, right: 36, opacity: 0.65 },
   chapterHeader: { flexDirection: "row", alignItems: "center", gap: 11 },
   chapterIcon: { width: 46, height: 46, borderRadius: 17, alignItems: "center", justifyContent: "center" },
   chapterHeaderCopy: { flex: 1 },
@@ -577,7 +559,6 @@ const styles = StyleSheet.create({
   chapterPercent: { alignItems: "flex-end" },
   chapterPercentValue: { fontSize: 20, fontWeight: "900" },
   chapterPercentLabel: { color: COLORS.muted, fontSize: 8, fontWeight: "800" },
-  chapterDescription: { color: COLORS.muted, fontSize: 11, lineHeight: 17, fontWeight: "600", marginTop: 14 },
   progressTrack: { width: "100%", backgroundColor: "#ECF0F6", overflow: "hidden" },
   progressFill: { backgroundColor: COLORS.purple },
   chapterProgressMeta: { flexDirection: "row", justifyContent: "space-between", marginTop: 7 },
@@ -591,7 +572,7 @@ const styles = StyleSheet.create({
   nodeCircleNext: { borderColor: "#E4DFFF", shadowColor: COLORS.purple, shadowOpacity: 0.35, shadowRadius: 14 },
   xpBadge: { alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 2, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 8, marginTop: -7, borderWidth: 2, borderColor: COLORS.white },
   xpBadgeText: { color: COLORS.white, fontSize: 8, fontWeight: "900" },
-  levelInfo: { width: "58%", minHeight: 68, backgroundColor: "#FAFBFE", borderRadius: 16, paddingHorizontal: 11, paddingVertical: 9, borderWidth: 1, borderColor: COLORS.line },
+  levelInfo: { flex: 1, minHeight: 68, backgroundColor: "rgba(255,255,255,0.82)", borderRadius: 16, paddingHorizontal: 11, paddingVertical: 9, borderWidth: 1, borderColor: "rgba(255,255,255,0.8)" },
   levelInfoLocked: { opacity: 0.75 },
   levelInfoTop: { flexDirection: "row", alignItems: "center", gap: 5 },
   levelNumber: { fontSize: 8, fontWeight: "900", letterSpacing: 0.8, flex: 1 },
