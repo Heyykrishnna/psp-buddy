@@ -253,24 +253,12 @@ function MissionNode({
 }) {
   const locked = level.status === "LOCKED";
   const complete = level.status === "COMPLETED";
-  const pulse = useRef(new Animated.Value(1)).current;
-  useEffect(() => {
-    if (!isNext) return;
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.spring(pulse, { toValue: 1.08, stiffness: 170, damping: 11, mass: 0.7, useNativeDriver: true }),
-        Animated.spring(pulse, { toValue: 1, stiffness: 210, damping: 14, mass: 0.7, useNativeDriver: true }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [isNext]);
   const nodeColor = locked ? "#C9D2E0" : complete ? COLORS.green : level.color || chapterColor;
   return (
     <TouchableOpacity disabled={locked} onPress={onPress} activeOpacity={0.82} accessibilityRole="button">
-      <Animated.View style={[styles.nodeCircle, { backgroundColor: nodeColor, transform: [{ scale: pulse }] }, isNext && styles.nodeCircleNext]}>
+      <View style={[styles.nodeCircle, { backgroundColor: nodeColor }, isNext && styles.nodeCircleNext]}>
         <Icon name={locked ? "lock" : complete ? "check-circle" : level.icon} size={24} color={COLORS.white} />
-      </Animated.View>
+      </View>
       {!locked && (
         <View style={[styles.xpBadge, { backgroundColor: nodeColor }]}>
           <Text style={styles.xpBadgeText}>{level.xpReward} XP</Text>
@@ -569,7 +557,7 @@ const styles = StyleSheet.create({
   levelRowLeft: { justifyContent: "flex-start", paddingRight: 8 },
   levelRowRight: { justifyContent: "flex-end", paddingLeft: 8 },
   nodeCircle: { width: 58, height: 58, borderRadius: 22, alignItems: "center", justifyContent: "center", borderWidth: 4, borderColor: COLORS.white, shadowColor: "#B7C3D5", shadowOpacity: 0.35, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
-  nodeCircleNext: { borderColor: "#E4DFFF", shadowColor: COLORS.purple, shadowOpacity: 0.35, shadowRadius: 14 },
+  nodeCircleNext: {},
   xpBadge: { alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 2, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 8, marginTop: -7, borderWidth: 2, borderColor: COLORS.white },
   xpBadgeText: { color: COLORS.white, fontSize: 8, fontWeight: "900" },
   levelInfo: { flex: 1, minHeight: 68, backgroundColor: "rgba(255,255,255,0.82)", borderRadius: 16, paddingHorizontal: 11, paddingVertical: 9, borderWidth: 1, borderColor: "rgba(255,255,255,0.8)" },
