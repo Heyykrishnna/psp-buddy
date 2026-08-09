@@ -14,7 +14,7 @@ import {
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
-import { DashboardScreen } from './src/screens/DashboardScreen';
+import { GameHomeScreen } from './src/screens/GameHomeScreen';
 import { AssessmentScreen } from './src/screens/AssessmentScreen';
 import { LeaderboardScreen } from './src/screens/LeaderboardScreen';
 import { PlaygroundScreen } from './src/screens/PlaygroundScreen';
@@ -103,7 +103,7 @@ function MainNavigator() {
   }
 
   return (
-    <DashboardScreen
+    <GameHomeScreen
       onOpenAssessments={(asmId) => {
         setSelectedAsmId(asmId || null);
         setCurrentScreen('ASSESSMENTS');
@@ -159,7 +159,7 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <MainNavigator />
     </AuthProvider>
   );

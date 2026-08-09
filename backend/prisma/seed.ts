@@ -1,4 +1,5 @@
 import { PrismaClient, RoleName, QuestionType, DifficultyLevel, AssessmentType, AttemptStatus } from '@prisma/client';
+import { seedLearningPath } from './learning-path.seed';
 
 const prisma = new PrismaClient();
 
@@ -262,6 +263,9 @@ async function main() {
       },
     },
   });
+
+  // Seed Standalone Problems
+  await seedLearningPath(prisma);
 
   // Seed Standalone Problems
   const dbProblem = (prisma as any).problem;

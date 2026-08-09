@@ -15,8 +15,12 @@ export class SyncGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private connectedClients: Map<WebSocket, string> = new Map();
 
-  handleConnection(client: WebSocket, ...args: any[]) {
-    // In production, extract user_id from query params/token verification
+  handleConnection(client: WebSocket, request?: { url?: string }) {
+    // The JWT is still validated by the API on state-changing requests. The
+    // query userId only scopes realtime fan-out to the current browser/device.
+    const url = new URL(request?.url || '/ws', 'http://localhost');
+    const userId = url.searchParams.get('userId');
+    if (userId) this.connectedClients.set(client, userId);
     console.log('Client connected to WebSocket Sync Gateway');
   }
 

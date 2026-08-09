@@ -215,6 +215,59 @@ export interface NotificationDTO {
   createdAt: string;
 }
 
+export type LearningActivityType = 'QUIZ' | 'WORKSHEET';
+export type LevelProgressStatus = 'LOCKED' | 'UNLOCKED' | 'IN_PROGRESS' | 'COMPLETED';
+
+export interface LearningActivityProgressDTO {
+  assessmentId: string;
+  type: LearningActivityType;
+  score: number;
+  completed: boolean;
+  source: 'ATTEMPT' | 'WORKBOOK' | 'NONE';
+}
+
+export interface LearningActivityDTO {
+  id: string;
+  type: LearningActivityType;
+  orderIndex: number;
+  assessment: AssessmentDTO;
+  progress: LearningActivityProgressDTO;
+}
+
+export interface LearningLevelDTO {
+  id: string;
+  key: string;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  icon: string;
+  color: string;
+  orderIndex: number;
+  xpReward: number;
+  passPercent: number;
+  status: LevelProgressStatus;
+  bestPercent: number;
+  xpAwarded: number;
+  activities: LearningActivityDTO[];
+}
+
+export interface LearningChapterDTO {
+  id: string;
+  key: string;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  icon: string;
+  color: string;
+  orderIndex: number;
+  levels: LearningLevelDTO[];
+}
+
+export interface LearningPathDTO {
+  student: { id: string; userId: string; name: string };
+  chapters: LearningChapterDTO[];
+}
+
 // Analytics Engine DTOs
 export interface StudentTopicMasteryDTO {
   topic: string;
@@ -250,6 +303,7 @@ export enum SyncEventType {
   WORKBOOK_STATUS_CHANGED = 'WORKBOOK_STATUS_CHANGED',
   LEADERBOARD_UPDATED = 'LEADERBOARD_UPDATED',
   ASSESSMENT_SUBMITTED = 'ASSESSMENT_SUBMITTED',
+  LEVEL_PROGRESS_UPDATED = 'LEVEL_PROGRESS_UPDATED',
 }
 
 export interface SyncEventPayload<T = unknown> {

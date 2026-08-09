@@ -3,6 +3,7 @@ import { db } from '@/database';
 import { SyncGateway } from '../gateway/sync.gateway';
 import { AiService } from '../ai/ai.service';
 import { SyncEventType } from '@/types';
+import { LearningPathService } from '../learning-path/learning-path.service';
 
 export interface CreateAssessmentDto {
   title: string;
@@ -52,6 +53,7 @@ export class AssessmentService {
   constructor(
     private syncGateway: SyncGateway,
     private aiService: AiService,
+    private learningPathService: LearningPathService,
   ) { }
 
   // 1. Create Assessment with Questions & Config
@@ -604,6 +606,8 @@ export class AssessmentService {
       maxScore,
     });
 
+    await this.learningPathService.syncStudentProgress(attempt.studentId, attempt.assessmentId);
+
     return {
       success: true,
       attemptId: evaluatedAttempt.id,
@@ -803,6 +807,8 @@ export class AssessmentService {
       maxMarks: updated.maxMarks,
       feedback: updated.aiFeedback,
     });
+
+    await this.learningPathService.syncStudentProgress(updated.studentId, updated.assessmentId || undefined);
 
     return updated;
   }

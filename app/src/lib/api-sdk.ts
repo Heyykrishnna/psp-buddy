@@ -9,6 +9,8 @@ import {
   NotificationDTO,
   SyncEventType,
   SyncEventPayload,
+  LearningPathDTO,
+  LearningLevelDTO,
   StudentTopicMasteryDTO,
   StudentOverviewDTO,
 } from '../types';
@@ -16,6 +18,7 @@ import { RegisterInput, LoginInput, CodingSubmissionInput, SubmitAnswerInput } f
 
 export interface ApiClientConfig {
   baseURL: string;
+  getBaseURL?: () => string;
   getAccessToken?: () => Promise<string | null>;
   getRefreshToken?: () => Promise<string | null>;
   setTokens?: (tokens: AuthTokens) => Promise<void>;
@@ -26,6 +29,7 @@ export class PSPBuddyApiClient {
   private http: AxiosInstance;
   private syncSubscribers: Map<SyncEventType, Set<(payload: SyncEventPayload) => void>> = new Map();
   private ws: WebSocket | null = null;
+  private realtimeShouldReconnect = true;
 
   constructor(private config: ApiClientConfig) {
     this.http = axios.create({
@@ -36,6 +40,9 @@ export class PSPBuddyApiClient {
     });
 
     this.http.interceptors.request.use(async (reqConfig) => {
+      if (config.getBaseURL) {
+        reqConfig.baseURL = config.getBaseURL();
+      }
       if (config.getAccessToken) {
         const token = await config.getAccessToken();
         if (token && reqConfig.headers) {
@@ -59,7 +66,8 @@ export class PSPBuddyApiClient {
           try {
             const refreshToken = await config.getRefreshToken();
             if (refreshToken) {
-              const res = await axios.post<AuthTokens>(`${config.baseURL}/auth/refresh`, { refreshToken });
+              const currentBaseURL = config.getBaseURL ? config.getBaseURL() : config.baseURL;
+              const res = await axios.post<AuthTokens>(`${currentBaseURL}/auth/refresh`, { refreshToken });
               await config.setTokens(res.data);
               originalRequest.headers.Authorization = `Bearer ${res.data.accessToken}`;
               return this.http(originalRequest);
@@ -124,6 +132,19 @@ export class PSPBuddyApiClient {
 
   async getStudentAttempts(studentId: string) {
     const res = await this.http.get(`/students/${studentId}/attempts`);
+    return res.data;
+  }
+
+  // GAME LEARNING PATH API
+  async getLearningPath(studentId?: string): Promise<LearningPathDTO> {
+    const query = studentId ? `?studentId=${encodeURIComponent(studentId)}` : '';
+    const res = await this.http.get<LearningPathDTO>(`/learning-path${query}`);
+    return res.data;
+  }
+
+  async getLearningLevel(levelId: string, studentId?: string): Promise<LearningLevelDTO> {
+    const query = studentId ? `?studentId=${encodeURIComponent(studentId)}` : '';
+    const res = await this.http.get<LearningLevelDTO>(`/learning-path/levels/${levelId}${query}`);
     return res.data;
   }
 
@@ -336,11 +357,14 @@ export class PSPBuddyApiClient {
   }
 
 
-  connectRealtimeSync(wsUrl: string, token: string) {
+  connectRealtimeSync(wsUrl: string, token: string, userId?: string) {
     if (typeof window === 'undefined' && typeof globalThis === 'undefined') return;
 
     try {
-      this.ws = new WebSocket(`${wsUrl}?token=${token}`);
+      this.realtimeShouldReconnect = true;
+      const params = new URLSearchParams({ token });
+      if (userId) params.set('userId', userId);
+      this.ws = new WebSocket(`${wsUrl}?${params.toString()}`);
 
       this.ws.onmessage = (event) => {
         try {
@@ -355,11 +379,19 @@ export class PSPBuddyApiClient {
       };
 
       this.ws.onclose = () => {
-        setTimeout(() => this.connectRealtimeSync(wsUrl, token), 5000);
+        if (this.realtimeShouldReconnect) {
+          setTimeout(() => this.connectRealtimeSync(wsUrl, token, userId), 5000);
+        }
       };
     } catch (err) {
       console.error('WebSocket connection error:', err);
     }
+  }
+
+  disconnectRealtimeSync() {
+    this.realtimeShouldReconnect = false;
+    this.ws?.close();
+    this.ws = null;
   }
 
   subscribeSync(event: SyncEventType, callback: (payload: SyncEventPayload) => void) {

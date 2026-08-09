@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { Platform } from "react-native";
+import Constants from "expo-constants";
 import { UserProfile, AuthResponse, UserRole } from "../types";
 import { PSPBuddyApiClient } from "../lib/api-sdk";
 
@@ -39,14 +41,53 @@ let memoryRefreshToken: string | null = null;
 
 function getMobileApiUrl(): string {
   const envUrl = process.env.EXPO_PUBLIC_API_URL;
-  if (envUrl && !envUrl.includes("localhost")) {
+
+  // If explicit production API URL is set in env, use it
+  if (envUrl && !envUrl.includes("192.168.1.4")) {
+    const isLocal =
+      envUrl.includes("localhost") ||
+      envUrl.includes("127.0.0.1") ||
+      envUrl.includes("192.168.");
+    if (!isLocal) {
+      return envUrl;
+    }
+  }
+
+  // On Web: use current browser hostname so port 4000 works on localhost or any LAN IP
+  if (
+    Platform.OS === "web" &&
+    typeof window !== "undefined" &&
+    window.location &&
+    window.location.hostname
+  ) {
+    return `http://${window.location.hostname}:4000`;
+  }
+
+  // On Expo Go / Physical device: auto-detect Metro server IP from hostUri
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri) {
+    const host = hostUri.split(":")[0];
+    if (host && host !== "localhost" && host !== "127.0.0.1") {
+      return `http://${host}:4000`;
+    }
+  }
+
+  // Fallback to valid local envUrl
+  if (envUrl && !envUrl.includes("192.168.1.4")) {
     return envUrl;
   }
-  return "http://192.168.1.5:4000";
+
+  // Android emulator fallback
+  if (Platform.OS === "android") {
+    return "http://10.0.2.2:4000";
+  }
+
+  return "http://localhost:4000";
 }
 
 const apiClientInstance = new PSPBuddyApiClient({
   baseURL: getMobileApiUrl(),
+  getBaseURL: () => getMobileApiUrl(),
   getAccessToken: async () => memoryAccessToken,
   getRefreshToken: async () => memoryRefreshToken,
   setTokens: async (tokens) => {
@@ -66,6 +107,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     }, 500);
   }, []);
+
+  useEffect(() => {
+    if (!user || !accessToken) return;
+    const apiUrl = getMobileApiUrl();
+    const wsUrl = `${apiUrl.replace(/^http/, "ws")}/ws`;
+    apiClientInstance.connectRealtimeSync(wsUrl, accessToken, user.id);
+    return () => apiClientInstance.disconnectRealtimeSync();
+  }, [user, accessToken]);
 
   const login = async (email: string, password: string) => {
     try {
@@ -195,6 +244,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    apiClientInstance.disconnectRealtimeSync();
     memoryAccessToken = null;
     memoryRefreshToken = null;
     setTokenState(null);

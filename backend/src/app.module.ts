@@ -13,6 +13,8 @@ import { LeaderboardService } from './leaderboard/leaderboard.service';
 import { AnalyticsController } from './analytics/analytics.controller';
 import { AnalyticsService } from './analytics/analytics.service';
 import { SyncGateway } from './gateway/sync.gateway';
+import { LearningPathController } from './learning-path/learning-path.controller';
+import { LearningPathService } from './learning-path/learning-path.service';
 
 @Module({
   imports: [
@@ -27,12 +29,13 @@ import { SyncGateway } from './gateway/sync.gateway';
     ProblemModule,
     CompetitiveModule,
   ],
-  controllers: [AssessmentController, LeaderboardController, AnalyticsController],
+  controllers: [AssessmentController, LeaderboardController, AnalyticsController, LearningPathController],
   providers: [
     SyncGateway,
     AssessmentService,
     LeaderboardService,
     AnalyticsService,
+    LearningPathService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })

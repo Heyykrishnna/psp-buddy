@@ -782,6 +782,13 @@ export default function TeacherDashboardPage() {
 
           <div className="flex items-center gap-3">
             <button
+              onClick={() => router.push("/teacher/learning-path")}
+              className="flex items-center gap-1.5 px-4 py-2 bg-[#E8F8FF] hover:bg-[#D9F3FF] text-[#168FBF] text-xs font-semibold rounded-md transition-all cursor-pointer"
+            >
+              <RocketIcon className="w-3.5 h-3.5" />
+              Learning Map
+            </button>
+            <button
               onClick={() => router.push("/teacher/assessments/new")}
               className="flex items-center gap-1.5 px-4 py-2 bg-[#5451FF] hover:bg-[#4340e0] text-white text-xs font-semibold rounded-md shadow-sm transition-all cursor-pointer"
             >

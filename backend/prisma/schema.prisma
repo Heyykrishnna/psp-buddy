@@ -41,6 +41,18 @@ enum AssessmentType {
   PRACTICE
 }
 
+enum LearningActivityType {
+  QUIZ
+  WORKSHEET
+}
+
+enum LevelProgressStatus {
+  LOCKED
+  UNLOCKED
+  IN_PROGRESS
+  COMPLETED
+}
+
 enum WorkbookStatus {
   PENDING
   PROCESSING
@@ -174,6 +186,7 @@ model Student {
   userAchievements      UserAchievement[]
   weeklyProgress        UserWeeklyProgress[]
   dailyChallengeEntries DailyChallengeEntry[]
+  levelProgress          LevelProgress[]
 
   @@map("students")
 }
@@ -367,6 +380,7 @@ model Assessment {
   answers            Answer[]
   attempts           AssessmentAttempt[]
   workbookUploads    WorkbookUpload[]
+  learningActivities LevelActivity[]
 
   @@map("assessments")
 }
@@ -729,4 +743,83 @@ model ChatMessage {
   createdAt DateTime    @default(now())
 
   @@map("chat_messages")
+}
+
+// ── Mobile Game Learning Path ───────────────────────────────────────────────
+// Chapters and levels orchestrate existing assessments. Question content stays
+// in Assessment/Question so teacher edits are immediately reflected in mobile.
+model LearningChapter {
+  id          String         @id @default(uuid())
+  key         String         @unique
+  title       String
+  subtitle    String?
+  description String?
+  icon        String         @default("sparkles")
+  color       String         @default("#7C5CFC")
+  orderIndex  Int            @map("order_index")
+  isPublished Boolean        @default(true) @map("is_published")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  levels      LearningLevel[]
+
+  @@map("learning_chapters")
+}
+
+model LearningLevel {
+  id          String          @id @default(uuid())
+  key         String          @unique
+  chapterId   String          @map("chapter_id")
+  chapter     LearningChapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  title       String
+  subtitle    String?
+  description String?
+  icon        String          @default("star")
+  color       String          @default("#56C7F2")
+  orderIndex  Int             @map("order_index")
+  xpReward    Int             @default(100) @map("xp_reward")
+  passPercent Int             @default(70) @map("pass_percent")
+  isPublished Boolean         @default(true) @map("is_published")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  activities  LevelActivity[]
+  progress    LevelProgress[]
+
+  @@unique([chapterId, orderIndex])
+  @@map("learning_levels")
+}
+
+model LevelActivity {
+  id           String              @id @default(uuid())
+  levelId      String              @map("level_id")
+  level        LearningLevel       @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  assessmentId String              @map("assessment_id")
+  assessment   Assessment          @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  type         LearningActivityType
+  orderIndex   Int                 @map("order_index")
+  createdAt    DateTime            @default(now()) @map("created_at")
+
+  @@unique([levelId, assessmentId])
+  @@unique([levelId, orderIndex])
+  @@map("level_activities")
+}
+
+model LevelProgress {
+  id              String              @id @default(uuid())
+  studentId       String              @map("student_id")
+  student         Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  levelId         String              @map("level_id")
+  level           LearningLevel       @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  status          LevelProgressStatus @default(LOCKED)
+  quizScore       Float               @default(0) @map("quiz_score")
+  worksheetScore  Float               @default(0) @map("worksheet_score")
+  bestPercent     Float               @default(0) @map("best_percent")
+  xpAwarded       Int                 @default(0) @map("xp_awarded")
+  unlockedAt      DateTime?           @map("unlocked_at")
+  completedAt     DateTime?           @map("completed_at")
+  lastSyncedAt    DateTime            @updatedAt @map("last_synced_at")
+
+  @@unique([studentId, levelId])
+  @@map("level_progress")
 }
