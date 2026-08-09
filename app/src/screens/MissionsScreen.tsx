@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Animated,
   Easing,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -20,728 +21,628 @@ import {
   SyncEventType,
 } from "../types";
 
-// ─── Colors ───────────────────────────────────────────────────────────────────
-const C = {
-  ink: "#1A1F3D",
+const COLORS = {
+  ink: "#20253D",
   muted: "#7D879F",
+  canvas: "#F1F5FB",
   white: "#FFFFFF",
-  sky1: "#A8D8F0",
-  sky2: "#C5E8FA",
-  sky3: "#E8F5FD",
-  blue: "#4DAADC",
-  purple: "#6C5CE7",
-  orange: "#E8803A",
-  pink: "#D63384",
-  yellow: "#F0B429",
-  green: "#27AE60",
-  teal: "#00B4D8",
-  red: "#E74C3C",
+  blue: "#55B9EE",
+  purple: "#7366E8",
+  orange: "#FF9D68",
+  pink: "#EE72A7",
+  yellow: "#F7C95E",
+  green: "#55C98C",
+  line: "#DDE5F2",
+  softPurple: "#F0EEFF",
+  softBlue: "#E8F7FF",
+  softOrange: "#FFF1E9",
 };
 
-// Chapter island themes — each chapter gets its own island color scheme
-const ISLAND_THEMES = [
-  { bg: "#A8D4A8", shadow: "#5A9E5A", accent: "#7CC47C", water: "#5BA3D9", label: "#2D6A2D" },
-  { bg: "#C9A8E8", shadow: "#7A4FBF", accent: "#B080E0", water: "#6CB4F0", label: "#4A1E8A" },
-  { bg: "#F0C080", shadow: "#B8862A", accent: "#E8B060", water: "#4DB8E8", label: "#7A4A10" },
-  { bg: "#90D8E0", shadow: "#3A8A9E", accent: "#6ECFE0", water: "#3AACDA", label: "#1E5A6A" },
-  { bg: "#F0A0B0", shadow: "#B84060", accent: "#E880A0", water: "#70C0E8", label: "#7A1A30" },
-];
-
-const ICON_MAP: Record<string, any> = {
-  compass: "compass-outline", rocket: "rocket-outline", layers: "layers-outline",
-  database: "server-outline", code: "code-slash-outline", hardware: "hardware-chip-outline",
-  cube: "cube-outline", git: "git-branch-outline", bulb: "bulb-outline",
-  lock: "lock-closed-outline", trophy: "trophy-outline", quiz: "help-circle-outline",
-  worksheet: "document-text-outline", sparkles: "sparkles-outline", flame: "flame-outline",
-  flash: "flash-outline", checkmark: "checkmark", star: "star",
-  "arrow-back": "arrow-back", "arrow-forward": "arrow-forward",
-  "chevron-forward": "chevron-forward", "chevron-down": "chevron-down-outline",
-  "chevron-up": "chevron-up-outline", map: "map-outline",
+const ICONS: Record<string, any> = {
+  compass: "compass-outline",
+  rocket: "rocket-outline",
+  layers: "layers-outline",
+  database: "server-outline",
+  code: "code-slash-outline",
+  hardware: "hardware-chip-outline",
+  cube: "cube-outline",
+  git: "git-branch-outline",
+  bulb: "bulb-outline",
+  lock: "lock-closed-outline",
+  trophy: "trophy-outline",
+  quiz: "help-circle-outline",
+  worksheet: "document-text-outline",
+  sparkles: "sparkles-outline",
+  flame: "flame-outline",
+  flash: "flash-outline",
+  star: "star",
+  map: "map-outline",
+  book: "book-outline",
+  gift: "gift-outline",
+  timer: "time-outline",
+  play: "play",
+  check: "checkmark",
+  "check-circle": "checkmark-circle",
+  "arrow-forward": "arrow-forward",
+  "arrow-back": "arrow-back",
+  "chevron-forward": "chevron-forward",
 };
 
-function Ico({ name, size = 20, color = C.ink }: { name: string; size?: number; color?: string }) {
-  return <Ionicons name={(ICON_MAP[name] || name) as any} size={size} color={color} />;
+function Icon({
+  name,
+  size = 20,
+  color = COLORS.ink,
+}: {
+  name: string;
+  size?: number;
+  color?: string;
+}) {
+  return <Ionicons name={(ICONS[name] || name) as any} size={size} color={color} />;
 }
 
-// ─── Fallback data ────────────────────────────────────────────────────────────
+function fallbackAssessment(
+  id: string,
+  title: string,
+  type: "QUIZ" | "WORKSHEET",
+): AssessmentDTO {
+  return {
+    id,
+    title,
+    description: type === "QUIZ" ? "A quick knowledge check" : "A guided practice worksheet",
+    className: "1st Sem",
+    topic: "Learning Path",
+    assessmentType: type === "QUIZ" ? "QUIZ" : "PRACTICE",
+    totalMarks: 10,
+    passingMarks: 7,
+    durationMinutes: 15,
+    isPublished: true,
+  };
+}
+
 function fallbackPath(): LearningPathDTO {
-  const fa = (id: string, title: string, type: "QUIZ" | "WORKSHEET", oi: number) => ({
-    id: `${id}-${type.toLowerCase()}`, type, orderIndex: oi,
-    assessment: { id, title, description: "A quick check", className: "1st Sem", topic: "Learning Path", assessmentType: (type === "QUIZ" ? "QUIZ" : "PRACTICE") as any, totalMarks: 10, passingMarks: 7, durationMinutes: 15, isPublished: true } as AssessmentDTO,
+  const activity = (id: string, title: string, type: "QUIZ" | "WORKSHEET", orderIndex: number) => ({
+    id: `${id}-${type.toLowerCase()}`,
+    type,
+    orderIndex,
+    assessment: fallbackAssessment(id, title, type),
     progress: { assessmentId: id, type, score: 0, completed: false, source: "NONE" as const },
   });
-  const lvls = [
-    { id: "dl-1", key: "cq", title: "Complexity Quest", subtitle: "Read the hidden cost", description: "Spot Big-O patterns and make smart choices.", icon: "compass", color: C.purple, orderIndex: 1, xpReward: 120, passPercent: 70, status: "UNLOCKED" as const, bestPercent: 0, xpAwarded: 0, activities: [fa("da-1", "Algorithm Complexity Quiz", "QUIZ", 1), fa("da-4", "Logic Worksheet", "WORKSHEET", 2)] },
-    { id: "dl-2", key: "ss", title: "Systems Station", subtitle: "Keep the machine moving", description: "Explore processes and memory.", icon: "hardware", color: C.orange, orderIndex: 2, xpReward: 150, passPercent: 70, status: "LOCKED" as const, bestPercent: 0, xpAwarded: 0, activities: [fa("da-2", "Systems Quiz", "QUIZ", 1)] },
-    { id: "dl-3", key: "dq", title: "Data Quest", subtitle: "Sort the chaos", description: "Choose structures wisely.", icon: "database", color: C.teal, orderIndex: 3, xpReward: 130, passPercent: 70, status: "LOCKED" as const, bestPercent: 0, xpAwarded: 0, activities: [fa("da-3", "Data Structures Quiz", "QUIZ", 1)] },
+  const baseLevels = [
+    {
+      id: "demo-level-1",
+      key: "complexity-quest",
+      title: "Complexity Quest",
+      subtitle: "Read the hidden cost",
+      description: "Spot Big-O patterns and make smart choices before the timer runs out.",
+      icon: "compass",
+      color: COLORS.blue,
+      orderIndex: 1,
+      xpReward: 120,
+      passPercent: 70,
+      status: "UNLOCKED" as const,
+      bestPercent: 0,
+      xpAwarded: 0,
+      activities: [activity("demo-asm-1", "Algorithm Complexity Quiz", "QUIZ", 1), activity("demo-asm-4", "Logic Worksheet", "WORKSHEET", 2)],
+    },
+    {
+      id: "demo-level-2",
+      key: "systems-station",
+      title: "Systems Station",
+      subtitle: "Keep the machine moving",
+      description: "Explore processes, memory, and the choices that keep systems reliable.",
+      icon: "hardware",
+      color: COLORS.orange,
+      orderIndex: 2,
+      xpReward: 150,
+      passPercent: 70,
+      status: "LOCKED" as const,
+      bestPercent: 0,
+      xpAwarded: 0,
+      activities: [activity("demo-asm-2", "Systems Quiz", "QUIZ", 1), activity("demo-asm-5", "Build Lab Worksheet", "WORKSHEET", 2)],
+    },
   ];
   return {
     student: { id: "demo", userId: "demo", name: "Learner" },
     chapters: [
-      { id: "dc-1", key: "algorithm-academy", title: "Algorithm Academy", subtitle: "Train your logic muscles", description: "Build foundations of algorithms, complexity, and problem solving.", icon: "layers", color: C.purple, orderIndex: 1, levels: lvls },
-      { id: "dc-2", key: "builder-bay", title: "Builder Bay", subtitle: "Turn ideas into code", description: "Practice object thinking and ship solutions.", icon: "cube", color: C.orange, orderIndex: 2, levels: [{ ...lvls[0], id: "dl-4", title: "Object Town", status: "LOCKED" as const, color: C.yellow, icon: "cube" }, { ...lvls[1], id: "dl-5", title: "Branching Grove", status: "LOCKED" as const, color: C.green, icon: "git" }] },
-      { id: "dc-3", key: "data-dock", title: "Data Dock", subtitle: "Organize the moving parts", description: "Practice choosing and tracing the structures behind reliable programs.", icon: "database", color: C.teal, orderIndex: 3, levels: [{ ...lvls[0], id: "dl-6", title: "Structure Harbor", status: "LOCKED" as const, color: C.teal, icon: "layers" }, { ...lvls[1], id: "dl-7", title: "Debugger Den", status: "LOCKED" as const, color: C.red, icon: "bulb" }] },
+      {
+        id: "demo-chapter-1",
+        key: "algorithm-academy",
+        title: "Algorithm Academy",
+        subtitle: "Train your logic muscles",
+        description: "Build the foundations of algorithms, complexity, and problem solving.",
+        icon: "layers",
+        color: COLORS.purple,
+        orderIndex: 1,
+        levels: baseLevels,
+      },
+      {
+        id: "demo-chapter-2",
+        key: "builder-bay",
+        title: "Builder Bay",
+        subtitle: "Turn ideas into code",
+        description: "Practice object thinking and ship solutions that hold together.",
+        icon: "cube",
+        color: COLORS.pink,
+        orderIndex: 2,
+        levels: [
+          { ...baseLevels[0], id: "demo-level-3", title: "Object Town", status: "LOCKED" as const, color: COLORS.yellow, icon: "cube" },
+          { ...baseLevels[1], id: "demo-level-4", title: "Branching Grove", status: "LOCKED" as const, color: COLORS.green, icon: "git" },
+        ],
+      },
+      {
+        id: "demo-chapter-3",
+        key: "data-dock",
+        title: "Data Dock",
+        subtitle: "Organize the moving parts",
+        description: "Choose, trace, and repair the structures behind reliable programs.",
+        icon: "database",
+        color: COLORS.blue,
+        orderIndex: 3,
+        levels: [
+          { ...baseLevels[0], id: "demo-level-5", title: "Structure Harbor", status: "LOCKED" as const, color: COLORS.green, icon: "layers" },
+          { ...baseLevels[1], id: "demo-level-6", title: "Debugger Den", status: "LOCKED" as const, color: COLORS.orange, icon: "bulb" },
+        ],
+      },
     ],
   };
 }
 
-// ─── Animated pulse glow ───────────────────────────────────────────────────────
-function PulseGlow({ color, size }: { color: string; size: number }) {
-  const pulse = useRef(new Animated.Value(0)).current;
+function ProgressBar({ percent, color, height = 8 }: { percent: number; color: string; height?: number }) {
+  const progress = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 0, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, []);
-  const scale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.35] });
-  const opacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.5, 0] });
+    Animated.timing(progress, {
+      toValue: Math.max(0, Math.min(100, percent)),
+      duration: 650,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [percent]);
+  const width = progress.interpolate({ inputRange: [0, 100], outputRange: ["0%", "100%"] });
   return (
-    <Animated.View style={{
-      position: "absolute", width: size, height: size, borderRadius: size / 2,
-      backgroundColor: color, transform: [{ scale }], opacity
-    }} />
-  );
-}
-
-// ─── Floating cloud decoration ─────────────────────────────────────────────────
-function Cloud({ x, y, scale = 1, opacity = 0.7 }: { x: number; y: number; scale?: number; opacity?: number }) {
-  return (
-    <View style={{ position: "absolute", left: x, top: y, opacity, transform: [{ scale }] }}>
-      <View style={{ flexDirection: "row", alignItems: "flex-end" }}>
-        <View style={{ width: 32, height: 20, borderRadius: 16, backgroundColor: C.white }} />
-        <View style={{ width: 46, height: 30, borderRadius: 23, backgroundColor: C.white, marginLeft: -12 }} />
-        <View style={{ width: 32, height: 20, borderRadius: 16, backgroundColor: C.white, marginLeft: -10 }} />
-      </View>
+    <View style={[styles.progressTrack, { height, borderRadius: height / 2 }]}>
+      <Animated.View style={[styles.progressFill, { width, height, borderRadius: height / 2, backgroundColor: color }]} />
     </View>
   );
 }
 
-// ─── Island shape (floating) ───────────────────────────────────────────────────
-function IslandShape({ theme, width = 160 }: { theme: typeof ISLAND_THEMES[number]; width?: number }) {
-  const h = Math.round(width * 0.42);
-  const sh = Math.round(width * 0.2);
-  return (
-    <View style={{ alignItems: "center" }}>
-      {/* Island top surface */}
-      <View style={{
-        width, height: h, borderRadius: width * 0.3,
-        backgroundColor: theme.bg,
-        borderTopWidth: 4, borderColor: theme.accent,
-        overflow: "hidden",
-      }}>
-        {/* Grass texture dots */}
-        <View style={{ position: "absolute", top: 6, left: 16, width: 8, height: 8, borderRadius: 4, backgroundColor: theme.accent, opacity: 0.6 }} />
-        <View style={{ position: "absolute", top: 4, right: 24, width: 6, height: 6, borderRadius: 3, backgroundColor: theme.accent, opacity: 0.5 }} />
-        <View style={{ position: "absolute", top: 10, left: "45%", width: 10, height: 10, borderRadius: 5, backgroundColor: theme.accent, opacity: 0.4 }} />
-        {/* Water stream */}
-        <View style={{ position: "absolute", right: "20%", top: 0, width: 6, height: h, backgroundColor: theme.water, opacity: 0.3 }} />
-      </View>
-      {/* Island shadow / base */}
-      <View style={{
-        width: width * 0.75, height: sh, borderRadius: width * 0.2,
-        backgroundColor: theme.shadow,
-        marginTop: -6, opacity: 0.85,
-      }} />
-    </View>
-  );
+function FloatingSpark({ color, delay = 0 }: { color: string; delay?: number }) {
+  const float = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(float, { toValue: 1, duration: 1500, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(float, { toValue: 0, duration: 1500, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        ]),
+      ).start();
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
+  const translateY = float.interpolate({ inputRange: [0, 1], outputRange: [0, -8] });
+  return <Animated.View style={[styles.spark, { backgroundColor: color, transform: [{ translateY }] }]} />;
 }
 
-// ─── Level node on island ──────────────────────────────────────────────────────
-function LevelNode({
-  level, isNext, chapterColor, onPress, index,
+function MissionNode({
+  level,
+  isNext,
+  chapterColor,
+  onPress,
 }: {
-  level: LearningLevelDTO; isNext: boolean; chapterColor: string; onPress: () => void; index: number;
+  level: LearningLevelDTO;
+  isNext: boolean;
+  chapterColor: string;
+  onPress: () => void;
 }) {
   const locked = level.status === "LOCKED";
   const complete = level.status === "COMPLETED";
-  const pulse = useRef(new Animated.Value(0)).current;
-
+  const pulse = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     if (!isNext) return;
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse, { toValue: 1, duration: 850, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 0, duration: 850, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-      ])
+        Animated.spring(pulse, { toValue: 1.08, stiffness: 170, damping: 11, mass: 0.7, useNativeDriver: true }),
+        Animated.spring(pulse, { toValue: 1, stiffness: 210, damping: 14, mass: 0.7, useNativeDriver: true }),
+      ]),
     );
     loop.start();
     return () => loop.stop();
   }, [isNext]);
-  const btnScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] });
-
-  const bgColor = locked ? "#C5CDD8" : complete ? C.green : level.color;
-
+  const nodeColor = locked ? "#C9D2E0" : complete ? COLORS.green : level.color || chapterColor;
   return (
-    <View style={[
-      ss.levelNodeWrap,
-      index % 2 === 0 ? { alignSelf: "flex-start", marginLeft: 20 } : { alignSelf: "flex-end", marginRight: 20 },
-    ]}>
-      <TouchableOpacity disabled={locked} onPress={onPress} activeOpacity={0.82} style={{ alignItems: "center" }}>
-        {/* Glow ring for active */}
-        {isNext && !locked && (
-          <View style={[ss.nodeGlowRing, { borderColor: level.color }]}>
-            <PulseGlow color={level.color} size={70} />
-          </View>
-        )}
-        {/* Node circle */}
-        <Animated.View style={[
-          ss.nodeCircle,
-          { backgroundColor: bgColor },
-          isNext && { transform: [{ scale: btnScale }] },
-        ]}>
-          <Ico
-            name={locked ? "lock" : complete ? "trophy" : level.icon}
-            size={22}
-            color={C.white}
-          />
-        </Animated.View>
-        {/* XP badge */}
-        {!locked && (
-          <View style={[ss.nodeXpBadge, { backgroundColor: bgColor }]}>
-            <Ico name="flash" size={8} color={C.white} />
-            <Text style={ss.nodeXpText}>{level.xpReward}</Text>
-          </View>
-        )}
-        {/* Label */}
-        <View style={[ss.nodeLabelBox, { borderColor: locked ? "#C5CDD8" : bgColor }]}>
-          <Text style={[ss.nodeLabelText, { color: locked ? C.muted : bgColor }]} numberOfLines={1}>{level.title}</Text>
-          {isNext && !locked && (
-            <View style={[ss.upNextTag, { backgroundColor: level.color }]}>
-              <Text style={ss.upNextText}>NEXT</Text>
-            </View>
-          )}
+    <TouchableOpacity disabled={locked} onPress={onPress} activeOpacity={0.82} accessibilityRole="button">
+      <Animated.View style={[styles.nodeCircle, { backgroundColor: nodeColor, transform: [{ scale: pulse }] }, isNext && styles.nodeCircleNext]}>
+        <Icon name={locked ? "lock" : complete ? "check-circle" : level.icon} size={24} color={COLORS.white} />
+      </Animated.View>
+      {!locked && (
+        <View style={[styles.xpBadge, { backgroundColor: nodeColor }]}>
+          <Icon name="flash" size={10} color={COLORS.white} />
+          <Text style={styles.xpBadgeText}>{level.xpReward} XP</Text>
         </View>
-      </TouchableOpacity>
+      )}
+    </TouchableOpacity>
+  );
+}
+
+function LevelInfo({ level, isNext, chapterColor }: { level: LearningLevelDTO; isNext: boolean; chapterColor: string }) {
+  const locked = level.status === "LOCKED";
+  const complete = level.status === "COMPLETED";
+  const accent = locked ? COLORS.muted : complete ? COLORS.green : level.color || chapterColor;
+  return (
+    <View style={[styles.levelInfo, locked && styles.levelInfoLocked]}>
+      <View style={styles.levelInfoTop}>
+        <Text style={[styles.levelNumber, { color: accent }]}>LEVEL {level.orderIndex}</Text>
+        {isNext && <View style={[styles.nextPill, { backgroundColor: accent }]}><Text style={styles.nextPillText}>NEXT</Text></View>}
+        {complete && <Icon name="check-circle" size={15} color={COLORS.green} />}
+      </View>
+      <Text style={[styles.levelTitle, locked && styles.levelTitleLocked]} numberOfLines={1}>{level.title}</Text>
+      <Text style={styles.levelSubtitle} numberOfLines={1}>{level.subtitle}</Text>
+      <View style={styles.levelMeta}>
+        <Icon name={locked ? "lock" : "flash"} size={11} color={locked ? COLORS.muted : COLORS.orange} />
+        <Text style={styles.levelMetaText}>{locked ? "Clear the previous checkpoint" : `${level.xpReward} XP reward`}</Text>
+      </View>
     </View>
   );
 }
 
-// ─── Chapter island card ───────────────────────────────────────────────────────
-function ChapterIsland({
-  chapter, nextLevel, onSelectLevel, themeIdx,
+function JourneyChapter({
+  chapter,
+  nextLevel,
+  onSelectLevel,
+  index,
 }: {
-  chapter: LearningChapterDTO; nextLevel?: LearningLevelDTO; onSelectLevel: (id: string) => void; themeIdx: number;
+  chapter: LearningChapterDTO;
+  nextLevel?: LearningLevelDTO;
+  onSelectLevel: (id: string) => void;
+  index: number;
 }) {
-  const theme = ISLAND_THEMES[themeIdx % ISLAND_THEMES.length];
-  const completedCount = chapter.levels.filter((l) => l.status === "COMPLETED").length;
-  const totalCount = chapter.levels.length;
-  const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-
+  const completed = chapter.levels.filter((level) => level.status === "COMPLETED").length;
+  const percent = chapter.levels.length ? Math.round((completed / chapter.levels.length) * 100) : 0;
   return (
-    <View style={[ss.islandWrap, { marginLeft: themeIdx % 2 === 0 ? 0 : 28 }]}>
-      {/* Chapter banner */}
-      <View style={[ss.chapterBanner, { backgroundColor: chapter.color }]}>
-        <View style={[ss.chapterBannerIcon, { backgroundColor: "rgba(255,255,255,0.22)" }]}>
-          <Ico name={chapter.icon} size={18} color={C.white} />
+    <View style={styles.chapterCard}>
+      <View style={[styles.chapterAccent, { backgroundColor: chapter.color }]} />
+      <View style={styles.chapterHeader}>
+        <View style={[styles.chapterIcon, { backgroundColor: `${chapter.color}18` }]}>
+          <Icon name={chapter.icon} size={22} color={chapter.color} />
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={ss.chapterKicker}>CHAPTER {chapter.orderIndex}</Text>
-          <Text style={ss.chapterBannerTitle}>{chapter.title}</Text>
+        <View style={styles.chapterHeaderCopy}>
+          <Text style={styles.chapterEyebrow}>CHAPTER {chapter.orderIndex}</Text>
+          <Text style={styles.chapterTitle}>{chapter.title}</Text>
+          <Text style={styles.chapterSubtitle}>{chapter.subtitle}</Text>
         </View>
-        <View style={[ss.chapterProgressChip, { borderColor: "rgba(255,255,255,0.5)" }]}>
-          <Text style={ss.chapterProgressText}>{pct}%</Text>
+        <View style={styles.chapterPercent}>
+          <Text style={[styles.chapterPercentValue, { color: chapter.color }]}>{percent}%</Text>
+          <Text style={styles.chapterPercentLabel}>done</Text>
         </View>
       </View>
+      <Text style={styles.chapterDescription}>{chapter.description}</Text>
+      <ProgressBar percent={percent} color={chapter.color} height={7} />
+      <View style={styles.chapterProgressMeta}>
+        <Text style={styles.chapterProgressText}>{completed} of {chapter.levels.length} checkpoints cleared</Text>
+        <Text style={styles.chapterProgressText}>{index === 0 ? "Start here" : "Keep exploring"}</Text>
+      </View>
 
-      {/* Island visual + level nodes */}
-      <View style={ss.islandBody}>
-        {/* Decorative island terrain */}
-        <View style={ss.islandTerrain}>
-          <IslandShape theme={theme} width={300} />
-          {/* Island label */}
-          <Text style={[ss.islandNameLabel, { color: theme.label }]}>{chapter.title.toUpperCase()}</Text>
-        </View>
-
-        {/* Level path nodes */}
-        <View style={ss.levelPath}>
-          {chapter.levels.map((level, idx) => (
-            <View key={level.id} style={{ alignItems: "stretch" }}>
-              {/* Winding path connector */}
-              {idx > 0 && (
-                <View style={[
-                  ss.pathConnector,
-                  idx % 2 === 0
-                    ? { alignSelf: "flex-start", marginLeft: 52 }
-                    : { alignSelf: "flex-end", marginRight: 52 },
-                ]}>
-                  {/* dashed vertical line */}
-                  {[0, 1, 2, 3, 4].map((d) => (
-                    <View
-                      key={d}
-                      style={{
-                        width: 3, height: 8, borderRadius: 2, marginVertical: 2,
-                        backgroundColor: level.status === "COMPLETED" ? chapter.color : "#B8C8DA",
-                      }}
-                    />
-                  ))}
-                </View>
-              )}
-              <LevelNode
-                level={level}
-                isNext={nextLevel?.id === level.id}
-                chapterColor={chapter.color}
-                onPress={() => onSelectLevel(level.id)}
-                index={idx}
-              />
+      <View style={styles.journeyRail}>
+        <View style={[styles.railLine, { backgroundColor: `${chapter.color}35` }]} />
+        {chapter.levels.map((level, levelIndex) => {
+          const isNext = nextLevel?.id === level.id;
+          const onLeft = levelIndex % 2 === 0;
+          return (
+            <View key={level.id} style={[styles.levelRow, onLeft ? styles.levelRowLeft : styles.levelRowRight]}>
+              {onLeft ? <MissionNode level={level} isNext={isNext} chapterColor={chapter.color} onPress={() => onSelectLevel(level.id)} /> : <LevelInfo level={level} isNext={isNext} chapterColor={chapter.color} />}
+              {onLeft ? <LevelInfo level={level} isNext={isNext} chapterColor={chapter.color} /> : <MissionNode level={level} isNext={isNext} chapterColor={chapter.color} onPress={() => onSelectLevel(level.id)} />}
             </View>
-          ))}
-        </View>
-
-        {/* Chapter progress bar */}
-        <View style={ss.chapterProgressBar}>
-          <View style={[ss.chapterProgressFill, { width: `${pct}%`, backgroundColor: chapter.color }]} />
-        </View>
-        <Text style={ss.chapterProgressLabel}>{completedCount}/{totalCount} levels cleared</Text>
+          );
+        })}
       </View>
     </View>
   );
 }
 
-// ─── Path connector between chapters ──────────────────────────────────────────
-function ChapterConnector({ fromColor, toColor }: { fromColor: string; toColor: string }) {
+function ActivityCard({ activity, accent, onPress }: { activity: any; accent: string; onPress: () => void }) {
+  const complete = activity.progress.completed;
+  const quiz = activity.type === "QUIZ";
   return (
-    <View style={ss.chapterConnectorWrap}>
-      <View style={ss.chapterConnectorRoad}>
-        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-          <View key={i} style={{ flexDirection: "row", justifyContent: "center", marginVertical: 3 }}>
-            <View style={[ss.chapterConnectorDot, { backgroundColor: i < 3 ? fromColor : toColor, opacity: 0.7 - i * 0.05 }]} />
-          </View>
-        ))}
+    <TouchableOpacity style={styles.activityCard} onPress={onPress} activeOpacity={0.84}>
+      <View style={[styles.activityIcon, { backgroundColor: complete ? `${COLORS.green}18` : `${accent}18` }]}>
+        <Icon name={complete ? "check-circle" : quiz ? "quiz" : "worksheet"} size={21} color={complete ? COLORS.green : accent} />
       </View>
-      <Text style={ss.chapterConnectorLabel}>→</Text>
-    </View>
+      <View style={styles.activityCopy}>
+        <Text style={styles.activityType}>{complete ? "COMPLETED" : quiz ? "QUIZ" : "ASSIGNMENT"}</Text>
+        <Text style={styles.activityTitle} numberOfLines={2}>{activity.assessment.title}</Text>
+        <View style={styles.activityMeta}>
+          <Icon name="timer" size={12} color={COLORS.muted} />
+          <Text style={styles.activityMetaText}>{complete ? `${activity.progress.score}% score` : `${activity.assessment.durationMinutes} min`}</Text>
+        </View>
+      </View>
+      <View style={[styles.activityArrow, { backgroundColor: complete ? COLORS.green : accent }]}>
+        <Icon name={complete ? "check" : "arrow-forward"} size={15} color={COLORS.white} />
+      </View>
+    </TouchableOpacity>
   );
 }
 
-// ─── Level detail overlay ──────────────────────────────────────────────────────
-function LevelDetailView({
-  level, chapter, onBack, onOpenAssessment,
+function LevelDetail({
+  level,
+  chapter,
+  onBack,
+  onOpenAssessment,
 }: {
-  level: LearningLevelDTO; chapter?: LearningChapterDTO; onBack: () => void; onOpenAssessment: (asm: AssessmentDTO) => void;
+  level: LearningLevelDTO;
+  chapter?: LearningChapterDTO;
+  onBack: () => void;
+  onOpenAssessment: (assessment: AssessmentDTO) => void;
 }) {
   const locked = level.status === "LOCKED";
-  const completedActs = level.activities.filter((a) => a.progress.completed).length;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-
+  const completed = level.activities.filter((activity) => activity.progress.completed).length;
+  const fade = useRef(new Animated.Value(0)).current;
+  const slide = useRef(new Animated.Value(18)).current;
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
-      Animated.spring(slideAnim, { toValue: 0, friction: 7, tension: 80, useNativeDriver: true }),
+      Animated.timing(fade, { toValue: 1, duration: 260, useNativeDriver: true }),
+      Animated.spring(slide, { toValue: 0, stiffness: 180, damping: 20, mass: 0.8, useNativeDriver: true }),
     ]).start();
   }, []);
-
   return (
-    <SafeAreaView style={[ss.safeArea, { backgroundColor: "#0D1B2E" }]}>
-      <Animated.View style={{ flex: 1, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-        <ScrollView contentContainerStyle={ss.detailScroll} showsVerticalScrollIndicator={false}>
-          {/* Topbar */}
-          <View style={ss.detailTopbar}>
-            <TouchableOpacity style={[ss.backBtn, { backgroundColor: "rgba(255,255,255,0.12)" }]} onPress={onBack}>
-              <Ico name="arrow-back" size={18} color={C.white} />
+    <SafeAreaView style={styles.safeArea}>
+      <Animated.View style={{ flex: 1, opacity: fade, transform: [{ translateY: slide }] }}>
+        <ScrollView contentContainerStyle={styles.detailScroll} showsVerticalScrollIndicator={false}>
+          <View style={styles.detailTopbar}>
+            <TouchableOpacity style={styles.backButton} onPress={onBack} accessibilityLabel="Back to missions">
+              <Icon name="arrow-back" size={19} color={COLORS.ink} />
             </TouchableOpacity>
-            <View style={{ flex: 1 }}>
-              <Text style={[ss.breadcrumbChapter, { color: "rgba(255,255,255,0.6)" }]}>{chapter?.title || "Missions"}</Text>
-              <Text style={[ss.breadcrumbLevel, { color: C.white }]}>Level {level.orderIndex} — {level.title}</Text>
+            <View style={styles.detailBreadcrumb}>
+              <Text style={styles.detailKicker}>{chapter?.title || "Missions"}</Text>
+              <Text style={styles.detailHeading}>Level {level.orderIndex} journey</Text>
             </View>
+            <View style={styles.detailReward}><Icon name="flash" size={14} color={COLORS.orange} /><Text style={styles.detailRewardText}>{level.xpReward}</Text></View>
           </View>
-
-          {/* Hero */}
-          <View style={[ss.detailHero, { backgroundColor: level.color }]}>
-            <View style={ss.heroOrbLarge}>
-              <Ico name={level.icon} size={34} color={C.white} />
-            </View>
-            <Text style={ss.heroEyebrow}>LEVEL {level.orderIndex}  ·  {level.xpReward} XP</Text>
-            <Text style={ss.heroTitle}>{level.title}</Text>
-            <Text style={ss.heroSubtitle}>{level.description}</Text>
-            <View style={ss.heroProgressRow}>
-              <View style={ss.heroProgressTrack}>
-                <View style={[ss.heroProgressFill, { width: `${level.bestPercent}%` }]} />
-              </View>
-              <Text style={ss.heroProgressLabel}>{level.bestPercent}% / {level.passPercent}% to pass</Text>
-            </View>
+          <View style={[styles.detailHero, { backgroundColor: level.color || COLORS.purple }]}>
+            <View style={styles.detailHeroOrb}><Icon name={level.icon} size={34} color={COLORS.white} /></View>
+            <Text style={styles.detailHeroEyebrow}>CHECKPOINT {level.orderIndex} · {level.xpReward} XP</Text>
+            <Text style={styles.detailHeroTitle}>{level.title}</Text>
+            <Text style={styles.detailHeroBody}>{level.description}</Text>
+            <View style={styles.detailProgressMeta}><Text style={styles.detailProgressLabel}>{level.bestPercent}% mastered</Text><Text style={styles.detailProgressLabel}>{level.passPercent}% to pass</Text></View>
+            <ProgressBar percent={level.bestPercent} color="rgba(255,255,255,0.92)" height={8} />
           </View>
-
           {locked ? (
-            <View style={[ss.lockedPanel, { backgroundColor: "rgba(255,255,255,0.08)" }]}>
-              <View style={[ss.lockedIcon, { backgroundColor: "rgba(255,255,255,0.1)" }]}>
-                <Ico name="lock" size={28} color="rgba(255,255,255,0.5)" />
-              </View>
-              <Text style={[ss.lockedTitle, { color: C.white }]}>Level Locked</Text>
-              <Text style={[ss.lockedBody, { color: "rgba(255,255,255,0.55)" }]}>Clear the previous level to unlock this checkpoint.</Text>
+            <View style={styles.lockedCard}>
+              <View style={styles.lockedIcon}><Icon name="lock" size={25} color={COLORS.muted} /></View>
+              <Text style={styles.lockedTitle}>This checkpoint is waiting</Text>
+              <Text style={styles.lockedBody}>Clear the previous checkpoint to open this part of your learning journey.</Text>
             </View>
           ) : (
             <>
-              <View style={ss.sectionHeader}>
-                <View>
-                  <Text style={[ss.sectionKicker, { color: "rgba(255,255,255,0.5)" }]}>YOUR CHECKPOINTS</Text>
-                  <Text style={[ss.sectionTitle, { color: C.white }]}>Clear the trail</Text>
-                </View>
-                <View style={[ss.scorePill, { backgroundColor: level.color }]}>
-                  <Text style={ss.scorePillText}>{completedActs}/{level.activities.length}</Text>
-                </View>
+              <View style={styles.sectionHeader}>
+                <View><Text style={styles.sectionKicker}>YOUR CHECKPOINTS</Text><Text style={styles.sectionTitle}>Choose your next move</Text></View>
+                <View style={styles.scorePill}><Text style={styles.scorePillText}>{completed}/{level.activities.length}</Text></View>
               </View>
-
-              {level.activities.map((act) => {
-                const done = act.progress.completed;
-                const isQuiz = act.type === "QUIZ";
-                return (
-                  <TouchableOpacity key={act.id}
-                    style={[ss.actCard, { backgroundColor: "rgba(255,255,255,0.08)" }]}
-                    activeOpacity={0.85} onPress={() => onOpenAssessment(act.assessment)}>
-                    <View style={[ss.actIcon, { backgroundColor: done ? C.green + "33" : isQuiz ? "#4DAADC33" : "#E8803A33" }]}>
-                      <Ico name={isQuiz ? "quiz" : "worksheet"} size={19} color={done ? C.green : isQuiz ? C.blue : C.orange} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[ss.actType, { color: "rgba(255,255,255,0.45)" }]}>{isQuiz ? "QUIZ" : "ASSIGNMENT"}</Text>
-                      <Text style={[ss.actTitle, { color: C.white }]} numberOfLines={2}>{act.assessment.title}</Text>
-                      <Text style={[ss.actMeta, { color: "rgba(255,255,255,0.5)" }]}>{done ? `Completed · ${act.progress.score}%` : `${act.assessment.durationMinutes} min`}</Text>
-                    </View>
-                    <View style={[ss.actArrow, { backgroundColor: done ? C.green : level.color }]}>
-                      <Ico name={done ? "checkmark" : "arrow-forward"} size={15} color={C.white} />
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-
-              <View style={[ss.tipCard, { backgroundColor: "rgba(255,184,0,0.12)", borderColor: "rgba(255,184,0,0.25)", borderWidth: 1 }]}>
-                <View style={[ss.tipIcon, { backgroundColor: "rgba(255,184,0,0.2)" }]}><Ico name="bulb" size={18} color={C.yellow} /></View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[ss.tipTitle, { color: C.white }]}>Small steps count</Text>
-                  <Text style={[ss.tipBody, { color: "rgba(255,255,255,0.55)" }]}>Finish each activity to unlock the next level.</Text>
-                </View>
+              <View style={styles.activityList}>
+                {level.activities.map((activity) => <ActivityCard key={activity.id} activity={activity} accent={level.color || COLORS.purple} onPress={() => onOpenAssessment(activity.assessment)} />)}
+              </View>
+              <View style={styles.tipCard}>
+                <View style={styles.tipIcon}><Icon name="bulb" size={20} color={COLORS.orange} /></View>
+                <View style={{ flex: 1 }}><Text style={styles.tipTitle}>A little progress compounds</Text><Text style={styles.tipBody}>Finish each activity and reach the score target to unlock the next chapter.</Text></View>
               </View>
             </>
           )}
-
-          <TouchableOpacity style={[ss.backButton, { borderColor: "rgba(255,255,255,0.18)" }]} onPress={onBack}>
-            <Text style={[ss.backButtonText, { color: "rgba(255,255,255,0.7)" }]}>← Back to Adventure Map</Text>
-          </TouchableOpacity>
+          <TouchableOpacity style={styles.secondaryButton} onPress={onBack}><Text style={styles.secondaryButtonText}>Back to journey</Text><Icon name="map" size={16} color={COLORS.purple} /></TouchableOpacity>
         </ScrollView>
       </Animated.View>
     </SafeAreaView>
   );
 }
 
-// ─── Main screen ───────────────────────────────────────────────────────────────
 export interface MissionsScreenProps {
-  onOpenAssessment?: (asmId?: string) => void;
+  onOpenAssessment?: (assessmentId?: string) => void;
 }
 
 export function MissionsScreen({ onOpenAssessment }: MissionsScreenProps) {
   const { user, apiClient } = useAuth();
   const [path, setPath] = useState<LearningPathDTO>(() => fallbackPath());
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedLevelId, setSelectedLevelId] = useState<string | null>(null);
 
-  const loadPath = async () => {
+  const loadPath = async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
     try {
-      const p = await apiClient.getLearningPath(user?.id);
-      if (p?.chapters?.length) setPath(p);
-    } catch { }
-    finally { setLoading(false); }
+      const nextPath = await apiClient.getLearningPath();
+      if (nextPath?.chapters?.length) setPath(nextPath);
+    } catch {
+      // The local journey remains available while the API reconnects.
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
 
   useEffect(() => { loadPath(); }, [apiClient, user?.id]);
-  useEffect(() => {
-    return apiClient.subscribeSync(SyncEventType.LEVEL_PROGRESS_UPDATED, () => loadPath());
-  }, [apiClient]);
+  useEffect(() => apiClient.subscribeSync(SyncEventType.LEVEL_PROGRESS_UPDATED, () => loadPath()), [apiClient]);
 
-  const allLevels = useMemo(() => path.chapters.flatMap((c) => c.levels), [path]);
-  const nextLevel = allLevels.find((l) => l.status === "UNLOCKED" || l.status === "IN_PROGRESS");
-  const completedLevels = allLevels.filter((l) => l.status === "COMPLETED").length;
+  const levels = useMemo(() => path.chapters.flatMap((chapter) => chapter.levels), [path]);
+  const completedLevels = levels.filter((level) => level.status === "COMPLETED").length;
+  const nextLevel = levels.find((level) => level.status === "UNLOCKED" || level.status === "IN_PROGRESS");
+  const percent = levels.length ? Math.round((completedLevels / levels.length) * 100) : 0;
+  const selectedLevel = levels.find((level) => level.id === selectedLevelId);
+  const selectedChapter = path.chapters.find((chapter) => chapter.levels.some((level) => level.id === selectedLevelId));
 
-  // Level detail
-  if (selectedLevelId) {
-    const sel = allLevels.find((l) => l.id === selectedLevelId);
-    const chap = path.chapters.find((c) => c.levels.some((l) => l.id === selectedLevelId));
-    if (sel) {
-      return (
-        <LevelDetailView
-          level={sel} chapter={chap}
-          onBack={() => setSelectedLevelId(null)}
-          onOpenAssessment={(asm) => onOpenAssessment?.(asm.id)}
-        />
-      );
-    }
+  if (selectedLevel) {
+    return <LevelDetail level={selectedLevel} chapter={selectedChapter} onBack={() => setSelectedLevelId(null)} onOpenAssessment={(assessment) => onOpenAssessment?.(assessment.id)} />;
   }
 
   return (
-    <View style={ss.root}>
-      {/* Sky gradient background */}
-      <View style={ss.skyBg}>
-        <View style={ss.skyTop} />
-        <View style={ss.skyMid} />
-        <View style={ss.skyBottom} />
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => loadPath(true)} tintColor={COLORS.purple} colors={[COLORS.purple]} />}
+      >
+        <View style={styles.topbar}>
+          <View style={styles.avatar}><Text style={styles.avatarText}>{(user?.firstName?.[0] || "L").toUpperCase()}</Text></View>
+          <View style={styles.topbarCopy}><Text style={styles.topbarKicker}>MISSION CONTROL</Text><Text style={styles.topbarTitle}>Your learning journey</Text></View>
+          <View style={styles.xpPill}><Icon name="flash" size={14} color={COLORS.orange} /><Text style={styles.xpText}>{completedLevels} cleared</Text></View>
+        </View>
 
-      <SafeAreaView style={ss.safeArea}>
-        {/* Header */}
-        <View style={ss.topHeader}>
-          <View style={ss.headerLeft}>
-            <View style={ss.headerIconBox}>
-              <Ico name="map" size={18} color={C.white} />
-            </View>
-            <View>
-              <Text style={ss.headerKicker}>ADVENTURE MAP</Text>
-              <Text style={ss.headerTitle}>World Chapters</Text>
-            </View>
+        <View style={styles.heroCard}>
+          <View style={styles.heroCopy}>
+            <View style={styles.heroLabel}><Icon name="map" size={13} color={COLORS.purple} /><Text style={styles.heroLabelText}>YOUR ADVENTURE MAP</Text></View>
+            <Text style={styles.heroTitle}>Every checkpoint gets you closer.</Text>
+            <Text style={styles.heroBody}>{nextLevel ? `Your next mission is ${nextLevel.title}. Keep your streak moving.` : "You have explored every available checkpoint. More missions are on the way."}</Text>
+            {nextLevel && <TouchableOpacity style={styles.heroButton} onPress={() => setSelectedLevelId(nextLevel.id)} activeOpacity={0.84}><Text style={styles.heroButtonText}>Continue journey</Text><Icon name="arrow-forward" size={16} color={COLORS.white} /></TouchableOpacity>}
           </View>
-          <View style={ss.headerRight}>
-            <View style={ss.xpPill}>
-              <Ico name="trophy" size={13} color={C.yellow} />
-              <Text style={ss.xpPillText}>{completedLevels} cleared</Text>
-            </View>
+          <View style={styles.heroArt}>
+            <View style={styles.heroOrbitLarge} />
+            <View style={styles.heroPlanet}><Icon name="rocket" size={35} color={COLORS.purple} /></View>
+            <View style={styles.heroStarOne}><Icon name="sparkles" size={16} color={COLORS.orange} /></View>
+            <View style={styles.heroStarTwo}><Icon name="star" size={12} color={COLORS.yellow} /></View>
+            <FloatingSpark color={COLORS.pink} delay={150} />
           </View>
         </View>
 
-        {/* Continue banner */}
-        {nextLevel && (
-          <TouchableOpacity
-            style={ss.continueBanner}
-            onPress={() => setSelectedLevelId(nextLevel.id)}
-            activeOpacity={0.88}
-          >
-            <View style={[ss.continueBannerIcon, { backgroundColor: nextLevel.color }]}>
-              <Ico name="flash" size={14} color={C.white} />
-            </View>
-            <Text style={ss.continueBannerText} numberOfLines={1}>
-              Continue → <Text style={{ color: nextLevel.color, fontWeight: "900" }}>{nextLevel.title}</Text>
-            </Text>
-            <Ico name="chevron-forward" size={16} color="rgba(255,255,255,0.6)" />
-          </TouchableOpacity>
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}><View style={[styles.statIcon, { backgroundColor: COLORS.softPurple }]}><Icon name="trophy" size={16} color={COLORS.purple} /></View><Text style={styles.statValue}>{completedLevels}/{Math.max(levels.length, 1)}</Text><Text style={styles.statLabel}>CLEARED</Text></View>
+          <View style={styles.statCard}><View style={[styles.statIcon, { backgroundColor: COLORS.softOrange }]}><Icon name="flash" size={16} color={COLORS.orange} /></View><Text style={[styles.statValue, { color: COLORS.orange }]}>{percent}%</Text><Text style={styles.statLabel}>PROGRESS</Text></View>
+          <View style={styles.statCard}><View style={[styles.statIcon, { backgroundColor: COLORS.softBlue }]}><Icon name="gift" size={16} color={COLORS.blue} /></View><Text style={[styles.statValue, { color: COLORS.blue }]}>{path.chapters.length}</Text><Text style={styles.statLabel}>CHAPTERS</Text></View>
+        </View>
+
+        <View style={styles.overallCard}>
+          <View style={styles.overallHeader}><View><Text style={styles.sectionKicker}>JOURNEY PROGRESS</Text><Text style={styles.overallTitle}>{percent === 0 ? "Your first step starts here" : `${percent}% of your map explored`}</Text></View><Icon name="compass" size={26} color={COLORS.purple} /></View>
+          <ProgressBar percent={percent} color={COLORS.purple} height={9} />
+          <View style={styles.overallFooter}><Text style={styles.overallFooterText}>{completedLevels} checkpoints cleared</Text><Text style={styles.overallFooterText}>{levels.length - completedLevels} ahead</Text></View>
+        </View>
+
+        <View style={styles.sectionHeading}><View><Text style={styles.sectionKicker}>THE WORLD AHEAD</Text><Text style={styles.sectionTitle}>Follow your trail</Text></View><View style={styles.liveChip}><View style={styles.liveDot} /><Text style={styles.liveText}>SYNCED</Text></View></View>
+
+        {loading ? (
+          <View style={styles.loadingCard}><ActivityIndicator color={COLORS.purple} /><Text style={styles.loadingText}>Syncing your journey...</Text></View>
+        ) : (
+          path.chapters.map((chapter, index) => <JourneyChapter key={chapter.id} chapter={chapter} nextLevel={nextLevel} onSelectLevel={setSelectedLevelId} index={index} />)
         )}
 
-        <ScrollView
-          contentContainerStyle={ss.mapScroll}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Clouds decoration */}
-          <Cloud x={-10} y={0} scale={0.8} opacity={0.8} />
-          <Cloud x={220} y={20} scale={0.6} opacity={0.6} />
-          <Cloud x={60} y={60} scale={0.5} opacity={0.5} />
-
-          {loading ? (
-            <View style={ss.loadingBox}>
-              <ActivityIndicator color={C.white} size="large" />
-              <Text style={ss.loadingText}>Loading your adventure...</Text>
-            </View>
-          ) : (
-            path.chapters.map((chapter, idx) => (
-              <View key={chapter.id}>
-                {/* Chapter island */}
-                <ChapterIsland
-                  chapter={chapter}
-                  nextLevel={nextLevel}
-                  onSelectLevel={setSelectedLevelId}
-                  themeIdx={idx}
-                />
-
-                {/* Connector between chapters */}
-                {idx < path.chapters.length - 1 && (
-                  <ChapterConnector
-                    fromColor={chapter.color}
-                    toColor={path.chapters[idx + 1].color}
-                  />
-                )}
-              </View>
-            ))
-          )}
-
-          {/* End of map */}
-          {!loading && (
-            <View style={ss.mapEnd}>
-              <View style={ss.mapEndIcon}>
-                <Ico name="star" size={24} color={C.yellow} />
-              </View>
-              <Text style={ss.mapEndText}>More worlds coming soon...</Text>
-            </View>
-          )}
-        </ScrollView>
-      </SafeAreaView>
-    </View>
+        <View style={styles.endCard}><View style={styles.endIcon}><Icon name="sparkles" size={22} color={COLORS.yellow} /></View><Text style={styles.endTitle}>The trail keeps growing</Text><Text style={styles.endBody}>New chapters and challenges will appear here as you progress.</Text></View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-// ─── Styles ────────────────────────────────────────────────────────────────────
-const ss = StyleSheet.create({
-  root: { flex: 1 },
-
-  // Sky background
-  skyBg: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
-  skyTop: { flex: 0.35, backgroundColor: "#1A3A5C" },
-  skyMid: { flex: 0.4, backgroundColor: "#1E4D72" },
-  skyBottom: { flex: 0.25, backgroundColor: "#215A84" },
-
-  safeArea: { flex: 1, backgroundColor: "transparent" },
-
-  // Header
-  topHeader: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 18, paddingTop: 10, paddingBottom: 8,
-  },
-  headerLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
-  headerIconBox: {
-    width: 38, height: 38, borderRadius: 13,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    alignItems: "center", justifyContent: "center",
-    borderWidth: 1, borderColor: "rgba(255,255,255,0.2)",
-  },
-  headerKicker: { color: "rgba(255,255,255,0.55)", fontSize: 9, fontWeight: "900", letterSpacing: 1.5 },
-  headerTitle: { color: C.white, fontSize: 20, fontWeight: "900", marginTop: 1 },
-  headerRight: { flexDirection: "row", gap: 8, alignItems: "center" },
-  xpPill: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    backgroundColor: "rgba(255,255,255,0.12)",
-    paddingHorizontal: 12, paddingVertical: 7, borderRadius: 14,
-    borderWidth: 1, borderColor: "rgba(255,255,255,0.18)",
-  },
-  xpPillText: { color: C.white, fontSize: 12, fontWeight: "800" },
-
-  // Continue banner
-  continueBanner: {
-    flexDirection: "row", alignItems: "center", gap: 10,
-    marginHorizontal: 18, marginBottom: 6,
-    backgroundColor: "rgba(255,255,255,0.1)",
-    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16,
-    borderWidth: 1, borderColor: "rgba(255,255,255,0.15)",
-  },
-  continueBannerIcon: { width: 28, height: 28, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  continueBannerText: { flex: 1, color: C.white, fontSize: 12, fontWeight: "700" },
-
-  // Map scroll
-  mapScroll: { paddingHorizontal: 14, paddingBottom: 40, paddingTop: 8 },
-
-  // Island wrap
-  islandWrap: {
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderRadius: 28, overflow: "hidden",
-    borderWidth: 1, borderColor: "rgba(255,255,255,0.12)",
-    marginBottom: 6,
-  },
-
-  // Chapter banner
-  chapterBanner: {
-    flexDirection: "row", alignItems: "center", gap: 10,
-    paddingHorizontal: 16, paddingVertical: 12,
-  },
-  chapterBannerIcon: {
-    width: 38, height: 38, borderRadius: 14,
-    alignItems: "center", justifyContent: "center",
-  },
-  chapterKicker: { color: "rgba(255,255,255,0.7)", fontSize: 8, fontWeight: "900", letterSpacing: 1.4 },
-  chapterBannerTitle: { color: C.white, fontSize: 16, fontWeight: "900", marginTop: 1 },
-  chapterProgressChip: {
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, borderWidth: 1.5,
-  },
-  chapterProgressText: { color: C.white, fontSize: 11, fontWeight: "900" },
-
-  // Island body
-  islandBody: { paddingHorizontal: 14, paddingBottom: 16 },
-  islandTerrain: { alignItems: "center", marginBottom: -10, zIndex: 1 },
-  islandNameLabel: { position: "absolute", bottom: 14, fontSize: 9, fontWeight: "900", letterSpacing: 1.2, opacity: 0.8 },
-
-  // Level path
-  levelPath: { gap: 0, paddingTop: 8 },
-
-  // Path connector (dashes between levels)
-  pathConnector: { alignItems: "center", paddingVertical: 2 },
-
-  // Level node
-  levelNodeWrap: { marginVertical: 4 },
-  nodeGlowRing: {
-    position: "absolute", width: 74, height: 74, borderRadius: 37,
-    borderWidth: 2, top: -5, left: -5,
-    alignItems: "center", justifyContent: "center",
-    overflow: "visible",
-  },
-  nodeCircle: {
-    width: 64, height: 64, borderRadius: 22,
-    alignItems: "center", justifyContent: "center",
-    borderWidth: 3, borderColor: "rgba(255,255,255,0.35)",
-    shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-  },
-  nodeXpBadge: {
-    flexDirection: "row", alignItems: "center", gap: 2,
-    paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8,
-    marginTop: -8, zIndex: 2,
-  },
-  nodeXpText: { color: C.white, fontSize: 8, fontWeight: "900" },
-  nodeLabelBox: {
-    marginTop: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.15)", borderWidth: 1,
-    flexDirection: "row", alignItems: "center", gap: 4,
-    maxWidth: 130,
-  },
-  nodeLabelText: { fontSize: 10, fontWeight: "800", flexShrink: 1 },
-  upNextTag: { paddingHorizontal: 5, paddingVertical: 2, borderRadius: 6 },
-  upNextText: { color: C.white, fontSize: 7, fontWeight: "900", letterSpacing: 0.5 },
-
-  // Chapter progress
-  chapterProgressBar: { height: 4, backgroundColor: "rgba(255,255,255,0.12)", borderRadius: 2, marginTop: 10, overflow: "hidden" },
-  chapterProgressFill: { height: 4, borderRadius: 2 },
-  chapterProgressLabel: { color: "rgba(255,255,255,0.55)", fontSize: 9, fontWeight: "700", marginTop: 5, textAlign: "center" },
-
-  // Chapter connector
-  chapterConnectorWrap: { alignItems: "center", paddingVertical: 8 },
-  chapterConnectorRoad: { alignItems: "center" },
-  chapterConnectorDot: { width: 5, height: 5, borderRadius: 3 },
-  chapterConnectorLabel: { color: "rgba(255,255,255,0.4)", fontSize: 18, fontWeight: "900", marginTop: 4 },
-
-  // Loading
-  loadingBox: { height: 200, justifyContent: "center", alignItems: "center", gap: 12 },
-  loadingText: { color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: "700" },
-
-  // Map end
-  mapEnd: { alignItems: "center", paddingVertical: 24, gap: 8 },
-  mapEndIcon: {
-    width: 56, height: 56, borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.1)",
-    alignItems: "center", justifyContent: "center",
-    borderWidth: 1, borderColor: "rgba(255,255,255,0.2)",
-  },
-  mapEndText: { color: "rgba(255,255,255,0.45)", fontSize: 11, fontWeight: "700" },
-
-  // ── Detail view ────────────────────────────────────────────────────────────
-  detailScroll: { paddingHorizontal: 18, paddingTop: 14, paddingBottom: 40, gap: 16 },
-  detailTopbar: { flexDirection: "row", alignItems: "center", gap: 12 },
-  backBtn: { width: 40, height: 40, borderRadius: 15, alignItems: "center", justifyContent: "center" },
-  breadcrumbChapter: { fontSize: 10, fontWeight: "700" },
-  breadcrumbLevel: { fontSize: 15, fontWeight: "900", marginTop: 1 },
-  detailHero: { borderRadius: 26, padding: 22, overflow: "hidden" },
-  heroOrbLarge: { width: 62, height: 62, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.25)", alignItems: "center", justifyContent: "center", marginBottom: 14 },
-  heroEyebrow: { color: "rgba(255,255,255,0.75)", fontSize: 9, fontWeight: "900", letterSpacing: 1.2 },
-  heroTitle: { color: C.white, fontSize: 28, fontWeight: "900", marginTop: 4 },
-  heroSubtitle: { color: "rgba(255,255,255,0.8)", fontSize: 12, lineHeight: 18, marginTop: 7 },
-  heroProgressRow: { marginTop: 16, gap: 6 },
-  heroProgressTrack: { height: 7, backgroundColor: "rgba(255,255,255,0.25)", borderRadius: 4, overflow: "hidden" },
-  heroProgressFill: { height: 7, borderRadius: 4, backgroundColor: "rgba(255,255,255,0.9)" },
-  heroProgressLabel: { color: "rgba(255,255,255,0.75)", fontSize: 10, fontWeight: "700" },
-  lockedPanel: { borderRadius: 22, alignItems: "center", padding: 28, gap: 8 },
-  lockedIcon: { width: 58, height: 58, borderRadius: 21, alignItems: "center", justifyContent: "center" },
-  lockedTitle: { fontSize: 17, fontWeight: "900" },
-  lockedBody: { fontSize: 11, textAlign: "center", lineHeight: 16 },
-  sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  sectionKicker: { fontSize: 9, fontWeight: "900", letterSpacing: 1.3 },
-  sectionTitle: { fontSize: 20, fontWeight: "900", marginTop: 2 },
-  scorePill: { paddingHorizontal: 11, paddingVertical: 6, borderRadius: 12 },
-  scorePillText: { color: C.white, fontSize: 11, fontWeight: "900" },
-  actCard: { borderRadius: 20, padding: 14, flexDirection: "row", alignItems: "center", gap: 11 },
-  actIcon: { width: 44, height: 44, borderRadius: 15, alignItems: "center", justifyContent: "center" },
-  actType: { fontSize: 8, fontWeight: "900", letterSpacing: 1 },
-  actTitle: { fontSize: 13, fontWeight: "900", marginTop: 2 },
-  actMeta: { fontSize: 9, fontWeight: "600", marginTop: 3 },
-  actArrow: { width: 32, height: 32, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  tipCard: { borderRadius: 18, padding: 14, flexDirection: "row", gap: 10, alignItems: "center" },
-  tipIcon: { width: 38, height: 38, borderRadius: 13, alignItems: "center", justifyContent: "center" },
-  tipTitle: { fontSize: 12, fontWeight: "900" },
-  tipBody: { fontSize: 10, lineHeight: 15, marginTop: 2 },
-  backButton: { borderWidth: 1, borderRadius: 16, paddingVertical: 13, alignItems: "center" },
-  backButtonText: { fontSize: 11, fontWeight: "900" },
+const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: COLORS.canvas },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 36, gap: 14 },
+  topbar: { flexDirection: "row", alignItems: "center", gap: 10 },
+  avatar: { width: 42, height: 42, borderRadius: 16, backgroundColor: COLORS.yellow, borderWidth: 3, borderColor: COLORS.white, alignItems: "center", justifyContent: "center" },
+  avatarText: { color: COLORS.ink, fontSize: 18, fontWeight: "900" },
+  topbarCopy: { flex: 1 },
+  topbarKicker: { color: COLORS.muted, fontSize: 9, fontWeight: "800", letterSpacing: 1.2 },
+  topbarTitle: { color: COLORS.ink, fontSize: 17, fontWeight: "900", marginTop: 2 },
+  xpPill: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: COLORS.white, paddingHorizontal: 11, paddingVertical: 9, borderRadius: 16, shadowColor: "#C7D2E5", shadowOpacity: 0.36, shadowRadius: 7, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
+  xpText: { color: COLORS.ink, fontSize: 11, fontWeight: "900" },
+  heroCard: { minHeight: 215, borderRadius: 28, backgroundColor: COLORS.softPurple, padding: 20, overflow: "hidden", flexDirection: "row", borderWidth: 1, borderColor: "#E3DEFF" },
+  heroCopy: { flex: 1, zIndex: 2 },
+  heroLabel: { flexDirection: "row", alignItems: "center", gap: 6 },
+  heroLabelText: { color: COLORS.purple, fontSize: 9, fontWeight: "900", letterSpacing: 1.1 },
+  heroTitle: { color: COLORS.ink, fontSize: 24, lineHeight: 30, fontWeight: "900", marginTop: 10, maxWidth: 245 },
+  heroBody: { color: COLORS.muted, fontSize: 12, lineHeight: 18, fontWeight: "600", marginTop: 8, maxWidth: 245 },
+  heroButton: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: COLORS.ink, paddingHorizontal: 14, paddingVertical: 11, borderRadius: 15, marginTop: 15 },
+  heroButtonText: { color: COLORS.white, fontSize: 11, fontWeight: "900" },
+  heroArt: { width: 105, alignItems: "center", justifyContent: "center", position: "relative" },
+  heroOrbitLarge: { position: "absolute", width: 128, height: 128, borderRadius: 64, borderWidth: 1, borderColor: "rgba(115,102,232,0.2)", transform: [{ rotate: "28deg" }] },
+  heroPlanet: { width: 72, height: 72, borderRadius: 27, backgroundColor: COLORS.white, alignItems: "center", justifyContent: "center", shadowColor: COLORS.purple, shadowOpacity: 0.24, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 4 },
+  heroStarOne: { position: "absolute", top: 26, right: 2, width: 30, height: 30, borderRadius: 11, backgroundColor: COLORS.white, alignItems: "center", justifyContent: "center" },
+  heroStarTwo: { position: "absolute", bottom: 26, left: 2, width: 26, height: 26, borderRadius: 10, backgroundColor: COLORS.white, alignItems: "center", justifyContent: "center" },
+  spark: { position: "absolute", top: 8, left: 12, width: 7, height: 7, borderRadius: 4 },
+  statsRow: { flexDirection: "row", gap: 9 },
+  statCard: { flex: 1, minHeight: 102, backgroundColor: COLORS.white, borderRadius: 20, padding: 12, borderWidth: 1, borderColor: COLORS.line, shadowColor: "#C7D2E5", shadowOpacity: 0.22, shadowRadius: 9, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  statIcon: { width: 30, height: 30, borderRadius: 11, alignItems: "center", justifyContent: "center", marginBottom: 7 },
+  statValue: { color: COLORS.purple, fontSize: 21, fontWeight: "900" },
+  statLabel: { color: COLORS.muted, fontSize: 8, fontWeight: "900", letterSpacing: 0.8, marginTop: 2 },
+  overallCard: { backgroundColor: COLORS.white, borderRadius: 22, padding: 16, borderWidth: 1, borderColor: COLORS.line },
+  overallHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 13 },
+  overallTitle: { color: COLORS.ink, fontSize: 15, fontWeight: "900", marginTop: 3 },
+  overallFooter: { flexDirection: "row", justifyContent: "space-between", marginTop: 7 },
+  overallFooterText: { color: COLORS.muted, fontSize: 10, fontWeight: "700" },
+  sectionHeading: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", marginTop: 4 },
+  sectionKicker: { color: COLORS.muted, fontSize: 9, fontWeight: "900", letterSpacing: 1.3 },
+  sectionTitle: { color: COLORS.ink, fontSize: 21, fontWeight: "900", marginTop: 3 },
+  liveChip: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.line, borderRadius: 12, paddingHorizontal: 9, paddingVertical: 6 },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.green },
+  liveText: { color: COLORS.muted, fontSize: 8, fontWeight: "900", letterSpacing: 0.8 },
+  chapterCard: { backgroundColor: COLORS.white, borderRadius: 26, padding: 16, borderWidth: 1, borderColor: COLORS.line, overflow: "hidden", shadowColor: "#C7D2E5", shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  chapterAccent: { position: "absolute", left: 0, top: 0, bottom: 0, width: 5 },
+  chapterHeader: { flexDirection: "row", alignItems: "center", gap: 11 },
+  chapterIcon: { width: 46, height: 46, borderRadius: 17, alignItems: "center", justifyContent: "center" },
+  chapterHeaderCopy: { flex: 1 },
+  chapterEyebrow: { color: COLORS.muted, fontSize: 8, fontWeight: "900", letterSpacing: 1.2 },
+  chapterTitle: { color: COLORS.ink, fontSize: 17, fontWeight: "900", marginTop: 2 },
+  chapterSubtitle: { color: COLORS.muted, fontSize: 10, fontWeight: "600", marginTop: 1 },
+  chapterPercent: { alignItems: "flex-end" },
+  chapterPercentValue: { fontSize: 20, fontWeight: "900" },
+  chapterPercentLabel: { color: COLORS.muted, fontSize: 8, fontWeight: "800" },
+  chapterDescription: { color: COLORS.muted, fontSize: 11, lineHeight: 17, fontWeight: "600", marginTop: 14 },
+  progressTrack: { width: "100%", backgroundColor: "#ECF0F6", overflow: "hidden" },
+  progressFill: { backgroundColor: COLORS.purple },
+  chapterProgressMeta: { flexDirection: "row", justifyContent: "space-between", marginTop: 7 },
+  chapterProgressText: { color: COLORS.muted, fontSize: 9, fontWeight: "700" },
+  journeyRail: { marginTop: 12, minHeight: 170, justifyContent: "space-around", position: "relative", paddingVertical: 5, gap: 10 },
+  railLine: { position: "absolute", width: 4, top: 8, bottom: 8, left: "50%", marginLeft: -2, borderRadius: 2 },
+  levelRow: { minHeight: 74, width: "100%", flexDirection: "row", alignItems: "center", gap: 10, zIndex: 1 },
+  levelRowLeft: { justifyContent: "flex-start", paddingRight: 8 },
+  levelRowRight: { justifyContent: "flex-end", paddingLeft: 8 },
+  nodeCircle: { width: 58, height: 58, borderRadius: 22, alignItems: "center", justifyContent: "center", borderWidth: 4, borderColor: COLORS.white, shadowColor: "#B7C3D5", shadowOpacity: 0.35, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
+  nodeCircleNext: { borderColor: "#E4DFFF", shadowColor: COLORS.purple, shadowOpacity: 0.35, shadowRadius: 14 },
+  xpBadge: { alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 2, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 8, marginTop: -7, borderWidth: 2, borderColor: COLORS.white },
+  xpBadgeText: { color: COLORS.white, fontSize: 8, fontWeight: "900" },
+  levelInfo: { width: "58%", minHeight: 68, backgroundColor: "#FAFBFE", borderRadius: 16, paddingHorizontal: 11, paddingVertical: 9, borderWidth: 1, borderColor: COLORS.line },
+  levelInfoLocked: { opacity: 0.75 },
+  levelInfoTop: { flexDirection: "row", alignItems: "center", gap: 5 },
+  levelNumber: { fontSize: 8, fontWeight: "900", letterSpacing: 0.8, flex: 1 },
+  nextPill: { paddingHorizontal: 5, paddingVertical: 2, borderRadius: 5 },
+  nextPillText: { color: COLORS.white, fontSize: 7, fontWeight: "900" },
+  levelTitle: { color: COLORS.ink, fontSize: 12, fontWeight: "900", marginTop: 3 },
+  levelTitleLocked: { color: COLORS.muted },
+  levelSubtitle: { color: COLORS.muted, fontSize: 9, fontWeight: "600", marginTop: 1 },
+  levelMeta: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 5 },
+  levelMetaText: { color: COLORS.muted, fontSize: 8, fontWeight: "700" },
+  loadingCard: { minHeight: 170, backgroundColor: COLORS.white, borderRadius: 24, alignItems: "center", justifyContent: "center", gap: 11, borderWidth: 1, borderColor: COLORS.line },
+  loadingText: { color: COLORS.muted, fontSize: 11, fontWeight: "700" },
+  endCard: { alignItems: "center", backgroundColor: COLORS.softPurple, borderRadius: 24, padding: 22, borderWidth: 1, borderColor: "#E3DEFF" },
+  endIcon: { width: 52, height: 52, borderRadius: 19, backgroundColor: COLORS.white, alignItems: "center", justifyContent: "center", marginBottom: 9 },
+  endTitle: { color: COLORS.ink, fontSize: 14, fontWeight: "900" },
+  endBody: { color: COLORS.muted, fontSize: 10, lineHeight: 15, textAlign: "center", marginTop: 4, maxWidth: 230 },
+  detailScroll: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 36, gap: 15 },
+  detailTopbar: { flexDirection: "row", alignItems: "center", gap: 10 },
+  backButton: { width: 40, height: 40, borderRadius: 15, backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.line, alignItems: "center", justifyContent: "center" },
+  detailBreadcrumb: { flex: 1 },
+  detailKicker: { color: COLORS.muted, fontSize: 9, fontWeight: "800", letterSpacing: 1 },
+  detailHeading: { color: COLORS.ink, fontSize: 16, fontWeight: "900", marginTop: 2 },
+  detailReward: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.line, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 13 },
+  detailRewardText: { color: COLORS.ink, fontSize: 11, fontWeight: "900" },
+  detailHero: { borderRadius: 27, padding: 21, overflow: "hidden" },
+  detailHeroOrb: { width: 62, height: 62, borderRadius: 23, backgroundColor: "rgba(255,255,255,0.24)", alignItems: "center", justifyContent: "center", marginBottom: 14 },
+  detailHeroEyebrow: { color: "rgba(255,255,255,0.76)", fontSize: 9, fontWeight: "900", letterSpacing: 1.1 },
+  detailHeroTitle: { color: COLORS.white, fontSize: 27, fontWeight: "900", marginTop: 4 },
+  detailHeroBody: { color: "rgba(255,255,255,0.82)", fontSize: 12, lineHeight: 18, marginTop: 6 },
+  detailProgressMeta: { flexDirection: "row", justifyContent: "space-between", marginTop: 16, marginBottom: 6 },
+  detailProgressLabel: { color: "rgba(255,255,255,0.78)", fontSize: 10, fontWeight: "800" },
+  lockedCard: { alignItems: "center", backgroundColor: COLORS.white, borderRadius: 23, padding: 27, borderWidth: 1, borderColor: COLORS.line },
+  lockedIcon: { width: 58, height: 58, borderRadius: 21, backgroundColor: COLORS.canvas, alignItems: "center", justifyContent: "center", marginBottom: 10 },
+  lockedTitle: { color: COLORS.ink, fontSize: 17, fontWeight: "900" },
+  lockedBody: { color: COLORS.muted, fontSize: 11, lineHeight: 17, textAlign: "center", marginTop: 6, maxWidth: 250 },
+  sectionHeader: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" },
+  scorePill: { backgroundColor: COLORS.purple, paddingHorizontal: 11, paddingVertical: 7, borderRadius: 12 },
+  scorePillText: { color: COLORS.white, fontSize: 11, fontWeight: "900" },
+  activityList: { gap: 10 },
+  activityCard: { flexDirection: "row", alignItems: "center", gap: 11, backgroundColor: COLORS.white, padding: 13, borderRadius: 20, borderWidth: 1, borderColor: COLORS.line },
+  activityIcon: { width: 45, height: 45, borderRadius: 15, alignItems: "center", justifyContent: "center" },
+  activityCopy: { flex: 1 },
+  activityType: { color: COLORS.muted, fontSize: 8, fontWeight: "900", letterSpacing: 1 },
+  activityTitle: { color: COLORS.ink, fontSize: 13, fontWeight: "900", marginTop: 2 },
+  activityMeta: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 },
+  activityMetaText: { color: COLORS.muted, fontSize: 9, fontWeight: "700" },
+  activityArrow: { width: 32, height: 32, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  tipCard: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: COLORS.softOrange, borderRadius: 19, borderWidth: 1, borderColor: "#FFE0CB", padding: 14 },
+  tipIcon: { width: 39, height: 39, borderRadius: 14, backgroundColor: COLORS.white, alignItems: "center", justifyContent: "center" },
+  tipTitle: { color: COLORS.ink, fontSize: 12, fontWeight: "900" },
+  tipBody: { color: COLORS.muted, fontSize: 10, lineHeight: 15, marginTop: 2 },
+  secondaryButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1, borderColor: "#D9D3FF", backgroundColor: COLORS.softPurple, borderRadius: 16, paddingVertical: 13 },
+  secondaryButtonText: { color: COLORS.purple, fontSize: 11, fontWeight: "900" },
 });

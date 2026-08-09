@@ -193,13 +193,13 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#09090b',
+    backgroundColor: '#F1F5FB',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 16,
   },
   loadingText: {
-    color: '#a1a1aa',
+    color: '#7D879F',
     fontFamily: 'SpaceGrotesk_600SemiBold',
     fontSize: 12,
     letterSpacing: 1.5,

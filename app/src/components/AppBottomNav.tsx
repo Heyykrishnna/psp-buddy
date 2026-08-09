@@ -28,6 +28,7 @@ const COLORS = {
   muted: "#7D879F",
   white: "#FFFFFF",
   canvas: "#F1F5FB",
+  purple: "#7366E8",
 };
 
 export function AppBottomNav({ active, onChange }: AppBottomNavProps) {
@@ -115,7 +116,7 @@ const styles = StyleSheet.create({
     top: 5,
     bottom: 5,
     borderRadius: 20,
-    backgroundColor: COLORS.ink,
+    backgroundColor: COLORS.purple,
   },
   tab: {
     flex: 1,

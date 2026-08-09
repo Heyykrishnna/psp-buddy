@@ -49,7 +49,7 @@ function TopicProgressBar({ score, color }: { score: number; color: string }) {
 const barStyles = StyleSheet.create({
   track: {
     height: 6,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: '#E9EFF7',
     borderRadius: 3,
     overflow: 'hidden',
     marginTop: 8,
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   loadingText: {
-    color: '#a1a1aa',
+    color: '#7D879F',
     fontSize: 11,
     letterSpacing: 1.5,
     fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#27272a',
+    borderBottomColor: '#E3EAF4',
     backgroundColor: '#FFFFFF',
   },
   backBtn: { paddingRight: 12 },
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#ffffff',
+    color: '#20253D',
     letterSpacing: 1,
     fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
   },
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   sectionHeaderTitle: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#a1a1aa',
+    color: '#7D879F',
     letterSpacing: 1.2,
     marginTop: 4,
     fontFamily: Platform.OS === 'web' ? "'Space Grotesk', sans-serif" : 'SpaceGrotesk_600SemiBold',
@@ -294,8 +294,8 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   topicCard: {
-    backgroundColor: '#121316',
-    borderColor: '#27272a',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E3EAF4',
     borderWidth: 1,
     borderRadius: 16,
     padding: 14,
@@ -308,12 +308,12 @@ const styles = StyleSheet.create({
   topicTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#ffffff',
+    color: '#20253D',
     fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_700Bold',
   },
   topicMeta: {
     fontSize: 11,
-    color: '#71717a',
+    color: '#7D879F',
     marginTop: 2,
     fontFamily: Platform.OS === 'web' ? 'Poppins, sans-serif' : 'Poppins_500Medium',
   },
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
 
   // Hero Card Styles
   heroCard: {
-    backgroundColor: '#5451FF',
+    backgroundColor: '#7366E8',
     borderRadius: 24,
     padding: 24,
     marginVertical: 4,
