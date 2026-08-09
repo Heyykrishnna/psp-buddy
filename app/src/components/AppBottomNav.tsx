@@ -77,7 +77,7 @@ export function AppBottomNav({ active, onChange }: AppBottomNavProps) {
               accessibilityState={{ selected: isActive }}
               accessibilityLabel={tab.label}
             >
-              <Ionicons name={tab.icon} size={28} color={isActive ? COLORS.white : COLORS.muted} />
+              <Ionicons name={tab.icon} size={22} color={isActive ? COLORS.white : COLORS.muted} />
               <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
             </TouchableOpacity>
           );
@@ -90,26 +90,31 @@ export function AppBottomNav({ active, onChange }: AppBottomNavProps) {
 const styles = StyleSheet.create({
   shell: {
     backgroundColor: COLORS.canvas,
-    paddingHorizontal: 28,
-    paddingTop: 8,
-    paddingBottom: 10,
+    paddingHorizontal: 20,
+    paddingTop: 6,
+    paddingBottom: 8,
   },
   nav: {
-    height: 108,
+    height: 68,
     backgroundColor: COLORS.white,
-    borderRadius: 36,
-    padding: 7,
+    borderRadius: 24,
+    padding: 5,
     flexDirection: "row",
     alignItems: "stretch",
     position: "relative",
     overflow: "hidden",
+    shadowColor: "#C7D2E5",
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
   activePill: {
     position: "absolute",
-    left: 7,
-    top: 7,
-    bottom: 7,
-    borderRadius: 29,
+    left: 5,
+    top: 5,
+    bottom: 5,
+    borderRadius: 20,
     backgroundColor: COLORS.ink,
   },
   tab: {
@@ -117,13 +122,13 @@ const styles = StyleSheet.create({
     zIndex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 5,
-    borderRadius: 29,
+    gap: 3,
+    borderRadius: 20,
   },
   tabLabel: {
     color: COLORS.muted,
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 10,
+    lineHeight: 13,
     fontWeight: "800",
   },
   tabLabelActive: {

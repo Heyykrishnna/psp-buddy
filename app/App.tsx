@@ -22,9 +22,11 @@ import { CompetitiveScreen } from './src/screens/CompetitiveScreen';
 import { AiTutorScreen } from './src/screens/AiTutorScreen';
 import { AnalyticsScreen } from './src/screens/AnalyticsScreen';
 import { AppBottomNav, AppNavKey } from './src/components/AppBottomNav';
+import { MissionsScreen } from './src/screens/MissionsScreen';
 
 type ScreenType =
   | 'DASHBOARD'
+  | 'MISSIONS'
   | 'ASSESSMENTS'
   | 'LEADERBOARD'
   | 'PLAYGROUND'
@@ -60,24 +62,35 @@ function MainNavigator() {
 
   const handleBottomNav = (next: AppNavKey) => {
     if (next === 'MAP') openScreen('DASHBOARD');
-    if (next === 'MISSIONS') openScreen('ASSESSMENTS');
+    if (next === 'MISSIONS') openScreen('MISSIONS');
     if (next === 'RANK') openScreen('LEADERBOARD');
     if (next === 'PROFILE') openScreen('ANALYTICS');
   };
 
-  const activeNav: AppNavKey = currentScreen === 'ASSESSMENTS'
+  const activeNav: AppNavKey = currentScreen === 'MISSIONS'
     ? 'MISSIONS'
-    : currentScreen === 'LEADERBOARD'
-      ? 'RANK'
-      : currentScreen === 'ANALYTICS'
-        ? 'PROFILE'
-        : 'MAP';
+    : currentScreen === 'ASSESSMENTS'
+      ? 'MISSIONS'
+      : currentScreen === 'LEADERBOARD'
+        ? 'RANK'
+        : currentScreen === 'ANALYTICS'
+          ? 'PROFILE'
+          : 'MAP';
 
   let screen: React.ReactNode;
-  if (currentScreen === 'ASSESSMENTS') {
+  if (currentScreen === 'MISSIONS') {
+    screen = (
+      <MissionsScreen
+        onOpenAssessment={(asmId) => {
+          setSelectedAsmId(asmId || null);
+          openScreen('ASSESSMENTS');
+        }}
+      />
+    );
+  } else if (currentScreen === 'ASSESSMENTS') {
     screen = (
       <AssessmentScreen
-        onBackToDashboard={() => setCurrentScreen('DASHBOARD')}
+        onBackToDashboard={() => setCurrentScreen('MISSIONS')}
         selectedAssessmentId={selectedAsmId}
       />
     );
