@@ -155,7 +155,9 @@ export function AssessmentScreen({
     let cancelled = false;
     async function directLaunch() {
       try {
-        const details = await apiClient.getAssessmentById(selectedAssessmentId!);
+        const details = await apiClient.getAssessmentById(
+          selectedAssessmentId!,
+        );
         if (!cancelled && details) {
           startAssessment(details);
         }
@@ -164,13 +166,15 @@ export function AssessmentScreen({
       }
     }
     directLaunch();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAssessmentId]);
 
   // Fallback: auto-open once list has loaded (for cases where directLaunch fails)
   useEffect(() => {
-    if (selectedAssessmentId && assessments.length > 0 && mode === 'LIST') {
+    if (selectedAssessmentId && assessments.length > 0 && mode === "LIST") {
       const found = assessments.find((a) => a.id === selectedAssessmentId);
       if (found) {
         startAssessment(found);
