@@ -53,10 +53,18 @@ async function bootstrap() {
   );
 
   // ── CORS ───────────────────────────────────────────────────────────────────
+  const configuredOrigins = new Set(
+    (process.env.ALLOWED_ORIGINS || 'http://localhost:3000,http://localhost:8081')
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean),
+  );
   app.enableCors({
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-      // Allow mobile app requests, postman, Expo, and web
-      callback(null, true);
+      // Native clients do not send an Origin header; browser origins must be allow-listed.
+      if (!origin || configuredOrigins.has(origin)) return callback(null, true);
+      if (process.env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.)/.test(origin)) return callback(null, true);
+      return callback(new Error('Origin is not allowed by CORS'));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

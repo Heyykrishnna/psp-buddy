@@ -1,4 +1,5 @@
 import { Controller, Post, Get, Body, HttpCode, HttpStatus, UseGuards, Request } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import {
@@ -19,6 +20,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('send-verification-code')
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
   @HttpCode(HttpStatus.OK)
   async sendVerificationCode(@Body() body: any) {
     const validated = sendVerificationCodeSchema.parse(body);
@@ -26,12 +28,14 @@ export class AuthController {
   }
 
   @Post('register')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   async register(@Body() body: any) {
     const validated = registerSchema.parse(body);
     return this.authService.register(validated);
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @HttpCode(HttpStatus.OK)
   async login(@Body() body: any) {
     const validated = loginSchema.parse(body);
@@ -53,6 +57,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @HttpCode(HttpStatus.OK)
   async refresh(@Body() body: any) {
     const validated = refreshTokenSchema.parse(body);

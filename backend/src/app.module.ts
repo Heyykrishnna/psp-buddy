@@ -19,9 +19,9 @@ import { LearningPathService } from './learning-path/learning-path.service';
 @Module({
   imports: [
     ThrottlerModule.forRoot([
-      { name: 'default', ttl: 60_000, limit: 1000 },
-      { name: 'run', ttl: 60_000, limit: 100 },
-      { name: 'submit', ttl: 60_000, limit: 60 },
+      { name: 'default', ttl: Number(process.env.THROTTLE_DEFAULT_TTL || 60_000), limit: Number(process.env.THROTTLE_DEFAULT_LIMIT || 100) },
+      { name: 'run', ttl: Number(process.env.THROTTLE_RUN_TTL || 60_000), limit: Number(process.env.THROTTLE_RUN_LIMIT || 20) },
+      { name: 'submit', ttl: Number(process.env.THROTTLE_SUBMIT_TTL || 60_000), limit: Number(process.env.THROTTLE_SUBMIT_LIMIT || 10) },
     ]),
     AuthModule,
     AiModule,

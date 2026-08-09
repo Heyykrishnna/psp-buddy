@@ -38,6 +38,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 let memoryAccessToken: string | null = null;
 let memoryRefreshToken: string | null = null;
+let invalidateSession: (() => void) | null = null;
 
 function getMobileApiUrl(): string {
   const envUrl = process.env.EXPO_PUBLIC_API_URL;
@@ -94,12 +95,27 @@ const apiClientInstance = new PSPBuddyApiClient({
     memoryAccessToken = tokens.accessToken;
     memoryRefreshToken = tokens.refreshToken;
   },
+  onUnauthenticated: () => {
+    memoryAccessToken = null;
+    memoryRefreshToken = null;
+    invalidateSession?.();
+  },
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [accessToken, setTokenState] = useState<string | null>(null);
+
+  useEffect(() => {
+    invalidateSession = () => {
+      setTokenState(null);
+      setUser(null);
+    };
+    return () => {
+      invalidateSession = null;
+    };
+  }, []);
 
   useEffect(() => {
     // Initial check
@@ -229,12 +245,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
     } catch (err: any) {
-      console.warn(
-        "Backend onboarding request failed, updating local state:",
-        err?.message,
-      );
+      if (!memoryAccessToken?.startsWith("demo_token_")) {
+        throw new Error(err?.response?.data?.message || "Unable to sync onboarding with the server.");
+      }
     }
-    if (user) {
+    if (user && memoryAccessToken?.startsWith("demo_token_")) {
       setUser({
         ...user,
         ...data,
@@ -244,7 +259,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    const refreshToken = memoryRefreshToken;
+    if (refreshToken && !memoryAccessToken?.startsWith("demo_token_")) {
+      await apiClientInstance.logout(refreshToken).catch(() => undefined);
+    }
     apiClientInstance.disconnectRealtimeSync();
+    apiClientInstance.invalidateCache();
     memoryAccessToken = null;
     memoryRefreshToken = null;
     setTokenState(null);

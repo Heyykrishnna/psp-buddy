@@ -1,8 +1,12 @@
 import { Controller, Get, Param, Request, UseGuards } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { RoleName } from '@/types';
 
 @Controller('analytics')
+@UseGuards(JwtAuthGuard)
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
@@ -47,6 +51,8 @@ export class AnalyticsController {
    * GET /analytics/class/students
    * Per-student mastery rankings for default class (teacher view)
    */
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.ADMIN, RoleName.TEACHER)
   @Get('class/students')
   async getClassStudentsDefault() {
     return this.analyticsService.getClassStudentRankings('1st Sem');
@@ -56,6 +62,8 @@ export class AnalyticsController {
    * GET /analytics/class/topics
    * Aggregate topic mastery across default class
    */
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.ADMIN, RoleName.TEACHER)
   @Get('class/topics')
   async getClassTopicsDefault() {
     return this.analyticsService.getClassTopicBreakdown('1st Sem');
@@ -65,6 +73,8 @@ export class AnalyticsController {
    * GET /analytics/student/:studentId/performance
    * Specific student performance history
    */
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.ADMIN, RoleName.TEACHER)
   @Get('student/:studentId/performance')
   async getStudentPerformanceById(@Param('studentId') studentId: string) {
     return this.analyticsService.getStudentPerformance(studentId);
@@ -74,6 +84,8 @@ export class AnalyticsController {
    * GET /analytics/classes/:id
    * Class-level summary — total assessments, average score, etc.
    */
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.ADMIN, RoleName.TEACHER)
   @Get('classes/:id')
   async getClassOverview(@Param('id') className: string) {
     return this.analyticsService.getClassOverview(className);
@@ -83,6 +95,8 @@ export class AnalyticsController {
    * GET /analytics/classes/:id/topics
    * Aggregate topic mastery across all students in a class
    */
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.ADMIN, RoleName.TEACHER)
   @Get('classes/:id/topics')
   async getClassTopics(@Param('id') className: string) {
     return this.analyticsService.getClassTopicBreakdown(className);
@@ -92,6 +106,8 @@ export class AnalyticsController {
    * GET /analytics/classes/:id/students
    * Per-student mastery rankings for a class (teacher view)
    */
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.ADMIN, RoleName.TEACHER)
   @Get('classes/:id/students')
   async getClassStudents(@Param('id') className: string) {
     return this.analyticsService.getClassStudentRankings(className);

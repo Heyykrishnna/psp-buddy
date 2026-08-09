@@ -16,12 +16,15 @@ import { ProblemService } from './problem.service';
 import { CreateProblemDto } from './dto/create-problem.dto';
 import { CreateTestCaseDto } from './dto/create-test-case.dto';
 import { SubmitProblemDto } from './dto/submit-problem.dto';
-import { DifficultyLevel } from '@/types';
+import { DifficultyLevel, RoleName } from '@/types';
 import { JwtAuthGuard } from '@/auth/jwt-auth.guard';
+import { RolesGuard } from '@/auth/roles.guard';
+import { Roles } from '@/auth/roles.decorator';
 import { ExecutionQueueService } from '@/queue/execution-queue.service';
 import { ExecutionSecurityGuard, SubmitSecurityGuard, EXECUTION_LIMITS } from '@/security/execution.guard';
 
 @Controller('problems')
+@UseGuards(JwtAuthGuard)
 export class ProblemController {
   constructor(
     private readonly problemService: ProblemService,
@@ -31,6 +34,8 @@ export class ProblemController {
   // ── Problem CRUD ─────────────────────────────────────────────────────────────
 
   // 1. POST /problems - Create Problem (Teacher only)
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.ADMIN, RoleName.TEACHER)
   @Post()
   async createProblem(@Body() body: CreateProblemDto) {
     return this.problemService.createProblem(body);
@@ -51,7 +56,7 @@ export class ProblemController {
     const isBookmarked =
       bookmarked === 'true' ? true : bookmarked === 'false' ? false : undefined;
 
-    const effectiveUserId = userId || req?.user?.sub || req?.user?.id;
+    const effectiveUserId = req?.user?.sub || req?.user?.id;
 
     return this.problemService.getProblems({
       difficulty,
@@ -91,13 +96,16 @@ export class ProblemController {
   @Get(':slugOrId')
   async getProblemBySlugOrId(
     @Param('slugOrId') slugOrId: string,
+    @Request() req: any,
     @Query('userId') userId?: string,
   ) {
-    return this.problemService.getProblemBySlugOrId(slugOrId, userId);
+    return this.problemService.getProblemBySlugOrId(slugOrId, req.user?.sub || req.user?.id);
   }
 
   // 6. PATCH /problems/:id - Update Problem
   @Patch(':id')
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.ADMIN, RoleName.TEACHER)
   async updateProblem(
     @Param('id') id: string,
     @Body() body: Partial<CreateProblemDto>,
@@ -107,6 +115,8 @@ export class ProblemController {
 
   // 7. DELETE /problems/:id - Delete Problem
   @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.ADMIN, RoleName.TEACHER)
   async deleteProblem(@Param('id') id: string) {
     return this.problemService.deleteProblem(id);
   }
@@ -115,6 +125,8 @@ export class ProblemController {
 
   // 8. POST /problems/:id/test-cases
   @Post(':id/test-cases')
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.ADMIN, RoleName.TEACHER)
   async createTestCase(
     @Param('id') problemId: string,
     @Body() body: CreateTestCaseDto,
@@ -124,6 +136,8 @@ export class ProblemController {
 
   // 9. POST /problems/:id/test-cases/generate - AI generation
   @Post(':id/test-cases/generate')
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.ADMIN, RoleName.TEACHER)
   async generateAiTestCases(
     @Param('id') problemId: string,
     @Body() body: { count?: number },
@@ -140,6 +154,8 @@ export class ProblemController {
 
   // 11. DELETE /problems/test-cases/:testCaseId
   @Delete('test-cases/:testCaseId')
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.ADMIN, RoleName.TEACHER)
   async deleteTestCase(@Param('testCaseId') testCaseId: string) {
     return this.problemService.deleteTestCase(testCaseId);
   }
@@ -189,7 +205,7 @@ export class ProblemController {
     @Body() body?: { userId?: string },
     @Query('userId') queryUserId?: string,
   ) {
-    const userId = req.user?.sub || req.user?.id || body?.userId || queryUserId || 'demo-user-id';
+    const userId = req.user?.sub || req.user?.id;
     return this.problemService.toggleBookmark(problemId, userId);
   }
 

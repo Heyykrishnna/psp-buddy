@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Req } from '@nestjs/common';
+import { Controller, Post, Body, Req, UseGuards } from '@nestjs/common';
 import {
   AiService,
   GenerateAssessmentAiDto,
@@ -7,8 +7,10 @@ import {
   TutorChatAiDto,
 } from './ai.service';
 import { ChatService } from './chat.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('ai')
+@UseGuards(JwtAuthGuard)
 export class AiController {
   constructor(
     private readonly aiService: AiService,

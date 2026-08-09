@@ -5,6 +5,8 @@ import { db } from '@/database';
 import { RegisterInput, LoginInput, OnboardingInput } from '@/validation';
 import { RoleName, UserProfile } from '@/types';
 import { MailService } from '@/mail/mail.service';
+import { randomInt } from 'crypto';
+import { getAuthSecret } from '@/security/auth.config';
 
 @Injectable()
 export class AuthService {
@@ -19,7 +21,7 @@ export class AuthService {
       throw new BadRequestException('User with this email is already registered. Please sign in.');
     }
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const code = randomInt(100000, 1000000).toString();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
 
     await db.verificationCode.upsert({
@@ -59,14 +61,15 @@ export class AuthService {
 
     const hashedPassword = await argon2.hash(input.password);
 
-    let assignedRole: RoleName = RoleName.STUDENT;
-    if (input.role) {
-      assignedRole = input.role as RoleName;
-    } else if (input.email.toLowerCase().includes('teacher')) {
-      assignedRole = RoleName.TEACHER;
-    } else if (input.email.toLowerCase().includes('admin')) {
-      assignedRole = RoleName.ADMIN;
-    }
+    // Public registration must never mint an administrator account. Staff
+    // registration is opt-in for local development and should be provisioned
+    // by an administrator in production.
+    const allowLocalTeacherRegistration =
+      process.env.NODE_ENV !== 'production' && process.env.ALLOW_STAFF_REGISTRATION === 'true';
+    const assignedRole =
+      allowLocalTeacherRegistration && input.role === RoleName.TEACHER
+        ? RoleName.TEACHER
+        : RoleName.STUDENT;
 
     const user = await db.user.create({
       data: {
@@ -242,7 +245,7 @@ export class AuthService {
   async refresh(refreshToken: string) {
     try {
       const payload = this.jwtService.verify(refreshToken, {
-        secret: process.env.JWT_REFRESH_SECRET || 'refresh_secret',
+        secret: getAuthSecret('JWT_REFRESH_SECRET'),
       });
 
       const session = await db.session.findFirst({
@@ -296,11 +299,11 @@ export class AuthService {
   private async generateTokens(userId: string, email: string, role: string) {
     const payload = { sub: userId, email, role };
     const accessToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_ACCESS_SECRET || 'access_secret',
+      secret: getAuthSecret('JWT_ACCESS_SECRET'),
       expiresIn: '15m',
     });
     const refreshToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_REFRESH_SECRET || 'refresh_secret',
+      secret: getAuthSecret('JWT_REFRESH_SECRET'),
       expiresIn: '7d',
     });
 

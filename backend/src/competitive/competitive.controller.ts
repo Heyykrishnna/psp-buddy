@@ -11,6 +11,9 @@ import {
 import { SkipThrottle } from '@nestjs/throttler';
 import { CompetitiveService } from './competitive.service';
 import { JwtAuthGuard } from '@/auth/jwt-auth.guard';
+import { RolesGuard } from '@/auth/roles.guard';
+import { Roles } from '@/auth/roles.decorator';
+import { RoleName } from '@/types';
 
 @Controller('competitive')
 export class CompetitiveController {
@@ -85,6 +88,8 @@ export class CompetitiveController {
   }
 
   @SkipThrottle()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleName.ADMIN, RoleName.TEACHER)
   @Get('profile/:studentId')
   async getProfile(@Param('studentId') studentId: string) {
     return this.competitiveService.getStudentCompetitiveProfile(studentId);

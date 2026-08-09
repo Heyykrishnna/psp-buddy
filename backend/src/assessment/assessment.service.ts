@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger, UnauthorizedException } from '@nestjs/common';
 import { db } from '@/database';
 import { SyncGateway } from '../gateway/sync.gateway';
 import { AiService } from '../ai/ai.service';
@@ -257,7 +257,7 @@ export class AssessmentService {
 
     // Broadcast sync event to all web/mobile clients
     try {
-      this.syncGateway.broadcastSyncEvent(SyncEventType.NOTIFICATION_RECEIVED, 'all-students', {
+      this.syncGateway.broadcastSyncEvent(SyncEventType.NOTIFICATION_RECEIVED, 'GLOBAL', {
         assessmentId: published.id,
         title: published.title,
       });
@@ -284,15 +284,9 @@ export class AssessmentService {
       where: { OR: [{ id: studentId }, { userId: studentId }] },
     });
 
-    // Create fallback demo student if not found in db
+    // Never create an implicit student from a client-supplied identifier.
     if (!student) {
-      student = await db.student.create({
-        data: {
-          userId: studentId,
-          studentRegistrationNo: `STU-${Date.now().toString().slice(-6)}`,
-          gradeLevel: '1st Sem',
-        },
-      });
+      throw new UnauthorizedException('A student profile is required to start an assessment.');
     }
 
     // Check if student has ALREADY submitted an attempt for this assessment
@@ -343,15 +337,24 @@ export class AssessmentService {
   }
 
   // 7. Autosave Answer directly to PostgreSQL
-  async autosaveAnswer(attemptId: string, dto: AutosaveAnswerDto) {
-    const attempt = await db.assessmentAttempt.findUnique({ where: { id: attemptId } });
+  async autosaveAnswer(attemptId: string, dto: AutosaveAnswerDto, userId: string) {
+    const attempt = await db.assessmentAttempt.findUnique({
+      where: { id: attemptId },
+      include: { student: true, assessment: { select: { id: true } } },
+    });
     if (!attempt) throw new NotFoundException('Attempt not found');
+    if (attempt.student.userId !== userId) throw new UnauthorizedException('You do not own this assessment attempt.');
     if (attempt.status !== 'IN_PROGRESS') {
       throw new BadRequestException('Attempt is already submitted or evaluated');
     }
 
     const question = await db.question.findUnique({ where: { id: dto.questionId } });
     if (!question) throw new NotFoundException('Question not found');
+    if (question.assessmentId !== attempt.assessment.id) throw new BadRequestException('Question does not belong to this assessment.');
+    if (dto.selectedOptionId) {
+      const option = await db.option.findFirst({ where: { id: dto.selectedOptionId, questionId: dto.questionId } });
+      if (!option) throw new BadRequestException('Selected option is invalid for this question.');
+    }
 
     // Upsert into attempt_answers table in PostgreSQL
     const savedAnswer = await db.attemptAnswer.upsert({
@@ -384,7 +387,7 @@ export class AssessmentService {
   }
 
   // 8. Submit Attempt & Automated Evaluation Engine
-  async submitAttempt(attemptId: string) {
+  async submitAttempt(attemptId: string, userId: string) {
     const attempt = await db.assessmentAttempt.findUnique({
       where: { id: attemptId },
       include: {
@@ -403,6 +406,7 @@ export class AssessmentService {
     });
 
     if (!attempt) throw new NotFoundException('Attempt not found');
+    if (attempt.student.userId !== userId) throw new UnauthorizedException('You do not own this assessment attempt.');
 
     // If attempt was ALREADY evaluated/submitted, return existing result directly (prevents re-submission & double XP)
     if (attempt.status === 'EVALUATED' || attempt.status === 'SUBMITTED') {
@@ -599,7 +603,7 @@ export class AssessmentService {
     }
 
     // Broadcast real-time sync event to web & mobile clients
-    this.syncGateway.broadcastSyncEvent(SyncEventType.ASSESSMENT_SUBMITTED, attempt.studentId, {
+    this.syncGateway.broadcastSyncEvent(SyncEventType.ASSESSMENT_SUBMITTED, attempt.student.userId, {
       attemptId: evaluatedAttempt.id,
       assessmentId: attempt.assessmentId,
       score: finalScore,
@@ -619,7 +623,7 @@ export class AssessmentService {
   }
 
   // 9. Get Attempt Result & Topic Analysis
-  async getAttemptResult(attemptId: string) {
+  async getAttemptResult(attemptId: string, userId: string) {
     const attempt = await db.assessmentAttempt.findUnique({
       where: { id: attemptId },
       include: {
@@ -641,10 +645,12 @@ export class AssessmentService {
             },
           },
         },
+        student: { select: { userId: true } },
       },
     });
 
     if (!attempt) throw new NotFoundException('Attempt result not found');
+    if (attempt.student.userId !== userId) throw new UnauthorizedException('You do not own this assessment result.');
 
     const topicAnalysis = attempt.topicAnalysis ? JSON.parse(attempt.topicAnalysis) : [];
 
@@ -681,13 +687,7 @@ export class AssessmentService {
     const assessment = await db.assessment.findUnique({ where: { id: assessmentId } });
     if (!assessment) throw new NotFoundException('Assessment not found');
 
-    let student = await db.student.findUnique({ where: { id: studentId } });
-    if (!student) {
-      student = await db.student.findFirst({ where: { userId: studentId } });
-    }
-    if (!student) {
-      student = await db.student.findFirst();
-    }
+    const student = await db.student.findFirst({ where: { userId: studentId } });
     if (!student) throw new NotFoundException('Student record not found');
 
     // Perform AI Auto-Evaluation of the workbook submission
@@ -729,7 +729,7 @@ export class AssessmentService {
     });
 
     // Broadcast real-time SyncGateway event for Teacher & Student portals
-    this.syncGateway.broadcastSyncEvent(SyncEventType.WORKBOOK_SUBMITTED, student.id, {
+    const workbookSyncPayload = {
       workbookId: upload.id,
       assessmentId: assessment.id,
       assessmentTitle: assessment.title,
@@ -739,7 +739,11 @@ export class AssessmentService {
       maxMarks: upload.maxMarks,
       aiFeedback: upload.aiFeedback,
       status: upload.status,
-    });
+    };
+    this.syncGateway.broadcastSyncEvent(SyncEventType.WORKBOOK_SUBMITTED, student.userId, workbookSyncPayload);
+    if (assessment.createdById !== student.userId) {
+      this.syncGateway.broadcastSyncEvent(SyncEventType.WORKBOOK_SUBMITTED, assessment.createdById, workbookSyncPayload);
+    }
 
     return upload;
   }
@@ -801,12 +805,16 @@ export class AssessmentService {
       },
     });
 
-    this.syncGateway.broadcastSyncEvent(SyncEventType.WORKBOOK_EVALUATED, updated.studentId, {
+    const workbookEvaluationPayload = {
       workbookId: updated.id,
       obtainedMarks: updated.obtainedMarks,
       maxMarks: updated.maxMarks,
       feedback: updated.aiFeedback,
-    });
+    };
+    this.syncGateway.broadcastSyncEvent(SyncEventType.WORKBOOK_EVALUATED, updated.student.userId, workbookEvaluationPayload);
+    if (updated.assessment.createdById !== updated.student.userId) {
+      this.syncGateway.broadcastSyncEvent(SyncEventType.WORKBOOK_EVALUATED, updated.assessment.createdById, workbookEvaluationPayload);
+    }
 
     await this.learningPathService.syncStudentProgress(updated.studentId, updated.assessmentId || undefined);
 

@@ -7,16 +7,19 @@ import {
   Param,
   Req,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('chat')
+@UseGuards(JwtAuthGuard)
 export class ChatController {
   constructor(private readonly chatService: ChatService) { }
 
   @Get('sessions')
   async getSessions(@Req() req: any, @Query('userId') queryUserId?: string) {
-    const userId = req.user?.sub || req.user?.id || queryUserId;
+    const userId = req.user?.sub || req.user?.id;
     return this.chatService.getSessions(userId);
   }
 
@@ -26,7 +29,7 @@ export class ChatController {
     @Body() body: { topic?: string; userId?: string },
     @Query('userId') queryUserId?: string,
   ) {
-    const userId = req.user?.sub || req.user?.id || body?.userId || queryUserId;
+    const userId = req.user?.sub || req.user?.id;
     return this.chatService.createSession(userId, body?.topic);
   }
 
@@ -36,7 +39,7 @@ export class ChatController {
     @Param('id') id: string,
     @Query('userId') queryUserId?: string,
   ) {
-    const userId = req.user?.sub || req.user?.id || queryUserId;
+    const userId = req.user?.sub || req.user?.id;
     return this.chatService.deleteSession(userId, id);
   }
 
@@ -46,7 +49,7 @@ export class ChatController {
     @Param('id') id: string,
     @Query('userId') queryUserId?: string,
   ) {
-    const userId = req.user?.sub || req.user?.id || queryUserId;
+    const userId = req.user?.sub || req.user?.id;
     return this.chatService.getMessages(userId, id);
   }
 
@@ -57,7 +60,7 @@ export class ChatController {
     @Body() body: { message: string; topic?: string; userId?: string },
     @Query('userId') queryUserId?: string,
   ) {
-    const userId = req.user?.sub || req.user?.id || body?.userId || queryUserId;
+    const userId = req.user?.sub || req.user?.id;
     return this.chatService.sendMessage(userId, id, body?.message, body?.topic);
   }
 }
